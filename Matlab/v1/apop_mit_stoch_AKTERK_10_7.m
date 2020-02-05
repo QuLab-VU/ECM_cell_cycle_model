@@ -1,0 +1,202 @@
+function [t,x] = apop_mit_stoch_AKTERK_10_7(sys_size,p,Initial)
+
+%% Rate Constants
+p.omega=sys_size;
+
+%% Initial state
+tspan = [0, 120]; %time in hours
+x0=Initial;
+
+%% Specify reaction network
+pfun = @propensities_apop_mit_1;
+
+               % 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 
+               %s2 p1 pp c1 mc cD Dp  R pR E2 ER  E Ep  A Ap  B Bp C0 BX bx2b3 32 Bm B2
+stoich_matrix = [1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0; %1
+                 1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0; %2
+                -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0; %3
+                -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%4
+                 0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%5
+                 0 -1  0  0  0 -1  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%6
+                 0  1  0  0  0  1 -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%7
+                 0 -1  0  0  0  0  0  0  0  0  0 -1  1  0  0  0  0  0  0  0  0  0  0  0;%8
+                 0  1  0  0  0  0  0  0  0  0  0  1 -1  0  0  0  0  0  0  0  0  0  0  0;%9
+                 0 -1  0  0  0  0  0  0  0  0  0  0  0 -1  1  0  0  0  0  0  0  0  0  0; %10
+                 0  1  0  0  0  0  0  0  0  0  0  0  0  1 -1  0  0  0  0  0  0  0  0  0; %11
+                 0 -1  0  0  0  0  0  0  0  0  0  0  0  0  0 -1  1  0  0  0  0  0  0  0;% 12
+                 0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  1 -1  0  0  0  0  0  0  0;%13
+                 0 -1  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%14
+                 0  1 -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%15
+                 0 -1  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%16
+                 0 -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%17
+                 0  0 -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%18
+                 0  0 -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%19
+                 0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%20
+                 0  0  0 -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%21
+                 0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%22
+                 0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%23
+                 0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%24
+                 0  0  0  0 -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%25
+                 0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%26
+                 0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%27
+                 0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%28
+                 0  0  0  0  0 -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%29
+                 0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%30
+                 0  0  0  0  0  0  0  1 -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%31
+                 0  0  0  0  0  0  0 -1  0 -1  1  0  0  0  0  0  0  0  0  0  0  0  0  0;%32
+                 0  0  0  0  0  0  0 -1  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%33
+                 0  0  0  0  0  0  0 -1  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%34
+                 0  0  0  0  0  0  0 -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%35
+                 0  0  0  0  0  0  0  0  1  1 -1  0  0  0  0  0  0  0  0  0  0  0  0  0;%36
+                 0  0  0  0  0  0  0  0  1  1 -1  0  0  0  0  0  0  0  0  0  0  0  0  0;%37
+                 0  0  0  0  0  0  0  0 -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%38
+                 0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%39
+                 0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%40
+                 0  0  0  0  0  0  0  0  0 -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%41
+                 0  0  0  0  0  0  0  0  0 -1  0  0  0  0  0  0  0  0  0  0  0  0  0  0;%42
+                 0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0;%43                 
+                 0  0  0  0  0  0  0  0  0  0  0 -1  0  0  0  0  0  0  0  0  0  0  0  0;%44
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0;%45
+                 0  0  0  0  0  0  0  0  0  0  0  0  0 -1  0  0  0  0  0  0  0  0  0  0;%46
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0;%47
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 -1  0  0  0  0  0  0  0  0;%48
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0;%49
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 -1  0  0  0  0  0  0;%50
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 -1  0  0  0  1  0;%51
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0 -1  0;%52
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0 -1 -1;%53
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 -1  0  0  1  1;%54
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1 -1  0  0  0  1;%55
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0;%56
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 -1  0  0  0;%57
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 -1  1  0 -1;%58
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1 -1  0  1;%59
+                 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 -1  0  1];%60             
+                %s2 p1 pp c1 mc cD Dp  R pR E2 ER  E Ep  A Ap  B Bp C0 BX bx2b3 32 Bm B2
+
+             %% Run simulation
+[t,x] = directMethod(stoich_matrix, pfun, tspan, x0, p);      
+
+end
+
+function a = propensities_apop_mit_1(x,p)
+AKT=p.AKT*p.omega;
+ERK=p.ERK*p.omega;
+FAK=p.FAK*p.omega;
+
+Skp2=x(1);
+p21=x(2);
+p21p=x(3);  
+Cdh1=x(4);  
+Myc=x(5);
+CycD=x(6);  %
+CycDp21=x(7);
+Rb=x(8);
+pRb=x(9);
+E2F=x(10);
+RbE2F=x(11);
+CycE=x(12);
+CycEp21=x(13);
+CycA=x(14);
+CycAp21=x(15);
+CycB=x(16);
+CycBp21=x(17);
+Cdc20=x(18);
+BAX = x(19);
+BAXmBCL2 = x(20);
+BH3 = x(21);
+BH3BCL2 = x(22);
+BAXm=x(23);
+BCL2=x(24);
+Stress=2-p.AKT-p.ERK;
+
+%skp2
+w1=p.s*(p.V_sskp2*p.omega); %Basal skp2 synthesis
+w2=p.s*(p.V_s2skp*FAK); %Skp2 synthesis from FAK
+w3=p.s*((p.V_dskp2*p.omega*(Skp2/(p.K_dskp2*p.omega+Skp2))*(Cdh1/(p.K_cdh1*p.omega+Cdh1))));%skp2 degradation from cdh1
+w4=p.s*(p.k_ddskp2*Skp2);%skp2 degradation
+
+%p21 and p21p
+w5=p.s*((p.v_s1p21*p.omega));%p21 synthesis
+w6=p.s*((p.k_c1/p.omega)*CycD*p21);%p21 cycD association
+w7=p.s*(p.k_c2*CycDp21);%p21 cycD dis
+w8=p.s*((p.k_c3/p.omega)*CycE*p21);%p21 cycE association
+w9=p.s*(p.k_c4*CycEp21);%p21 cycE dis
+w10=p.s*((p.k_c5/p.omega)*CycA*p21);%p21 cycA association
+w11=p.s*(p.k_c6*CycAp21);%p21 cycA dis
+w12=p.s*((p.k_c7/p.omega)*CycB*p21);%p21 cycB association
+w13=p.s*(p.k_c8*CycBp21);%p21 cycB dis
+w14=p.s*(p.V_1p21*CycE*(p21/(p.K_1p21*p.omega+p21)));%p21 inact from cycE
+w15=p.s*((p.V_2p21*p.omega*p21)/(p.K_2p21*p.omega+p21));%p21 autoact from p21p       ******check against model
+w16=p.s*(p.V_Fp*p21*FAK/((p.K_Fp*p.omega)+p21));%p21 inact from FAK
+w17=p.s*(p.k_ddp21*p21);%p21 non specific inact  %these prob shouldn't be the same
+w18=p.s*(p.V_dp21p*p.omega*(Skp2/(p.K_dp21skp2*p.omega+Skp2))*(p21p/(p.K_dp21p*p.omega+p21p)));%p21p deg from skp2
+w19=p.s*(p.k_ddp21*p21p);%p21p nonspec degradation %these prob shouldn't be the same
+
+%cdh1
+w20=p.s*(p.V_1cdh1*p.omega*((p.cdh1_tot*p.omega-Cdh1)/(p.K_1cdh1*p.omega+(p.cdh1_tot*p.omega-Cdh1))));%cdh1 autoact
+w21=p.s*(p.V_2cdh1*(Cdh1/(p.K_2cdh1*p.omega+Cdh1))*(CycA+CycB));%cdh1 inact from cycA and cycB
+
+%myc
+w22=p.s*((p.k_M*AKT*p.omega)/((p.K_S*p.omega)+AKT));%myc synthesis from AKT
+w23=p.s*((p.k_EMY*ERK*p.omega)/((p.K_MY*p.omega)+ERK));%myc synthes from ERK
+w24=p.s*((p.k_CDF*FAK*p.omega)/((p.K_DF*p.omega)+FAK));%myc synthes from FAK
+w25=p.s*(p.d_M*Myc);%myc degradation
+
+%cycD
+w26=p.s*((p.k_CDS*AKT*p.omega)/((p.K_S*p.omega)+AKT));%cyclin D synthesis from AKT
+w27=p.s*((p.k_ED*ERK*p.omega)/((p.K_MY*p.omega)+ERK));%cyclin D synthesis from ERK
+w28=p.s*((p.k_CD*p.omega*Myc)/((p.K_M*p.omega)+Myc));%cycD synth from myc
+w29=p.s*(p.d_CD*CycD);%cycD degradation
+
+%rb and prb
+w30=p.s*(p.k_R*p.omega);%Rb synthesis 
+w31=p.s*((p.k_DP*p.omega*pRb)/((p.K_RP*p.omega)+pRb)); %pRb dephosphorylation
+w32=p.s*((p.k_RE/p.omega)*Rb*E2F); %Rb-E2F complex formation
+w33=p.s*((p.k_P1*CycD*Rb)/((p.omega*p.K_CD)+Rb)); %Rb phospho from cycD
+w34=p.s*((p.k_P2*CycE*Rb)/((p.omega*p.K_CE)+Rb)); %Rb phosphorylation from cyc E
+w35=p.s*(p.d_R*Rb);%Rb degradation
+w36=p.s*((p.k_P1*CycD*RbE2F)/((p.K_CD*p.omega)+RbE2F));%rb e2f phospho from cycD
+w37=p.s*((p.k_P2*CycE*RbE2F)/((p.omega*p.K_CE)+RbE2F));%Rb-e2f phosphorylation from cyc E
+w38=p.s*(p.d_RP*pRb);%pRb degradation
+
+%E2F
+w39=p.s*(p.k_E*p.omega*(Myc/((p.K_M*p.omega)+Myc))*(E2F/((p.K_E*p.omega)+E2F)));%e2f synthesis from myc e2f autoactivation
+w40=p.s*((p.k_b*p.omega*Myc)/((p.K_M*p.omega)+Myc));%e2f synthesis from myc
+w41=p.s*(p.d_E*E2F);%e2f degradation
+w42=p.s*(((p.V_2E2F*E2F*CycA)/((p.K_2E2F*p.omega)+E2F)));%e2f degradation from cycA
+%CycE
+w43=p.s*(p.V_1Me/p.omega * E2F * (p.a*p.omega+p.b1*CycE)*((p.CycE_tot*p.omega)-CycE-CycEp21)/(p.K_1Me*p.omega+((p.CycE_tot*p.omega)-CycE-CycEp21)));%Cyc E activation
+w44=p.s*(p.V_2Me*CycA*(CycE/(p.K_2Me*p.omega+CycE)));%Cyc E inactivation
+
+%cycA
+w45=p.s*(p.V_1Ma * E2F * (p.CycA_tot*p.omega - CycA - CycAp21)/(p.K_1Ma*p.omega+(p.CycA_tot*p.omega-CycA-CycAp21)));% Cyc A activation
+w46=p.s*(p.V_2Ma*Cdc20*(CycA/(p.K_2Ma*p.omega+CycA)));% Cyc A inactivation
+
+%cycB
+w47=p.s*(p.V_1Mb/p.omega *CycA * (p.a*p.omega+p.b2*CycB)*(p.K_ie*p.omega/(p.K_ie*p.omega+CycE))*(p.CycB_tot*p.omega-CycB-CycBp21)/(p.K_1Mb*p.omega+(p.CycB_tot*p.omega-CycB-CycBp21)));% Cyc B activation
+w48=p.s*(p.V_2Mb*(p.K_ib*p.omega/(p.K_ib*p.omega+CycB))*Cdc20*(CycB/(p.K_2Mb*p.omega+CycB))); % Cyc B inactivation
+
+%cdc20
+w49=p.s*(p.V_1cdc20 * CycB *((p.Cdc20_tot*p.omega - Cdc20)/(p.K_1cdc20*p.omega+(p.Cdc20_tot*p.omega-Cdc20))));% Cdc20 activation
+w50=p.s*((p.V_2cdc20*p.omega)*(Cdc20/(p.K_2cdc20*p.omega+Cdc20)));% Cdc20 inactivation
+
+%apoptosis switch
+w51=p.m*(p.kf1*BAX+(p.kf2/p.omega)*BAX*BH3);%bax activation from bh3
+w52=p.m*(p.kb*BAXm); %baxm inactivation to bax
+w53=p.m*((p.kasbaxmbcl2/p.omega)*BAXm*BCL2);%baxm-bcl2 association 
+w54=p.m*(p.kdsbaxmbcl2*BAXmBCL2);%baxmbcl2 dissociation
+w55=p.m*(p.kb*BAXmBCL2);%baxmblc2 inactivation to bax
+w56=p.m*((p.k1sbh3*p.omega)+p.k2sbh3*Stress*p.omega);%bh3 synthesis
+w57=p.m*(p.kdbh3*BH3);%bh3 degradation
+w58=p.m*((p.kasbh3bcl2/p.omega)*BH3*BCL2);%bh3 bcl2 association
+w59=p.m*(p.kdsbh3bcl2*BH3BCL2);%bh3bcl2 dissociation
+w60=p.m*(p.kdbh3*BH3BCL2);%bh3 degradation in bh3bcl2
+
+
+a = [w1; w2; w3; w4; w5; w6; w7; w8; w9; w10; w11; w12; w13; w14; w15; w16;
+    w17; w18; w19; w20; w21; w22; w23; w24; w25; w26; w27; w28; w29; w30; w31; w32;
+    w33; w34; w35; w36; w37; w38; w39; w40; w41; w42; w43; w44; w45; w46; w47;
+    w48; w49; w50; w51; w52; w53; w54; w55; w56; w57; w58; w59; w60];  
+end
+
