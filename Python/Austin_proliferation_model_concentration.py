@@ -9,7 +9,7 @@ from pysb import *
 
 import sys
 sys.path.insert(0, r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle") #add a pathway to the model
-from Austin_proliferation_model import model
+from Austin_proliferation_ODE_model import model
 
 
 ###Initials

@@ -10,7 +10,7 @@ from pysb import *
 
 Model()
 
-Parameter('omega', 1)
+Parameter('omega', 200)
 
 ###Monomers:
 
@@ -29,16 +29,12 @@ Monomer('BAX', ['b','m'], {'m':['yes','no']})
 Monomer('BCL2', ['b'])
 Monomer('BH3', ['b'])
 
-'''
-Monomer('YAP', )
-Monomer('AKT', )
-Monomer('ERK', )
-'''
+
 
 ###Parameter
 
 Parameter('AKT',1)
-Parameter('ERK',1)
+Parameter('ERK', 1)
 Parameter('FAK', 1)
 
 Parameter('m', 3)
@@ -212,9 +208,17 @@ Observable('obsCycAp21', p21(b=1, S='u')%CycA(b=1))
 Observable('obsCycB', CycB(b=None))
 Observable('obsCycBp21', p21(b=1, S='u')%CycB(b=1))
 Observable('obsCdc20', Cdc20())
+
 Observable('obsBH3', BH3(b=None))
-Observable('obsCycD', CycA(b=None))
+Observable('obsCycD', CycD(b=None))
+Observable('obsCycDp21', p21(b=1, S='u')%CycD(b=1))
+
 Observable('obsBAXm', BAX(b=None, m='yes'))
+Observable('obsBAX', BAX(b=None, m='no'))
+Observable('obsBAXmBCL2', BAX(b=1, m='yes')%BCL2(b=1))
+Observable('obsBH3BCL2', BH3(b=1)%BCL2(b=1))
+Observable('obsBCL2', BCL2(b=None))
+
 
 
 ###Expressions
@@ -245,9 +249,9 @@ Expression('kautoact_cdh1', s * (V_1cdh1 * omega * ((1) / (K_1cdh1 * omega + (ob
 Expression('k_inact_CycAorB', s * (V_2cdh1 * (1 / ( K_2cdh1 * omega + obscdh1act))))
 
 ##Myc
-Expression('ks_Myc_AKT', s * ((k_M * AKT * omega) / ((K_S) + AKT * omega)))
-Expression('ks_Myc_ERK', s * ((k_EMY * ERK * omega) / ((K_MY) + ERK * omega)))
-Expression('ks_Myc_FAK', s * ((k_CDF * FAK * omega) / ((K_DF) + FAK * omega)))
+Expression('ks_Myc_AKT', s * ((k_M * AKT * omega) / ((K_S * omega) + AKT)))
+Expression('ks_Myc_ERK', s * ((k_EMY * ERK * omega) / ((K_MY * omega) + ERK)))
+Expression('ks_Myc_FAK', s * ((k_CDF * FAK * omega) / ((K_DF * omega) + FAK)))
 Expression('kd_Myc', s * d_M)
 
 ##CycD
@@ -257,7 +261,6 @@ Expression('ks_CycD_Myc', s * ((k_CD * omega) / ((K_M * omega) + obsMyc)))
 Expression('kd_CycD', s * d_CD)
 
 ##pRb and pRbp
-'''
 Expression('ks_pRb', s * (k_R * omega))
 Expression('kunph_pRbp', s * ((k_DP * omega) / ((K_RP * omega) + obspRbp)))
 Expression('kf_RbE2F', s * (k_RE / omega))
@@ -267,7 +270,8 @@ Expression('kp_pRbE2F_CycD', s * ((k_P1) / ((K_CD * omega) + obspRbE2F)))
 Expression('kp_pRbE2F_CycE', s * ((k_P2) / ((K_CE * omega) + obspRbE2F)))
 Expression('kd_pRb', s * d_R)
 Expression('kd_pRbp', s * d_RP)
-'''
+
+
 ##E2F 
 Expression('ks_E2F_E2FMyc', s * (k_E * omega * (1 /((K_M * omega) + obsMyc)) * (1 / ((K_E * omega) + obsE2F))))
 Expression('ks_E2F_Myc', s * ((k_b * omega) / ((K_M * omega) + obsMyc)))
@@ -283,7 +287,7 @@ Expression('kact_CycA_E2F', s * (V_1Ma * (CycA_tot * omega - obsCycA - obsCycAp2
 Expression('kinact_CycA_Cdc20', s * (V_2Ma * ( 1 / (K_2Ma * omega + obsCycA))))
 
 ##CycB
-Expression('kact_CycB_CycA', s * (V_1Mb * omega * (a * omega + b2 * obsCycB) * (K_ie * omega/ (K_ie * omega + obsCycE)) * (CycB_tot * omega - obsCycB - obsCycBp21) / (K_1Mb * omega + (CycB_tot * omega- obsCycB - obsCycBp21))))
+Expression('kact_CycB_CycA', s * (V_1Mb / omega * (a * omega + b2 * obsCycB) * (K_ie * omega/ (K_ie * omega + obsCycE)) * (CycB_tot * omega - obsCycB - obsCycBp21) / (K_1Mb * omega + (CycB_tot * omega- obsCycB - obsCycBp21))))
 Expression('kinact_CycB_Cdc20', s * (V_2Mb * (K_ib * omega / (K_ib * omega + obsCycB)) * (1 / (K_2Mb * omega + obsCycB))))
 
 ##Cdc20
@@ -317,6 +321,7 @@ Rule('p21_synthesis', None >> p21(b=None, S='u'), ks_p21) #Sytnhesis of p21
 Rule('p21_CycD_association', p21(b=None, S='u') + CycD(b=None) | p21(b=1, S='u')%CycD(b=1), kasso_p21_CycD, kdiss_p21_CycD) #p21 and CycD association and dissociation
 Rule('p21_CycA_association', p21(b=None, S='u') + CycA(b=None) | p21(b=1, S='u')%CycA(b=1), kasso_p21_CycA, kdiss_p21_CycA) #p21 and CycA association and dissociation
 Rule('p21_CycB_association', p21(b=None, S='u') + CycB(b=None) | p21(b=1, S='u')%CycB(b=1), kasso_p21_CycB, kdiss_p21_CycB) #p21 and CycB association and dissociation
+Rule('p21_CycE_association', p21(b=None, S='u') + CycE(b=None) | p21(b=1, S='u')%CycE(b=1), kasso_p21_CycE, kdiss_p21_CycE) #p21 and CycB association and dissociation
 Rule('p21_phosphorylation_CycE', p21(b=None, S='u') + CycE(b=None) >> p21(b=None, S='p') + CycE(b=None), kp_p21_CycE) #Phosphorylation of p21 by CycE
 Rule('p21p_unphosphorylation', p21(b=None, S='p') >> p21(b=None, S='u'), kunph_p21p) #Unphosphorylation of p21
 Rule('p21_phosphorylation_FAK', p21(b=None, S='u') >> p21(b=None, S='p'), kp_p21_FAK) #Phosphorylation of p21 by FAK
@@ -346,14 +351,15 @@ Rule('CycD_synthesis_ERK', None >> CycD(b=None), ks_CycD_ERK) #Sytnhesis of Cycl
 Rule('CycD_synthesis_Myc', Myc() >> CycD(b=None) + Myc(), ks_CycD_Myc) #Sytnhesis of Cyclin D by Myc
 Rule('CycD_degradation', CycD(b=None) >> None, kd_CycD) #Degradation of CycD
 
+
 ##pRb and pRbp
-#Rule('pRb_synthesis', None >> pRb(b=None, S='u'), ks_pRb) #Sytnhesis of Rb
+Rule('pRb_synthesis', None >> pRb(b=None, S='u'), ks_pRb) #Sytnhesis of Rb
 Rule('pRbp_unphosphorylation', pRb(b=None, S='p') >> pRb(b=None, S='u'), kunph_pRbp) #Unphosphorylation of pRb
 Rule('pRbE2F_complex_formation', pRb(b=None, S='u') + E2F(b=None) >> pRb(b=1, S='u')%E2F(b=1), kf_RbE2F)
 Rule('pRb_phosphorylation_CycE', pRb(b=None, S='u') + CycE(b=None) >> pRb(b=None, S='p') + CycE(b=None), kp_pRb_CycE) #Phosphorylation of pRb by Cyclin E
 Rule('pRb_phosphorylation_CycD', pRb(b=None, S='u') + CycD(b=None) >> pRb(b=None, S='p') + CycD(b=None), kp_pRb_CycD) #Phosphorylation of pRb by Cyclin D
-Rule('pRbE2F_phosphorylation_CycE', pRb(b=1, S='u')%E2F(b=1) + CycE(b=None) >> pRb(b=1, S='p')%E2F(b=1) + CycE(b=None), kp_pRbE2F_CycE) #Phosphorylation of pRbE2F by Cyclin E
-Rule('pRbE2F_phosphorylation_CycD', pRb(b=1, S='u')%E2F(b=1) + CycD(b=None) >> pRb(b=1, S='p')%E2F(b=1) + CycD(b=None), kp_pRbE2F_CycD) #Phosphorylation of pRbE2F by Cyclin D
+Rule('pRbE2F_phosphorylation_CycE', pRb(b=1, S='u')%E2F(b=1) + CycE(b=None) >> pRb(b=None, S='p') + E2F(b=None) + CycE(b=None), kp_pRbE2F_CycE) #Phosphorylation of pRbE2F by Cyclin E
+Rule('pRbE2F_phosphorylation_CycD', pRb(b=1, S='u')%E2F(b=1) + CycD(b=None) >> pRb(b=None, S='p') + E2F(b=None) + CycD(b=None), kp_pRbE2F_CycD) #Phosphorylation of pRbE2F by Cyclin D
 Rule('pRb_degradation', pRb(b=None, S='u') >> None, kd_pRb) #Degradation of pRb
 Rule('pRbp_degradation', pRb(b=None, S='p') >> None, kd_pRbp) #Degradation of pRb
 
