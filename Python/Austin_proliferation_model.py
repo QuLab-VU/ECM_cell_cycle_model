@@ -33,9 +33,9 @@ Monomer('BH3', ['b'])
 
 ###Parameter
 
-Parameter('AKT',1)
-Parameter('ERK', 1)
-Parameter('FAK', 1)
+Parameter('AKT', 200.0)
+Parameter('ERK', 200.0)
+Parameter('FAK', 200.0)
 
 Parameter('m', 3)
 Parameter('BCL2t', 0.95) 
@@ -197,10 +197,12 @@ Observable('obsp21p', p21(b=None, S='p'))
 Observable('obscdh1act', cdh1(A='yes'))
 Observable('obscdh1inact', cdh1(A='no'))
 Observable('obsMyc', Myc())
-Observable('obspRbp', pRb(b=None, S='p'))
+Observable('obsCycD', CycD(b=None))
+Observable('obsCycDp21', p21(b=1, S='u')%CycD(b=1))
 Observable('obspRb', pRb(b=None, S='u'))
-Observable('obspRbE2F', pRb(b=1, S='u')%E2F(b=1))
+Observable('obspRbp', pRb(b=None, S='p'))
 Observable('obsE2F', E2F(b=None))
+Observable('obspRbE2F', pRb(b=1, S='u')%E2F(b=1))
 Observable('obsCycE', CycE(b=None))
 Observable('obsCycEp21', p21(b=1, S='u')%CycE(b=1))
 Observable('obsCycA', CycA(b=None))
@@ -208,15 +210,11 @@ Observable('obsCycAp21', p21(b=1, S='u')%CycA(b=1))
 Observable('obsCycB', CycB(b=None))
 Observable('obsCycBp21', p21(b=1, S='u')%CycB(b=1))
 Observable('obsCdc20', Cdc20())
-
-Observable('obsBH3', BH3(b=None))
-Observable('obsCycD', CycD(b=None))
-Observable('obsCycDp21', p21(b=1, S='u')%CycD(b=1))
-
-Observable('obsBAXm', BAX(b=None, m='yes'))
 Observable('obsBAX', BAX(b=None, m='no'))
 Observable('obsBAXmBCL2', BAX(b=1, m='yes')%BCL2(b=1))
+Observable('obsBH3', BH3(b=None))
 Observable('obsBH3BCL2', BH3(b=1)%BCL2(b=1))
+Observable('obsBAXm', BAX(b=None, m='yes'))
 Observable('obsBCL2', BCL2(b=None))
 
 
@@ -300,14 +298,13 @@ Expression('kinact_BAXm', m * kb)
 Expression('kasso_BAXm_BCL2', m * (kasbaxmbcl2 / omega))
 Expression('kdiss_BAXmBCL2', m * kdsbaxmbcl2)
 Expression('kinact_BAXmBCL2', m * kb)
-Expression('ks_BH3', m * ((k1sbh3 / omega) + k2sbh3 * (2 - AKT - ERK) * omega))
+Expression('ks_BH3', m * ((k1sbh3 * omega) + k2sbh3 * (400 - AKT - ERK)))
 Expression('kd_BH3', m * kdbh3)
 Expression('kasso_BH3_BCL2', m * (kasbh3bcl2 / omega))
 Expression('kdiss_BH3BCL2', m * kdsbh3bcl2)
 
 
 ###Rules
-
 
 ##Skp2
 Rule('Skp2_synthesis', None >> Skp2(), ks_Skp2) #Sytnhesis of Skp2
@@ -387,14 +384,14 @@ Rule('CycB_inactivation_Cdc20', CycB(b=None) + Cdc20() >> Cdc20(), kinact_CycB_C
 Rule('Cdc20_activation_CycB', CycB(b=None) >> CycB(b=None) + Cdc20(), kact_Cdc20_CycB) #Cdc20 activation by Cyclin B
 Rule('Cdc20_inactivation', Cdc20() >> None, kinact_Cdc20) #Cdc20 inactivation
 
-
 ##Apoptosis switch
 
 Rule('BAX_activation_inactivation', BAX(m='no', b=None) | BAX(m='yes', b=None), kact_BAX, kinact_BAXm) #BAX activation from BH3 and BAXm inactivation
 Rule('BAXmBCL2_association_dissociation', BAX(m='yes', b=None) + BCL2(b=None) | BAX(m='yes', b=1)%BCL2(b=1), kasso_BAXm_BCL2, kdiss_BAXmBCL2) #BAXm and BCL2 association and dissociation
 Rule('BAXmBCL2_inactivation', BAX(m='yes', b=1)%BCL2(b=1) >> BAX(m='no', b=None) + BCL2(b=None), kinact_BAXmBCL2) #BAXmBCL2 inactivation to bax
+
 Rule('BH3_synthesis', None >> BH3(b=None), ks_BH3) #Synthesis of BH3
 Rule('BH3_degradation', BH3(b=None) >> None, kd_BH3) #Degradation of BH3
-Rule('BH3mBCL2_association_dissociation', BH3(b=None) + BCL2(b=None) | BH3(b=1)%BCL2(b=1), kasso_BH3_BCL2, kdiss_BH3BCL2) #BH3 and BCL2 association and dissociation
-Rule('BH3BCL2_degradation', BH3(b=1)%BCL2(b=1) >> BCL2(b=None) , kd_BH3) #bh3 degradation in bh3bcl2
 
+Rule('BH3BCL2_association_dissociation', BH3(b=None) + BCL2(b=None) | BH3(b=1)%BCL2(b=1), kasso_BH3_BCL2, kdiss_BH3BCL2) #BH3 and BCL2 association and dissociation
+Rule('BH3BCL2_degradation', BH3(b=1)%BCL2(b=1) >> BCL2(b=None) , kd_BH3) #bh3 degradation in bh3bcl2

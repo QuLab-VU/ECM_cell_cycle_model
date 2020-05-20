@@ -5,10 +5,14 @@ Created on Mon Feb 3 14:57:38 2020
 @author: Jérémie Marlhens
 Title: Austin_proliferation_model
 """
-from pysb import *
+#path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle"
+path="/home/jeremie"
+
+from pysb import * 
 
 import sys
-sys.path.insert(0, r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle") #add a pathway to the model
+sys.path.insert(0, path) #add a pathway to the model
+
 from Austin_proliferation_ODE_model import model
 
 
@@ -46,23 +50,24 @@ Initial(model.monomers['p21'](b=None, S='p'), model.expressions['p21p_0'])
 Initial(model.monomers['cdh1'](A='yes'), model.expressions['cdh1act_0'])
 Initial(model.monomers['cdh1'](A='no'), model.expressions['cdh1inact_0'])
 Initial(model.monomers['Myc'](), model.expressions['Myc_0'])
-Initial(model.monomers['Cdc20'](), model.expressions['Cdc20_0'])
+Initial(model.monomers['CycD'](b=None), model.expressions['CycD_0'])
+Initial(model.monomers['CycD'](b=1)%model.monomers['p21'](b=1, S='u'), model.expressions['CycDp21_0'])
+Initial(model.monomers['pRb'](b=None, S='u'), model.expressions['pRb_0'])
+Initial(model.monomers['pRb'](b=None, S='p'), model.expressions['pRbp_0'])
+Initial(model.monomers['E2F'](b=None), model.expressions['E2F_0'])
+Initial(model.monomers['pRb'](b=1, S='u')%model.monomers['E2F'](b=1), model.expressions['pRbE2F_0'])
+Initial(model.monomers['CycE'](b=None), model.expressions['CycE_0'])
+Initial(model.monomers['CycE'](b=1)%model.monomers['p21'](b=1, S='u'), model.expressions['CycEp21_0'])
 Initial(model.monomers['CycA'](b=None), model.expressions['CycA_0'])
 Initial(model.monomers['CycA'](b=1)%model.monomers['p21'](b=1, S='u'), model.expressions['CycAp21_0'])
 Initial(model.monomers['CycB'](b=None), model.expressions['CycB_0'])
 Initial(model.monomers['CycB'](b=1)%model.monomers['p21'](b=1, S='u'), model.expressions['CycBp21_0'])
-Initial(model.monomers['CycD'](b=None), model.expressions['CycD_0'])
-Initial(model.monomers['CycD'](b=1)%model.monomers['p21'](b=1, S='u'), model.expressions['CycDp21_0'])
-Initial(model.monomers['CycE'](b=None), model.expressions['CycE_0'])
-Initial(model.monomers['CycE'](b=1)%model.monomers['p21'](b=1, S='u'), model.expressions['CycEp21_0'])
-Initial(model.monomers['pRb'](b=None, S='u'), model.expressions['pRb_0'])
-Initial(model.monomers['pRb'](b=None, S='p'), model.expressions['pRbp_0'])
-Initial(model.monomers['pRb'](b=1, S='u')%model.monomers['E2F'](b=1), model.expressions['pRbE2F_0'])
-Initial(model.monomers['E2F'](b=None), model.expressions['E2F_0'])
+Initial(model.monomers['Cdc20'](), model.expressions['Cdc20_0'])
 Initial(model.monomers['BAX'](m='no', b=None), model.expressions['BAX_0'])
-Initial(model.monomers['BAX'](m='yes', b=None), model.expressions['BAXm_0'])
 Initial(model.monomers['BAX'](m='yes', b=1)%model.monomers['BCL2'](b=1), model.expressions['BAXmBCL2_0'])
 Initial(model.monomers['BH3'](b=None), model.expressions['BH3_0'])
 Initial(model.monomers['BH3'](b=1)%model.monomers['BCL2'](b=1), model.expressions['BH3BCL2_0'])
+Initial(model.monomers['BAX'](m='yes', b=None), model.expressions['BAXm_0'])
 Initial(model.monomers['BCL2'](b=None), model.expressions['BCL2_0'])
+
 
