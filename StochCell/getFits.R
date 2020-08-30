@@ -3,7 +3,7 @@ library(emg)
 library(fracprolif)
 library(xlsx)
 
-setwd("C:\\Users\\Austin\\Documents\\pc9_cell_runs")
+setwd("C:\\Users\\Grim.m\\Documents\\pc9_cell_runs")
 state=read.xlsx("tmp_state.xls", sheetName = "Sheet1")
 total=read.xlsx("tmp_total.xls", sheetName = "Sheet1")
 

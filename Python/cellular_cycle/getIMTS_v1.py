@@ -47,12 +47,13 @@ for ii in range(len(cells['molecules'])) :
 
 ###Tests
     
-    
+import math
 import numpy as np
 from scipy import stats
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
 from statsmodels.distributions.mixture_rvs import mixture_rvs
+import pylab as pl
 
 #Kernel density estimation (ou estimation de densité par noyau)
 IMTs
@@ -111,9 +112,22 @@ fig = pl.figure(figsize=(12, 5))
 ax = fig.add_subplot(111)
 
 # Plot the KDE as fitted using the default arguments
-ax.plot(x, y_Matlab, lw=3, label='KDE IMTs from PySB simulation')
+ax.plot(x, y_Matlab, lw=3, label='KDE IMTs from experiments - 55 kPa DMSO')
 
-ax.plot(x, y_PySB, lw=3, label='KDE IMTs from Matlab simulation')
+ax.plot(x, y_PySB, lw=3, label='KDE IMTs from PySB simulation')
 
 ax.legend(loc='best')
 ax.grid(True, zorder=-5)
+
+plt.savefig(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\team meeting presentation\data2.pdf')  
+
+
+path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
+import sys
+sys.path.insert(0, path+"/fit") #add a pathway to the model
+
+
+from rbf_mmd import nmmd2_rbf
+
+length=min(len(IMTs_PySB), len(IMTs_Matlab))
+nmmd2_rbf(np.array([IMTs_Matlab[0:length]]).transpose(), np.array([IMTs_PySB[0:length]]).transpose(), 1)

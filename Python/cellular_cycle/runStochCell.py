@@ -5,8 +5,8 @@ Created on Tue Feb 11 17:48:30 2020
 @author: Grim.M
 Title: runStochCell
 """
-#path="/home/jeremie"
-path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
+path="/home/jeremie"
+#path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
 
 import sys
 sys.path.insert(0, path+"/cellular_cycle") #add a pathway to the model
@@ -26,13 +26,13 @@ def runStochcell(model) :
     run_time=500;    
     CI=0;
     
-    t = np.linspace(0, 200, 400)
+    t = np.linspace(0, 220, 400)
     
     
-    simres = ScipyOdeSimulator(model, t).run() 
-    yout = simres.all
+    simres = ScipyOdeSimulator(model, t).run();
+    yout = simres.all;
     
-    a, maxima = peakfinder(yout['obsCdc20'], [], 0.2, includeEndpoints=1);   #find the peak of cdc20 - last protein to peak
+    a, maxima = peakfinder(yout['obsCdc20'], [], 0.2);   #find the peak of cdc20 - last protein to peak
     
     variable_range={}
     

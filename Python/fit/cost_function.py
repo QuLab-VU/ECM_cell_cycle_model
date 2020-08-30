@@ -13,20 +13,16 @@ model_population=model
 
 from pysb.simulator import BngSimulator
 
-from SMs_G1s_simulation_OpenCL import IMTs
+from SMs_G1s_simulation import IMTs
 from rbf_mmd import nmmd2_rbf
 
 import os
 os.environ["PYOPENCL_CTX"] ="0"
 
-import pylab as pl
-
 
 
 def cost_function(parameter_vector):    
     
-    pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF"]
-
     print("les paramètres sont ")
     print(parameter_vector)
     
@@ -34,7 +30,7 @@ def cost_function(parameter_vector):
     
     param_dict = {pname: pvalue for pname, pvalue in zip(pysb_sampled_parameter_names, parameter_vector)}
     
-    tmp_t=pl.linspace(0, 100, 500)
+    tmp_t=pl.linspace(0, 500, 2500)
     
     for pname, pvalue in param_dict.items():
         
@@ -118,4 +114,3 @@ def cost_function(parameter_vector):
         n_mmd2_tot+=[nmmd2_rbf(np.array([simulated_SMs[0:len(experimental_SMs[condition])]]).transpose(), np.array([experimental_SMs[condition]]).transpose(), 1)]
     print("ok")
     return sum(n_mmd2_tot)
-

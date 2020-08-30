@@ -13,7 +13,7 @@ from pysb import *
 import sys
 sys.path.insert(0, path) #add a pathway to the model
 
-from Austin_proliferation_ODE_model import model
+from Austin_proliferation_ODE_model_bis import model
 
 
 ###Initials

@@ -18,7 +18,7 @@ def peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=0, interpolate=0):
     if sel==[]:
         sel = (max(x0)-min(x0))/4;
     
-        
+    
     x0 = extrema*x0 #Make it so we are finding maxima regardless
     thresh = thresh*extrema  #Adjust threshold according to extrema.
     dx0 = np.diff(x0) #Find derivative
@@ -34,16 +34,20 @@ def peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=0, interpolate=0):
         ind = [0] + ind + [len0-1];
         minMag = min(x);
         leftMin = minMag;
+        minLoc = x.index(minMag);
     else :
         x = [x0[i] for i in ind];
         if len(x)>0 :
             minMag = min(x);
-            leftMin = min(x[1], x0[1]);
+            minLoc = x.index(minMag)
+            x==minMag
+            leftMin = min(x[0], x0[0]);
         
-    length=len(x)
+    length = len(x)
     
     if length > 2: #Function with peaks and valleys
     #Set initial parameters for loop
+        tempLoc = minLoc
         tempMag = minMag;
         foundPeak = 0;
     
@@ -139,13 +143,17 @@ def peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=0, interpolate=0):
             peakMags = [];
             
     else  :#This is a monotone function where an endpoint is the only peak
-        [peakMags,xInd] = [[max(x)], np.argmax(x)];
-        if includeEndpoints and peakMags > minMag + sel :
-            peakInds = [ind[xInd]];
+        if includeEndpoints :
+            if length>0:
+                [peakMags,xInd] = [[max(x)], np.argmax(x)];
+            if peakMags > minMag + sel :
+                peakInds = [ind[xInd]];
+            else :
+                peakMags = [];
+                peakInds = [];
         else :
             peakMags = [];
             peakInds = [];
-
     
 #Apply threshold value.  Since always finding maxima it will always be larger than the thresh.
     if 'thresh' in locals() :
@@ -175,10 +183,3 @@ def peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=0, interpolate=0):
 
 
     return peakMags, peakInds
-    
-    
-    
-    
-    
-    
-    
