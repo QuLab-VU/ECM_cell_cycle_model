@@ -7,7 +7,7 @@ Created on Wed May 20 10:42:26 2020
 
 path="/home/jeremie"
 
-path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
+#path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
 
 import sys
 sys.path.insert(0, path+"/cellular_cycle") #add a pathway to the model
@@ -50,7 +50,7 @@ traj = sim.run()
 ###############################################################################
 all_events_exp = {}
 
-run_time=30
+run_time=120
 omega=200
 init=10
 
@@ -88,7 +88,6 @@ parameters_exp['0.6 kPa DMSO']['lambda'] = m['x'][2]
 parameters_exp['0.6 kPa DMSO'].update(fp.q_rates(m))
 
 
-
 df = pd.read_csv(path+'/cell_fates/ds8_06_DMSO_fates.csv')
 lines = {}
 for col in df :
@@ -99,7 +98,7 @@ pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","
 
 ##############################################################################
 conditions=['0.6 kPa DMSO']
-parameter_names=['mu','sigma','lambda','a','d','q']
+parameter_names = ['a','d','q']
 
 
 def cost_function_reduced_quiescence_DMSO_only_21_parameters(parameter_vector):    
@@ -174,6 +173,10 @@ def cost_function_reduced_quiescence_DMSO_only_21_parameters(parameter_vector):
         
         #running the simulation with the experiment parameters (run_time)
         (cells, cell_count) = runAKTERK(init, run_time, model_concentration, model_population)
+        
+        if cells == 0:
+            return 10000
+        
         IMT_eoe_counts = retrieve_cellState(run_time, init_cell, cells)
         all_events_simulated = all_events(run_time, IMT_eoe_counts)
         
@@ -199,6 +202,8 @@ def cost_function_reduced_quiescence_DMSO_only_21_parameters(parameter_vector):
         
         for name in parameter_names:
             print(name)
-            cost+=(parameters_sim[condition][name] - parameters_exp[condition][name])**2
+            cost += (parameters_sim[condition][name] - parameters_exp[condition][name])**2
         
     return cost
+
+
