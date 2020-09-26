@@ -13,10 +13,11 @@ import sys
 sys.path.insert(0, path+"/cellular_cycle") #add a pathway to the model
 sys.path.insert(0, path+"/fit") #add a pathway to the model
 
-from Austin_proliferation_model_population_3 import model
-model_population=model
 from Austin_proliferation_model_concentration_3 import model
 model_concentration=model
+from Austin_proliferation_model_population_3 import model
+model_population=model
+
 
 
 from pysb.simulator import BngSimulator
@@ -37,7 +38,10 @@ from plot_frac_div_q_ap1 import all_events
 import numpy as np
 import pandas as pd
 from pysb.simulator import BngSimulator
+from pysb.simulator import StochKitSimulator
 from pysb.simulator import ScipyOdeSimulator
+
+from pysb.simulator import  CupSodaSimulator
 import matplotlib.pyplot as plt
 import pylab as pl
 import fracprolif as fp
@@ -47,12 +51,16 @@ tmp_t=pl.linspace(0, 500, 2500)
 sim = BngSimulator(model_population, tspan=tmp_t, verbose=True)
 traj = sim.run()
 
+
+sim = ScipyOdeSimulator(model_concentration, tspan=tmp_t, verbose=True)
+traj = sim.run()
+
 ###############################################################################
 all_events_exp = {}
 
-run_time=120
+run_time=102.3
 omega=200
-init=10
+init=5
 
 
 IMT_eoe_counts = pd.DataFrame(columns=['End_of_Expt', 'Death' ,'Birthtime','Lifespan'])
@@ -99,6 +107,9 @@ pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","
 ##############################################################################
 conditions=['0.6 kPa DMSO']
 parameter_names = ['a','d','q']
+
+
+
 
 
 def cost_function_reduced_quiescence_DMSO_only_21_parameters(parameter_vector):    
@@ -177,7 +188,7 @@ def cost_function_reduced_quiescence_DMSO_only_21_parameters(parameter_vector):
         if cells == 0:
             return 10000
         
-        IMT_eoe_counts = retrieve_cellState(run_time, init_cell, cells)
+        IMT_eoe_counts = retrieve_cellState(run_time, init, cells)
         all_events_simulated = all_events(run_time, IMT_eoe_counts)
         
         #finding the parameters for the EMG and fractional proliferation model
@@ -205,5 +216,3 @@ def cost_function_reduced_quiescence_DMSO_only_21_parameters(parameter_vector):
             cost += (parameters_sim[condition][name] - parameters_exp[condition][name])**2
         
     return cost
-
-
