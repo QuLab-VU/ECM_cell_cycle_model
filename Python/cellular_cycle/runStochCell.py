@@ -29,7 +29,7 @@ def runStochcell(model) :
     t = np.linspace(0, 220, 400)
     
     
-    simres = ScipyOdeSimulator(model, t).run();
+    simres = ScipyOdeSimulator(model, t, verbose=False).run();
     yout = simres.all;
     
     a, maxima = peakfinder(yout['obsCdc20'], [], 0.2);   #find the peak of cdc20 - last protein to peak

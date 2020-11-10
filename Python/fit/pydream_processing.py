@@ -32,22 +32,22 @@ sampled_params_dict={}
 for chain in range(10):   
     logps_temp = np.array([])
     params_temp = np.array([])
-    for it in range(int(22500/500)):
+    for it in range(int(160/10)):
         if logps_temp.size==0:
-            print(str(500*it+14500))
-            logps_temp = vars()['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain) + '_' + str(500*it+14500)]
-            params_temp = vars()['cellular_cycle_dreamzs_5chain_sampled_params_chain_' + str(chain) + '_' + str(500*it+14500)]
+            print(str(10*it))
+            logps_temp = vars()['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain) + '_' + str(10*it)]
+            params_temp = vars()['cellular_cycle_dreamzs_5chain_sampled_params_chain_' + str(chain) + '_' + str(10*it)]
         else:
-            print(str(500*it+14500))
-            logps_temp = np.concatenate([logps_temp, vars()['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain) + '_' + str(500*it+14500)]])
-            params_temp = np.concatenate([ params_temp, vars()['cellular_cycle_dreamzs_5chain_sampled_params_chain_' + str(chain) + '_' + str(500*it+14500)]])
+            print(str(10*it))
+            logps_temp = np.concatenate([logps_temp, vars()['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain) + '_' + str(10*it)]])
+            params_temp = np.concatenate([ params_temp, vars()['cellular_cycle_dreamzs_5chain_sampled_params_chain_' + str(chain) + '_' + str(10*it)]])
     logps['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain)] = logps_temp
     sampled_params_dict['cellular_cycle_dreamzs_5chain_sampled_params_chain_' + str(chain)] = params_temp
 
 
 for name_logps,name in zip(logps.keys(), sampled_params_dict.keys()): 
-    np.save(path + "/fit_data/pydream/bis_log_DMSO_only_quiescence_21_parameters/" + name + "_14500-36500", sampled_params_dict[name])
-    np.save(path + "/fit_data/pydream/bis_log_DMSO_only_quiescence_21_parameters/" + name_logps + "_14500-36500", logps[name_logps])
+    np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/" + name + "_0_160", sampled_params_dict[name])
+    np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/" + name_logps + "_0_160", logps[name_logps])
 
 
 #################
@@ -56,7 +56,7 @@ for name_logps,name in zip(logps.keys(), sampled_params_dict.keys()):
 logps={}
 sampled_params_dict={}
 
-for chain in range(10):   
+for chain in range(10):     
     logps_temp = np.array([])
     params_temp = np.array([])
     for it in range(int(2000/50)):
@@ -90,8 +90,20 @@ for chain in range(10):
 for name_logps,name in zip(logps.keys(), sampled_params_dict.keys()): 
     np.save(path + "/fit_data/pydream/bis_log_DMSO_only_quiescence_21_parameters/" + name + "_0-36500", sampled_params_dict[name])
     np.save(path + "/fit_data/pydream/bis_log_DMSO_only_quiescence_21_parameters/" + name_logps + "_0-36500", logps[name_logps])
-
+    
+    
+    
+###################################################################################
+    
 #loading these parameters
+    
+    
+for chain in range(10): 
+    np.load(path + r"/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cellular_cycle_dreamzs_5chain_sampled_params_chain_" + str(chain) + "_0_160.npy")
+    np.load(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cellular_cycle_dreamzs_5chain_logps_chain_" + str(chain) + "_0_160.npy")
+
+
+
 
 logps={}
 sampled_params_dict={}
@@ -100,8 +112,8 @@ for chain in range(10):
     logps_temp = np.array([])
     params_temp = np.array([])
     
-    logps_temp = vars()['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain) + "_036500"]
-    params_temp = vars()['cellular_cycle_dreamzs_5chain_sampled_params_chain_' + str(chain) + "_036500"]          
+    logps_temp = vars()['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain) + "_0_160"]
+    params_temp = vars()['cellular_cycle_dreamzs_5chain_sampled_params_chain_' + str(chain) + "_0_160"]          
     logps['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain)] = logps_temp
     sampled_params_dict['cellular_cycle_dreamzs_5chain_sampled_params_chain_' + str(chain)] = params_temp
 
@@ -123,26 +135,45 @@ old_samples = sample_parameters
 np.save(path + "/fit_data/pydream/bis_log/sample_parameters.npy", sample_parameters)
 
 #####################################################################
+#plot log evolution
 
+
+pl.plot(cellular_cycle_dreamzs_5chain_logps_chain_4_0_160.transpose()[0])
+pl.plot(cellular_cycle_dreamzs_5chain_logps_chain_4_0_160.transpose()[0][100:])
+
+
+
+
+
+for chain in range(10):   
+    logps_temp = vars()['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain) + '_0_160']
+    
+    pl.plot(logps_temp.transpose()[0], label = 'chain_' +str(chain))
+    pl.legend() 
+
+
+############################################################
 import seaborn as sns
 from matplotlib import pyplot as plt
 
 pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF"]
 
 total_iterations = len(old_samples[0])
+
 burnin = int(total_iterations / 2)
+
 samples = np.concatenate([old_samples[i][burnin:, :] for i in range(10)])
 logps_tot_p = np.concatenate([logps_tot[i][burnin:] for i in range(10)])
 
 #removing bad values :
 
-np.where(logps_tot_p >-10000)
-np.where(logps_tot_p <-10000)
+np.where(logps_tot_p >-1000000)
+np.where(logps_tot_p <-1000000)
 
 
 
-samples=samples[np.where(logps_tot_p >-10000)[0],:]
-logps_tot_p=logps_tot_p[np.where(logps_tot_p >-10000)[0]]
+samples=samples[np.where(logps_tot_p >-1000000)[0],:]
+logps_tot_p=logps_tot_p[np.where(logps_tot_p >-1000000)[0]]
 
 
 np.where(logps_tot_p >-60)
@@ -152,7 +183,7 @@ samples=samples[np.where(logps_tot_p >-60)[0],:]
 len(samples)
 parameter_vector = 10**samples[500]
 
-parameter_vector = 10**samples[10]
+parameter_vector = 10**samples[58]
 
 #Test
 
@@ -172,7 +203,12 @@ from cost_function_BngSimulator_bis_reduced_quiescence_DMSO_only import cost_fun
 
 from cost_function_BngSimulator_bis_reduced_quiescence_DMSO_only_21_parameters import cost_function_reduced_quiescence_DMSO_only_21_parameters
 
-parameter_vector = 10**samples[350]
+from cost_function_BngSimulator_frac_prolif_quiescence_DMSO_only_21_parameters import cost_function_reduced_quiescence_DMSO_only_21_parameters
+
+from cost_function_BngSimulator_frac_death_rate_DMSO_only_switch_death_parameters import  cost_function_reduced_death_rate_DMSO_switch_death_parameters
+
+
+parameter_vector = 10**samples[15]
 
 parameter_vector = 10**samples[np.argmax(logps_tot_p)]
 
@@ -199,6 +235,10 @@ parameter_vector = 10**samples[np.argmin(logps_tot_p)]
 #bis_log_quiescence_DMSO_only wiht 21 parameters
 #parameter_vector = np.array([2.88095027e-02, 1.08653936e-04, 1.06190007e-03, 5.91535448e-02, 9.63052769e-04, 1.12765757e-04, 3.35453630e-02, 1.18449277e-04, 1.24550538e-01, 2.00076132e-03, 1.28792094e-01, 6.23484593e-03, 8.39769019e-02, 2.02874490e-02, 2.16102188e+00, 6.79877479e-04, 1.18330213e-03, 8.82600428e+00, 3.06767094e-04, 1.46608884e-04, 3.84589838e-02])
 
+#frac prolif
+#parameter_vector = np.array([5.08434023e-03, 4.14619045e-01, 1.58080261e+00, 1.87548356e-02, 2.43834294e-04, 2.67242878e-03, 9.17533143e-02, 2.39374299e-04, 3.14708506e-03, 1.37142120e-01, 7.69247749e-01, 1.41305571e-04, 1.90911690e-04, 1.03374254e-03, 3.77969796e+00, 1.22245523e-03, 8.07754038e-04, 6.38585894e+00, 4.09374334e-02, 1.73584598e-03, 4.19911872e-01])
+
+
 logps_tot_p[350]
 
 test0 = cost_function_reduced(parameter_vector)
@@ -206,6 +246,7 @@ test = cost_function_reduced_DMSO_only(parameter_vector)
 test_q = cost_function_reduced_quiescence_DMSO_only(parameter_vector)
 test_21 = cost_function_reduced_quiescence_DMSO_only_21_parameters(parameter_vector)
 
+test_death = cost_function_reduced_death_rate_DMSO_switch_death_parameters(parameter_vector)
 
 ##############################################################################
 #plot distributions
@@ -227,7 +268,10 @@ pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","
 #or
 pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "k_b"]
 
-for p in range(21):
+pysb_sampled_parameter_names = ["kf1","kf2","kb","kasbaxmbcl2","kdsbaxmbcl2","k1sbh3","k2sbh3","kdbh3","kasbh3bcl2","kdsbh3bcl2"]
+
+
+for p in range(10):
     dict_param[pysb_sampled_parameter_names[p]]=samples[:, p]
 
 df=df = pd.DataFrame(dict_param)
@@ -244,7 +288,7 @@ fn = Path(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\report\figures\pydream\bis
 a=5
 b=5
 fig, axs = pl.subplots(ncols=a, nrows=b, sharex=True, sharey=True, figsize=(15,6))
-for dim, ax in zip(range(21), axs.flat):
+for dim, ax in zip(range(10), axs.flat):
         sns.distplot(samples[:, dim], color=colors[dim], ax=ax, kde_kws={"lw": 0.5, "label": "variable: " + pysb_sampled_parameter_names[dim]}, bins=np.linspace(-4,1,50))
         ax.legend(loc='upper left', fontsize = 6)
 pl.savefig(fn, bbox_inches='tight')

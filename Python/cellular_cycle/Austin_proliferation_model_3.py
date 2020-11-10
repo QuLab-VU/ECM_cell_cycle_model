@@ -253,7 +253,6 @@ Expression('k_inact_CycAorB', s * (V_2cdh1 * (1 / ( K_2cdh1 * omega + obscdh1act
 ##Myc
 Expression('ks_Myc_AKT', s * ((k_M * AKT * omega) / ((K_S * omega) + AKT)))
 Expression('ks_Myc_ERK', s * ((k_EMY * ERK * omega) / ((K_MY * omega) + ERK)))
-#Expression('ks_Myc_FAK', s * ((k_CDF * FAK * omega) / ((K_DF * omega) + FAK)))
 Expression('kd_Myc', s * d_M)
 
 ##CycD
@@ -302,7 +301,7 @@ Expression('kinact_Cdc20', s * ((V_2cdc20 * omega) * (1 / (K_2cdc20 * omega + ob
 
 
 ##Switch apoptosis
-Expression('kact_BH3', m * obsBH3 * (kf1 + (kf2 / omega) * obsBAX) / obsBAX)
+Expression('kact_BAXm', m * obsBH3 * (kf1 + (kf2 / omega) * obsBAX) / obsBAX)
 Expression('kinact_BAXm', m * kb)
 Expression('kasso_BAXm_BCL2', m * (kasbaxmbcl2 / omega))
 Expression('kdiss_BAXmBCL2', m * kdsbaxmbcl2)
@@ -347,7 +346,6 @@ Rule('cdh1_inhibiton_CycB', cdh1(A='yes') + CycB(b=None) >> cdh1(A='no') + CycB(
 
 ##Myc
 Rule('Myc_synthesis_AKT', None >> Myc(), ks_Myc_AKT) #Sytnhesis of Myc by AKT
-#Rule('Myc_synthesis_FAK', None >> Myc(), ks_Myc_FAK) #Sytnhesis of Myc by FAK
 Rule('Myc_synthesis_ERK', None >> Myc(), ks_Myc_ERK) #Sytnhesis of Myc by ERK
 Rule('Myc_degradation', Myc() >> None, kd_Myc) #Degradation of Myc
 
@@ -398,11 +396,11 @@ Rule('CycB_inactivation_Cdc20', CycB(b=None) + Cdc20() >> Cdc20(), kinact_CycB_C
 #Cdc20
 Rule('Cdc20_activation_CycB', CycB(b=None) >> CycB(b=None) + Cdc20(), kact_Cdc20_CycB) #Cdc20 activation by Cyclin B
 Rule('Cdc20_inactivation', Cdc20() >> None, kinact_Cdc20) #Cdc20 inactivation
-"""
+
 
 ##Apoptosis switch
 
-Rule('BAX_activation_inactivation', BAX(m='no', b=None) | BAX(m='yes', b=None), kact_BH3, kinact_BAXm) #BAX activation from BH3 and BAXm inactivation
+Rule('BAX_activation_inactivation', BAX(m='no', b=None) | BAX(m='yes', b=None), kact_BAXm, kinact_BAXm) #BAX activation from BH3 and BAXm inactivation
 Rule('BAXmBCL2_association_dissociation', BAX(m='yes', b=None) + BCL2(b=None) | BAX(m='yes', b=1)%BCL2(b=1), kasso_BAXm_BCL2, kdiss_BAXmBCL2) #BAXm and BCL2 association and dissociation
 Rule('BAXmBCL2_inactivation', BAX(m='yes', b=1)%BCL2(b=1) >> BAX(m='no', b=None) + BCL2(b=None), kinact_BAXmBCL2) #BAXmBCL2 inactivation to bax
 Rule('BH3_synthesis', None >> BH3(b=None), ks_BH3) #Synthesis of BH3
@@ -410,4 +408,3 @@ Rule('BH3_degradation', BH3(b=None) >> None, kd_BH3) #Degradation of BH3
 Rule('BH3mBCL2_association_dissociation', BH3(b=None) + BCL2(b=None) | BH3(b=1)%BCL2(b=1), kasso_BH3_BCL2, kdiss_BH3BCL2) #BH3 and BCL2 association and dissociation
 Rule('BH3BCL2_degradation', BH3(b=1)%BCL2(b=1) >> BCL2(b=None) , kd_BH3) #bh3 degradation in bh3bcl2
 
-"""

@@ -44,11 +44,17 @@ def mle(mitotic_lifespans, censored_lifespans):
         #global mitotic_lifespans, censored_lifespans
         return - sum([np.log(1-Q) + np.log(demg(i, mu = mu, sigma = sigma, lambd = lambd)) for i in  mitotic_lifespans]) - sum([np.log(Q+(1-Q)*pemg(i,  mu = mu, sigma = sigma, lambd = lambd, lower_tail = False)) for i in censored_lifespans])
     
-    bounds = [(8,30), (0.1, (max(mitotic_lifespans) - min(mitotic_lifespans))), (0.01, 10), (0, 0.999999)]
-
-    m = minimize(qsurvival_nllik, x0, method='nelder-mead', bounds=bounds)
-    #minimize(qsurvival_nllik, x0, method="L-BFGS-B", bounds=bounds)
-
+    bounds = [(8,60), (0.01, (max(mitotic_lifespans) - min(mitotic_lifespans))), (0.01, 10), (1e-31, 0.9999999)]
+    #
+    #m = minimize(qsurvival_nllik, x0, method='nelder-mead', bounds=bounds) #Change the method to minimize
+    #x: array([18.89482881,  1.67120341,  0.09735528,  0.59049594])
+    #x0: array([25.5       , 10.35847627,  0.03450854,  0.5       ])
+    
+    #m = minimize(qsurvival_nllik, x0, method="L-BFGS-B", bounds=bounds)
+    
+    #m = minimize(qsurvival_nllik, x0, method="TNC", bounds=bounds)
+    m = minimize(qsurvival_nllik, x0, method="SLSQP", bounds=bounds)
+    #m = minimize(qsurvival_nllik, x0, method="trust-constr", bounds=bounds)        
     return m
 
 def q_rates_inner(m_x) :
@@ -69,7 +75,7 @@ def q_rates(m):
 #    def q_rates_inner_q(m_x):
 #        return q_rates_inner(m_x)[1]
 #    
-    rates=q_rates_inner(m['x'])
+    rates=q_rates_inner(m['x']) #
 #    eps = m['x']/1000
 #    gd = approx_fprime(m['x'], q_rates_inner_d, eps)
 #    gq = approx_fprime(m['x'], q_rates_inner_q, eps)
@@ -138,7 +144,7 @@ def split_fd(t, d1, d2, q1, q2, ad1, aq1, ad2, aq2, x0, q0=0, br = 20) :
     return split_d(t, d1, d2, q1, q2, ad1, aq1, ad2, aq2,x0, q0=q0, br = 20)/split_tot(t, d1, d2, q1, q2, ad1, aq1, ad2, aq2,x0, q0=q0, br = 20)
     
 
-def death_rate(Time_h, card_total, v) :
+def death_rate(Time_h, card_total, card_total_e16000, v) :
     X = np.array([Time_h]).T
     Y= np.array([card_total]).T
     
@@ -220,7 +226,9 @@ y = np.array(card_total_e16000) - card_total_e16000[0]
 
  
 model_total = np.array([np.log2(split_tot(t, untreated_division_rate, v['d'], 0.0, v['q'], 0, 0, a, a, 1, 0, half_imt))[0][0] for t in Time_h])
+
 model_fq = np.array([split_fq(t, untreated_division_rate, v['d'], 0.0, v['q'], 0, 0, a, a, 1, 0, half_imt)[0][0] for t in Time_h]) * model_total
+
 model_fd = np.array([split_fd(t, untreated_division_rate, v['d'], 0.0, v['q'], 0, 0, a, a, 1, 0, half_imt)[0][0] for t in Time_h]) * model_total
 
 
@@ -230,3 +238,24 @@ plt.plot(Time_h, model_total, c="green")
 plt.plot(Time_h, model_fq, c="red")
 plt.plot(Time_h, model_fd, c="blue")
 """
+"""
+
+x0 = np.array([np.median(mitotic_lifespans), np.std(mitotic_lifespans), 1/np.mean(mitotic_lifespans), 0.5])
+
+def qsurvival_nllik(x0):
+    mu, sigma, lambd, Q = x0   
+    #global mitotic_lifespans, censored_lifespans
+    return - sum([np.log(1-Q) + np.log(demg(i, mu = mu, sigma = sigma, lambd = lambd)) for i in  mitotic_lifespans]) - sum([np.log(Q+(1-Q)*pemg(i,  mu = mu, sigma = sigma, lambd = lambd, lower_tail = False)) for i in censored_lifespans])
+
+bounds = [(1,60), (0.1, (max(mitotic_lifespans) - min(mitotic_lifespans))), (0.01, 10), (1e-31, 0.9999999)]
+#
+#m = minimize(qsurvival_nllik, x0, method='nelder-mead', bounds=bounds) #Change the method to minimize
+#x: array([18.89482881,  1.67120341,  0.09735528,  0.59049594])
+#x0: array([25.5       , 10.35847627,  0.03450854,  0.5       ])
+
+#m = minimize(qsurvival_nllik, x0, method="L-BFGS-B", bounds=bounds)
+
+#m = minimize(qsurvival_nllik, x0, method="TNC", bounds=bounds)
+m = minimize(qsurvival_nllik, x0, method="SLSQP", bounds=bounds)
+""" 
+    

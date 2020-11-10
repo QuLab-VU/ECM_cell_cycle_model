@@ -9,8 +9,21 @@ Title= peakfinder
 
 import numpy as np
 import sys
-
-
+#
+#x0 = cells['molecules'][7]['obsCycE']
+#x0 = cells['molecules'][8]['obsCdc20']
+#sel = 0.15*omega
+#thresh = 0.15*omega
+#extrema = 1
+#includeEndpoints=1
+#interpolate=0
+#
+#
+#peakfinder(cells['molecules'][7]['obsCycE'], sel, thresh, extrema=1, includeEndpoints=1,interpolate=0)
+#peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=1,interpolate=0)
+# 
+# 
+ 
 def peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=0, interpolate=0): 
     
     len0 = len(x0)
@@ -84,12 +97,12 @@ def peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=0, interpolate=0):
         cInd = 0;
         #Loop through extrema which should be peaks and then valleys
         while kk < length-1 :
+            
             kk = kk+1; #This is a peak
             #Reset peak finding if we had a peak and the next peak is bigger than the last or the left min was small enough to reset.
             if foundPeak :
                 tempMag = minMag;
                 foundPeak = 0;
-
                 
             #Found new peak that was lager than temp mag and selectivity larger than the minimum to its left.
             if x[kk] > tempMag and x[kk] > leftMin + sel :
@@ -110,13 +123,15 @@ def peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=0, interpolate=0):
                 peakLoc[cInd] = tempLoc; #Add peak to index
                 peakMag[cInd] = tempMag;
                 cInd = cInd+1;
+
             elif x[kk] < leftMin :#New left minima
                 leftMin = x[kk];
-                
                 #Check end point
+        
+        
         if includeEndpoints :
             if x[-1] > tempMag and x[-1] > leftMin + sel :
-                peakLoc[cInd] = length;
+                peakLoc[cInd] = length-1;
                 peakMag[cInd] = x[-1];
                 cInd = cInd + 1;
             elif not foundPeak and tempMag > minMag : #Check if we still need to add the last point
@@ -146,6 +161,7 @@ def peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=0, interpolate=0):
         if includeEndpoints :
             if length>0:
                 [peakMags,xInd] = [[max(x)], np.argmax(x)];
+            print(x0)
             if peakMags > minMag + sel :
                 peakInds = [ind[xInd]];
             else :

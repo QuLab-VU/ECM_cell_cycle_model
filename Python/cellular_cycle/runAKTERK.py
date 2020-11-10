@@ -106,14 +106,17 @@ def runAKTERK(init, run_time, model_concentration, model_population):
                         if len(max_tmp_cdc)<=cells['division'][ii] :
                             current_time[ii,0]=cells['time'][ii][-1];
                             cell_count_tmp[ii,:]=[cells['time'][ii][-1], 0];
+                            
                         elif cells['division'][ii] == len(max_tmp_cycE) :
                             current_time[ii,0]=cells['time'][ii][-1];
                             cell_count_tmp[ii,:]=[cells['time'][ii][-1], 0];
+                            
                         else :
                             for obs in list(cells['molecules'][ii].keys()) :
                                 cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:div_ind]; #evolution of different species
                             cells['time'][ii]=cells['time'][ii][0:div_ind];
                             cells['division'][ii]=cells['division'][ii]+1;
+                            
                             current_time[ii,0]=cells['time'][ii][-1];
                             cell_count_tmp[ii]=[cells['time'][ii][-1], 1];
                         #add a new cell

@@ -32,7 +32,7 @@ import pylab as pl
 import pandas as pd
 import math
 import numpy as np
-from runAKTERK import runAKTERK
+from runAKTERK_2 import runAKTERK
 from retrieve_cellState_dw import retrieve_cellState
 from plot_frac_div_q_ap1 import all_events
 import numpy as np
@@ -47,7 +47,7 @@ import pylab as pl
 import fracprolif as fp
 
 
-tmp_t=pl.linspace(0, 500, 2500)
+tmp_t=pl.linspace(0, 10, 100)
 sim = BngSimulator(model_population, tspan=tmp_t, verbose=True)
 traj = sim.run()
 
@@ -60,7 +60,8 @@ all_events_exp = {}
 
 run_time=102.3
 omega=200
-init=5
+init=30
+
 
 
 IMT_eoe_counts = pd.DataFrame(columns=['End_of_Expt', 'Death' ,'Birthtime','Lifespan'])
@@ -73,7 +74,7 @@ for col in df :
 for (death, mitotic_time, end_time, lifetime) in zip(lines['Death'], lines['Mitotic Time'], lines['End Time'], lines['Lifetime']):
     tmp_counts = {'End_of_Expt' : end_time==102.3, 'Death' : death==1, 'Birthtime' : mitotic_time, 'Lifespan' : lifetime}
     IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
-    
+
 all_events_exp['0.6 kPa DMSO'] = all_events(run_time, IMT_eoe_counts)
 
 
@@ -83,6 +84,7 @@ censored_lifespans = all_events_exp['0.6 kPa DMSO']['Lifespan'][all_events_exp['
 
 number_of_deaths = len(all_events_exp['0.6 kPa DMSO']) - (all_events_exp['0.6 kPa DMSO']['event']=='apoptosis').value_counts()[0]
 cell_time_total = sum(all_events_exp['0.6 kPa DMSO']['Lifespan'])
+
 
 m = fp.mle(mitotic_lifespans, censored_lifespans)
 
@@ -101,13 +103,14 @@ lines = {}
 for col in df :
     lines[col]=df[col].dropna().tolist()
 
-pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "k_b"]
+pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "k_b", ]
 
 
 ##############################################################################
 conditions=['0.6 kPa DMSO']
 parameter_names = ['a','d','q']
 
+observed_cells_time = 30
 
 
 
@@ -117,7 +120,7 @@ def cost_function_reduced_quiescence_DMSO_only_21_parameters(parameter_vector):
     print("The parameters are ")
     print(parameter_vector)
     
-    global model_concentration, model_population, init, run_time
+    global model_concentration, model_population, init, run_time, observed_cells_time
     
     param_dict = {pname: pvalue for pname, pvalue in zip(pysb_sampled_parameter_names, parameter_vector)}   
     for pname, pvalue in param_dict.items():
@@ -183,15 +186,19 @@ def cost_function_reduced_quiescence_DMSO_only_21_parameters(parameter_vector):
                 model_population.parameters['AKT'].value = 0.585067267459499 * omega
         
         #running the simulation with the experiment parameters (run_time)
-        (cells, cell_count) = runAKTERK(init, run_time, model_concentration, model_population)
+        (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population)
         
         if cells == 0:
-            return 10000
+            return 1000000
         
         IMT_eoe_counts = retrieve_cellState(run_time, init, cells)
         all_events_simulated = all_events(run_time, IMT_eoe_counts)
         
         #finding the parameters for the EMG and fractional proliferation model
+        
+        if len(all_events_simulated)==0:
+            return 10000000
+        
         
         mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
         censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
@@ -207,12 +214,19 @@ def cost_function_reduced_quiescence_DMSO_only_21_parameters(parameter_vector):
         parameters_sim[condition]['mu'] = m['x'][0]
         parameters_sim[condition]['sigma'] = m['x'][1]
         parameters_sim[condition]['lambda'] = m['x'][2]
+        
         parameters_sim[condition].update(fp.q_rates(m))
         
         #comparing those parameters:
         
         for name in parameter_names:
             print(name)
-            cost += (parameters_sim[condition][name] - parameters_exp[condition][name])**2
+            if parameters_exp[condition][name]==0:
+                parameters_exp[condition][name] = 1e-100
+            if parameters_sim[condition][name]==0:
+                parameters_sim[condition][name] = 1e-100
+            
+            cost += (np.log(parameters_sim[condition][name]) - np.log(parameters_exp[condition][name]))**2
+            print(cost)
         
     return cost
