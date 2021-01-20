@@ -156,6 +156,7 @@ def cost_function_reduced(parameter_vector):
         simulated_SMs=[]
         
         (a,b) = IMTs(tmp_t[condition], model_population);
+        (a,b) = IMTs(np.linspace(1000,10000), model_population);
         print(a)
         print(len(a))
         print(b)
@@ -164,10 +165,14 @@ def cost_function_reduced(parameter_vector):
         if b==[] or a==[] or len(a)<25 or len(b)<25: #same nber of times
             return 10000
         
-        a=random.sample(a, 25)
-        b=random.sample(b, 25)
-        g1=random.sample(experimental_G1s[condition], 25)
-        sm=random.sample(experimental_SMs[condition], 25)
+        a=random.sample(a, 5)
+        b=random.sample(b, 5)
+        g1=random.sample(experimental_G1s[condition], 5)
+        sm=random.sample(experimental_SMs[condition], 5)        
+        a=random.sample(a, 5)
+        b=random.sample(b, 5)
+        g1=random.sample(experimental_G1s[condition], 5)
+        sm=random.sample(experimental_SMs[condition], 5)
         
         n_mmd2_tot+=[nmmd2_rbf(np.array([b]).transpose(), np.array([g1]).transpose(), 1)]
         n_mmd2_tot+=[nmmd2_rbf(np.array([a]).transpose(), np.array([sm]).transpose(), 1)]

@@ -448,7 +448,7 @@ total_iterations = niterations
 nchains = 10
 
 
-niterations = 5
+niterations = 1000
 total_iterations = 0
 
 
@@ -742,11 +742,13 @@ else:
 ###fitting with DMSO only 0.3 kPa with fracprolif and model no3
 #Cost function
 
+
 path="/home/jeremie"
 #path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
 import sys
 sys.path.insert(0, path + "/cellular_cycle") #add a pathway to the model
 sys.path.insert(0, path + "/fit") #add a pathway 
+
 from pydream.core import run_dream
 from pysb.integrate import Solver
 import numpy as np
@@ -757,20 +759,26 @@ import inspect
 from pydream.convergence import Gelman_Rubin
 import pandas as pd
 import pylab as pl
-from cost_function_BngSimulator_frac_prolif_quiescence_DMSO_only_30_parameters import  cost_function_reduced_quiescence_DMSO_only_30_parameters
+
+from cost_function_BngSimulator_frac_prolif_quiescence_and_mmd_DMSO_only_30_parameters import  cost_function_reduced_quiescence_DMSO_only_30_parameters
 
 from Austin_proliferation_model_population_3 import model
 model_population=model
 
+
 ###############################################################################
 
-parameter_vector = [4.800635907279269, 3.9774300061066046, 0.0387054504992875, 0.32499986371412365, 0.35777622204261267, 0.0009944953058487452, 2.237824499761186, 0.28043611679549096, 0.021259592285147864, 0.006260825171175394, 0.0009632938154961734, 0.40008970395372623, 0.0008261834973168124, 0.0004808385449294265, 1.0125180610037363, 0.0020144839403416154, 0.3903389858441723, 0.9663335772673012, 1.2920585358743464, 2.179996170318332, 0.08588331032846658, 0.04121752679283465, 0.0034152812637972276, 0.650689069719618, 0.738165002953985, 0.006021052129410297, 0.001183347044793872, 5.033805671111385, 14.46792006528087, 0.029428573646856398]
-
-parameter_vector = [7.09698462592513, 1.4106440558775277, 9.344724006360165, 13.56943889467159, 0.062499924302699336, 0.011251847411602133, 37.07864288707931, 0.42969242570255894, 0.04448402040986224, 0.0003588886046907576, 0.0007497183316475982, 1.6173514368404565, 0.008236520864891912, 0.003753895712771778, 0.2520808713489205, 0.00022560992699410936, 2.580054373455581, 5.9504955699203546, 0.1572599137099059, 15.205498329912354, 0.05699574585320892, 0.003489022874309077, 0.0016770883398079064, 0.29843523615760786, 1.2325484452321356, 0.00237113573463495, 0.0010247951539084355, 5.585134808848889, 51.52911949628718, 0.006419876379536079]
 
 def cost_function_f(parameter_vector):
     parameter_vector=[10**i for i in parameter_vector]
     return -cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector)
+
+
+###############################################################################
+
+
+#testing the cost funcction for some know parameter vectors
+parameter_vector = np.array([-0.12992854, -0.79432468, -1.22425997, -0.61897268, -1.51533394, 0.78992506, -3.04002967, -0.03880536, -1.245889  , -0.70842488, -0.39663, -1.43335935, -2.04159571, -1.29736515,  0.61441886, -2.10058033, -0.79850573,  0.69349641, -2.37217526, -0.19953057, 0.49406741, -2.51574845, -1.73680475,  0.24565102,  0.4208735, -2.56561986, -1.65958052,  1.10064336, -2.46068415,  1.23095915]) #dernier
 
 
 cost_2 = cost_function_f(parameter_vector)
@@ -791,6 +799,9 @@ parameter_vector_2=pl.rand(30)*6-2
 cost_2 = cost_function_f(parameter_vector_2)
 
 
+########################################################
+
+
 #Set upper and lower limits for uniform prior to be 3 orders of magnitude above and below original parameter values.
 
 
@@ -800,18 +811,19 @@ lower_limits = [-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4, -4, -4 ,-4 ,-4 ,-4 ,-4 ,-4 ,
 parameters_to_sample = SampledParam(uniform, loc=lower_limits, scale=6) #loc is the lower bdry and scale is the size of the distribution
 sampled_parameter_names = [parameters_to_sample]
 
-niterations = 4
+niterations = 1500
 converged = False
 
-nchains = 10
+nchains = 8
 
 total_iterations = 0
 
 
 if __name__ == '__main__':
     #Run DREAM sampling.  Documentation of DREAM options is in Dream.py.
-    sampled_params, log_ps = run_dream(sampled_parameter_names, cost_function_f, niterations=niterations, nchains=nchains, multitry=False, gamma_levels=1, adapt_gamma=True, history_thin=1, model_name = 'cellular_cycle_dreamzs_5chain', verbose=True)
+    sampled_params, log_ps = run_dream(sampled_parameter_names, likelihood=cost_function_f, niterations=niterations, nchains=nchains, multitry=False, gamma_levels=40, adapt_gamma=True, history_thin=1, model_name = 'cellular_cycle_dreamzs_5chain', verbose=True, snooker=0.3)
     print('ok')
+    
     #Save sampling output (sampled parameter values and their corresponding logps).
     for chain in range(len(sampled_params)):
         np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cellular_cycle_dreamzs_5chain_sampled_params_chain_"+str(chain)+'_'+str(total_iterations), sampled_params[chain])
@@ -829,16 +841,19 @@ if __name__ == '__main__':
             print("new_start")
             starts = [sampled_params[chain][-1, :] for chain in range(nchains)]
             total_iterations += niterations
-            sampled_params, log_ps = run_dream(sampled_parameter_names, cost_function_f, start=starts, niterations=niterations, nchains=nchains, multitry=False, gamma_levels=1, adapt_gamma=True, history_thin=1, model_name='cellular_cycle_dreamzs_5chain', verbose=True, restart=True)
+            sampled_params, log_ps = run_dream(parameters = sampled_parameter_names, likelihood = cost_function_f,  niterations = niterations, nchains = nchains, start = starts, multitry=False, gamma_levels = 40, adapt_gamma = True, history_thin = 1, model_name = 'cellular_cycle_dreamzs_5chain', verbose=True, restart=True, snooker = 0.3)
             
             for chain in range(len(sampled_params)):
                 np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cellular_cycle_dreamzs_5chain_sampled_params_chain_" + str(chain) + '_' + str(total_iterations), sampled_params[chain])
+                
                 np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cellular_cycle_dreamzs_5chain_logps_chain_" + str(chain) + '_' + str(total_iterations),log_ps[chain])
+            
             print("saved")
             old_samples = [np.concatenate((old_samples[chain], sampled_params[chain])) for chain in range(nchains)]
             GR = Gelman_Rubin(old_samples)
             print('At iteration: ', total_iterations, ' GR = ', GR)
             np.savetxt(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cellular_cycle_dreamzs_5chain_GelmanRubin_iteration_" + str(total_iterations)+'.txt', GR)
+            
             if np.all(GR < 1.2):
                 converged = True
                 
@@ -860,4 +875,37 @@ if __name__ == '__main__':
         pass
 else:
     run_kwargs = {'parameters':sampled_parameter_names, 'likelihood':cost_function_f, 'niterations':10000, 'nchains':nchains, 'multitry':False, 'gamma_levels':4, 'adapt_gamma':True, 'history_thin':1, 'model_name':'cellular_cycle_dreamzs_5chain', 'verbose':True}
-    
+
+
+
+
+
+
+"""""""""""""""
+
+sample_parameters=[]
+logps_tot=[]
+
+for chain in range(10): 
+    sample_parameters+=[np.load(path + r"/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/gamma10/cellular_cycle_dreamzs_5chain_sampled_params_chain_" + str(chain) + "_0.npy")]
+    logps_tot+=[np.load(path + r"/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/gamma10/cellular_cycle_dreamzs_5chain_logps_chain_" + str(chain) + "_0.npy")]
+
+
+
+pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2"]
+
+lower_limits = [-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4, -4, -4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4, -4, -4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4, -4]
+parameters_to_sample = SampledParam(uniform, loc=lower_limits, scale=6) #loc is the lower bdry and scale is the size of the distribution
+sampled_parameter_names = [parameters_to_sample]
+
+converged = False
+niterations = 3
+nchains = 10
+starts = [sample_parameters[chain][-1, :] for chain in range(nchains)]
+total_iterations = 2000
+
+sampled_params, log_ps = run_dream(sampled_parameter_names, likelihood=cost_function_f, niterations=niterations, nchains=nchains, multitry=False, gamma_levels=30, adapt_gamma=True, history_thin=1, model_name = 'cellular_cycle_dreamzs_5chain', verbose=True)
+
+for chain in range(len(sampled_params)):
+    np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cellular_cycle_dreamzs_5chain_sampled_params_chain_"+str(chain)+'_'+str(total_iterations), sampled_params[chain])
+    np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cellular_cycle_dreamzs_5chain_logps_chain_"+str(chain)+'_'+str(total_iterations), log_ps[chain])

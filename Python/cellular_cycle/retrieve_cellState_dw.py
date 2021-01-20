@@ -31,10 +31,16 @@ def retrieve_cellState(run_time, init_cell, cells):
     
         if len(end_index)>0 :
             if len(cells['molecules'][ii]['obsCdc20'])>20:
-                (a,max_tmp_cdc) = peakfinder(cells['molecules'][ii]['obsCdc20'], 0.15*omega, 0.15*omega, 1, includeEndpoints=1);
-                (a,max_tmp_cycE) = peakfinder(cells['molecules'][ii]['obsCycE'], 0.15*omega, 0.15*omega, 1, includeEndpoints=1); #those values are chosen (threshold)
+                try:
+                    (a,max_tmp_cdc) = peakfinder(cells['molecules'][ii]['obsCdc20'], 0.15*omega, 0.15*omega, 1, includeEndpoints=1);
+                    (a,max_tmp_cycE) = peakfinder(cells['molecules'][ii]['obsCycE'], 0.15*omega, 0.15*omega, 1, includeEndpoints=1); #those values are chosen (threshold)
+                except:
+                    np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/obscycE.npy", cells['molecules'][ii]['obsCycE'])
+                    np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/obscdc20.npy", cells['molecules'][ii]['obsCdc20'])
+                    
             else : #the course is very short so there can't be a division
                 max_tmp_cdc=[]
+            
             div_ind = max_tmp_cdc
             
             if cells['time'][ii][-1]<run_time : #if we didn't record the time until the end of the experiment
@@ -101,10 +107,8 @@ def retrieve_cellState(run_time, init_cell, cells):
                 else:
                     if len(div_ind)>=1 and cells['living_cell'][ii]:
                         for jj in range(len(div_ind)):
-                            if jj==0:
-                                tmp_counts = {'End_of_Expt' : False, 'Death' : False, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : (cells['time'][ii][div_ind[0]] - cells['time'][ii][0])}
-        
-                            elif jj==(len(div_ind)-1):
+                                   
+                            if jj==(len(div_ind)-1):
         
                                 tmp_counts = {'End_of_Expt' : True, 'Death' : False, 'Birthtime' : cells['time'][ii][div_ind[jj]], 'Lifespan' : run_time - cells['time'][ii][div_ind[jj]]}
                             
@@ -113,23 +117,22 @@ def retrieve_cellState(run_time, init_cell, cells):
                             IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
 
                              
-                    elif len(div_ind)==1 and cells['living_cell'][ii]:               
-                        tmp_counts = {'End_of_Expt' : False, 'Death' : False, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : (cells['time'][ii][div_ind[0]] - cells['time'][ii][0])}
-                        IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
-        
-
-                        tmp_counts = {'End_of_Expt' : True, 'Death' : False, 'Birthtime' : cells['time'][ii][div_ind[div_ind[0]]], 'Lifespan' : (run_time - cells['time'][ii][div_ind[0]])}
-                        IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
-
-                    elif len(div_ind)==0 and cells['living_cell'][ii] :
-                        tmp_counts = {'End_of_Expt' : True, 'Death' : False, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : (run_time - cells['time'][ii][0])}
-                        IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
+#                    elif len(div_ind)==1 and cells['living_cell'][ii]:               
+#                        tmp_counts = {'End_of_Expt' : False, 'Death' : False, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : (cells['time'][ii][div_ind[0]] - cells['time'][ii][0])}
+#                        IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
+#        
+#
+#                        tmp_counts = {'End_of_Expt' : True, 'Death' : False, 'Birthtime' : cells['time'][ii][div_ind[div_ind[0]]], 'Lifespan' : (run_time - cells['time'][ii][div_ind[0]])}
+#                        IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
+#
+#                    elif len(div_ind)==0 and cells['living_cell'][ii] :
+#                        tmp_counts = {'End_of_Expt' : True, 'Death' : False, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : (run_time - cells['time'][ii][0])}
+#                        IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
   
                     elif len(div_ind)>=2 and cells['living_cell'][ii]==False:
                         for jj in range(len(div_ind)):
-                            if jj==0 :
-                                tmp_counts = {'End_of_Expt' : False, 'Death' : False, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : (cells['time'][ii][div_ind[0]] - cells['time'][ii][0])}
-                            elif jj==(len(div_ind)-1):
+
+                            if jj==(len(div_ind)-1):
                                 tmp_counts = {'End_of_Expt' : False, 'Death' : True, 'Birthtime' : cells['time'][ii][div_ind[jj]], 'Lifespan' : (cells['time'][ii][-1] - cells['time'][ii][div_ind[jj]])}
                             else:
                                 tmp_counts = {'End_of_Expt' : False, 'Death' : False, 'Birthtime' : cells['time'][ii][div_ind[jj]], 'Lifespan' : (cells['time'][ii][div_ind[jj+1]] - cells['time'][ii][div_ind[jj]])}
@@ -137,14 +140,14 @@ def retrieve_cellState(run_time, init_cell, cells):
 
                     elif len(div_ind)==1 and cells['living_cell'][ii]==False : 
         
-                        tmp_counts = {'End_of_Expt' : False, 'Death' : False, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : (cells['time'][ii][div_ind[0]] - cells['time'][ii][0])}
+                        tmp_counts = {'End_of_Expt' : False, 'Death' : False, 'Birthtime' : cells['time'][ii][div_ind[0]], 'Lifespan' : (cells['time'][ii][div_ind[0]] - cells['time'][ii][div_ind[0]])}
                         IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
 
                         tmp_counts = {'End_of_Expt' : False, 'Death' : True, 'Birthtime' : cells['time'][ii][div_ind[0]], 'Lifespan' : (cells['time'][ii][-1] - cells['time'][ii][div_ind[0]])}
                         IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
-                    else: #len(div_ind)==0 and cells['living_cell'][ii]==False
-                        tmp_counts = {'End_of_Expt' : False, 'Death' : True, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : (cells['time'][ii][-1] - cells['time'][ii][0])}
-                        IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)          
+#                    else: #len(div_ind)==0 and cells['living_cell'][ii]==False #impossible, should have at least one division
+#                        tmp_counts = {'End_of_Expt' : False, 'Death' : True, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : (cells['time'][ii][-1] - cells['time'][ii][0])}
+#                        IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)          
 
     IMT_eoe_counts = IMT_eoe_counts[IMT_eoe_counts['Lifespan']>0]
     return IMT_eoe_counts

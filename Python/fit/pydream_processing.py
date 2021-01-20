@@ -20,7 +20,8 @@ from pydream.convergence import Gelman_Rubin
 import pandas as pd
 import pylab as pl
 
-
+import seaborn as sns
+from matplotlib import pyplot as plt
 
 ##################################################################################
 #Merging the different iterations:
@@ -32,7 +33,7 @@ sampled_params_dict={}
 for chain in range(10):   
     logps_temp = np.array([])
     params_temp = np.array([])
-    for it in range(int(160/10)):
+    for it in range(int(20/10)):
         if logps_temp.size==0:
             print(str(10*it))
             logps_temp = vars()['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain) + '_' + str(10*it)]
@@ -46,8 +47,8 @@ for chain in range(10):
 
 
 for name_logps,name in zip(logps.keys(), sampled_params_dict.keys()): 
-    np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/" + name + "_0_160", sampled_params_dict[name])
-    np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/" + name_logps + "_0_160", logps[name_logps])
+    np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/gamma10/" + name + "_0_2010", sampled_params_dict[name])
+    np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/gamma10/" + name_logps + "_0_2010", logps[name_logps])
 
 
 #################
@@ -96,11 +97,15 @@ for name_logps,name in zip(logps.keys(), sampled_params_dict.keys()):
 ###################################################################################
     
 #loading these parameters
-    
-    
+
+number_of_chains = 40
+number_of_chains = 10
+number_of_chains = 14
+
+
 for chain in range(10): 
-    np.load(path + r"/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cellular_cycle_dreamzs_5chain_sampled_params_chain_" + str(chain) + "_0_160.npy")
-    np.load(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cellular_cycle_dreamzs_5chain_logps_chain_" + str(chain) + "_0_160.npy")
+    np.load(path + r"/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cellular_cycle_dreamzs_5chain_sampled_params_chain_" + str(chain) + "_0_1000.npy")
+    np.load(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cellular_cycle_dreamzs_5chain_logps_chain_" + str(chain) + "_0_1000.npy")
 
 
 
@@ -108,12 +113,12 @@ for chain in range(10):
 logps={}
 sampled_params_dict={}
 
-for chain in range(10):   
+for chain in range(number_of_chains):   
     logps_temp = np.array([])
     params_temp = np.array([])
     
-    logps_temp = vars()['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain) + "_0_160"]
-    params_temp = vars()['cellular_cycle_dreamzs_5chain_sampled_params_chain_' + str(chain) + "_0_160"]          
+    logps_temp = vars()['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain) + "_0"]
+    params_temp = vars()['cellular_cycle_dreamzs_5chain_sampled_params_chain_' + str(chain) + "_0"]          
     logps['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain)] = logps_temp
     sampled_params_dict['cellular_cycle_dreamzs_5chain_sampled_params_chain_' + str(chain)] = params_temp
 
@@ -127,72 +132,271 @@ for (logps_chain, chain) in zip(logps.keys(), sampled_params_dict.keys()):
     logps_tot+=[logps[logps_chain].T[0]]
 
 
-GR = Gelman_Rubin(sample_parameters)
+GR =[]
+
+for chain in range(number_of_chains):   
+    sampled_parameters_temp = vars()['cellular_cycle_dreamzs_5chain_sampled_params_chain_' + str(chain) + '_0']
+    
+    GR += [[Gelman_Rubin(sample_parameters)]]
+
+    pl.plot(logps_temp.transpose()[0], label = 'chain_' +str(chain))
+    pl.legend() 
+    
+
 
 
 old_samples = sample_parameters
 
-np.save(path + "/fit_data/pydream/bis_log/sample_parameters.npy", sample_parameters)
+#np.save(path + "/fit_data/pydream/bis_log/sample_parameters.npy", sample_parameters)
+
 
 #####################################################################
 #plot log evolution
 
 
-pl.plot(cellular_cycle_dreamzs_5chain_logps_chain_4_0_160.transpose()[0])
-pl.plot(cellular_cycle_dreamzs_5chain_logps_chain_4_0_160.transpose()[0][100:])
-
-
-
-
-
-for chain in range(10):   
-    logps_temp = vars()['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain) + '_0_160']
+for chain in range(number_of_chains):   
+    logps_temp = vars()['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain) + '_0']
     
     pl.plot(logps_temp.transpose()[0], label = 'chain_' +str(chain))
     pl.legend() 
+    
+pl.savefig(path + "/../report/figures/pydream/frac_prolif/logps_10chains_gamma10.pdf")
+
+
+for chain in range(number_of_chains):   
+    logps_temp = vars()['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain) + '_0']
+    
+    pl.plot(logps_temp.transpose()[0][1500:], label = 'chain_' +str(chain))
+    pl.legend() 
+pl.savefig(path + "/../report/figures/pydream/frac_prolif/logps_10chains_gamma10_.pdf")
+
+
+#############################################################################"""
+#
+#pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF"]
+#
+#total_iterations = len(old_samples[0])
+#burnin = int(total_iterations / 2)
+#
+#samples = np.concatenate([old_samples[i][burnin:, :] for i in range(10)])
+#logps_tot_p = np.concatenate([logps_tot[i][burnin:] for i in range(10)])
+
+
+
+samples_after_burning = []
+logps_after_burning = []
+
+for chain in range(number_of_chains):   
+    logps_temp = vars()['cellular_cycle_dreamzs_5chain_logps_chain_' + str(chain) + '_0']
+    sampled_parameters_temp = vars()['cellular_cycle_dreamzs_5chain_sampled_params_chain_' + str(chain) + '_0']
+    
+    samples_after_burning += [sampled_parameters_temp[np.where(logps_temp>-100)[0][0]:]]
+    logps_after_burning += [logps_temp[np.where(logps_temp>-100)[0][0]:]]
+    
+
+#before burning
+samples = np.concatenate([sample_parameters[i] for i in range(10)])
+all_logps = np.concatenate([logps_tot[i] for i in range(10)])
+
+
+######################################################
+
+#separate death and mitosis parameters
+
+samples_death = np.array([sample[20:30].tolist() for sample in  samples])
+samples_mitosis = np.array([sample[0:20].tolist() for sample in  samples])
+
+sample_parameters_death = []
+sample_parameters_mitosis = []
+
+for chain in range(number_of_chains):
+    samples_death_temp = np.array([sample[20:30].tolist()for sample in  sample_parameters[chain]])
+    samples_mitosis_temp = np.array([sample[0:20].tolist()for sample in  sample_parameters[chain]])
+
+    sample_parameters_death+=[samples_death_temp]
+    sample_parameters_mitosis+=[samples_mitosis_temp]
+
+
+
+#################################################################################
+#Plot walk in the space parameters
+
+new_array = [tuple(row) for row in samples]
+unique_vectors=np.unique(new_array, axis=0)
+
+new_array = [tuple(row) for row in samples_death]
+unique_vectors_death=np.unique(new_array, axis=0)
+
+new_array = [tuple(row) for row in samples_mitosis]
+unique_vectors_mitosis=np.unique(new_array, axis=0)
+
+
+from sklearn import decomposition
+import umap
+
+colors = sns.color_palette(n_colors=10)
+
+#####################################
+#before burning
+#all sampled parameters
+
+#pca
+pca = decomposition.PCA(n_components=2)
+pca.fit(unique_vectors)
+#pca.fit(samples)
+
+X_pca = []
+for chain in range(10):   
+    X_pca += [pca.transform(sample_parameters[chain])]
+
+fig = pl.figure(figsize=(3,3),dpi=200)
+ax = fig.add_subplot(111)
+for chain in range(10) :
+    ax.scatter(X_pca[chain][:,0], X_pca[chain][:,1],c = colors[chain], alpha = 0.25,s = 0.05);
+    ax.plot(X_pca[chain][:,0], X_pca[chain][:,1], c = colors[chain], alpha = 0.5, lw = 0.25, ls = '--');
+    ax.plot(X_pca[chain][0,0], X_pca[chain][0,1],c=colors[chain], marker='+')
+    ax.plot(X_pca[chain][-1,0], X_pca[chain][-1,1],c=colors[chain], marker='o')
+
+pl.savefig(path + "/../report/figures/pydream/frac_prolif/chains_running_pca_10chains_gamma10_before_burning_unique.pdf")
+
+#umap   
+trans = umap.UMAP().fit(unique_vectors)
+
+X_umap = []
+for chain in range(10):   
+    X_umap += [trans.transform(sample_parameters[chain])]
+
+
+fig = pl.figure(figsize=(3,3),dpi=200)
+ax = fig.add_subplot(111)
+for chain in range(10) :
+    ax.scatter(X_umap[chain][:,0], X_umap[chain][:,1],c = colors[chain], alpha = 0.25,s = 0.05);
+    ax.plot(X_umap[chain][:,0], X_umap[chain][:,1], c = colors[chain], alpha = 0.5, lw = 0.25, ls = '--');
+    ax.plot(X_umap[chain][0,0], X_umap[chain][0,1],c=colors[chain], marker='+')
+    ax.plot(X_umap[chain][-1,0], X_umap[chain][-1,1],c=colors[chain], marker='o')
+pl.savefig(path + "/../report/figures/pydream/frac_prolif/chains_running_umap_10chains_gamma10_before_burning.pdf")
+
+
+#tsne
+
+from sklearn.manifold import TSNE
+X_embedded = TSNE(n_components=2)
+X_embedded.fit_transform(samples)
+
+#####
+#only death parameters
+
+#pca
+pca = decomposition.PCA(n_components=2)
+pca.fit(unique_vectors_death)
+#pca.fit(samples)
+
+
+X_pca = []
+for chain in range(10):   
+    X_pca += [pca.transform(sample_parameters_death[chain])]
+
+
+fig = pl.figure(figsize=(4,4),dpi=200)
+ax = fig.add_subplot(111)
+
+for chain in range(10) :
+    ax.scatter(X_pca[chain][:,0], X_pca[chain][:,1],c = colors[chain], alpha = 0.25,s = 0.05);
+    ax.plot(X_pca[chain][:,0], X_pca[chain][:,1], c = colors[chain], alpha = 0.5, lw = 0.25, ls = '--');
+    ax.plot(X_pca[chain][0,0], X_pca[chain][0,1],c=colors[chain], marker='+')
+    ax.plot(X_pca[chain][-1,0], X_pca[chain][-1,1],c=colors[chain], marker='o')
+
+pl.savefig(path + "/../report/figures/pydream/frac_prolif/chains_running_pca_10chains_gamma10_before_burning_unique_death_parameters_only.pdf")
+
+#####
+#only mitosis parameters
+
+#pca
+pca = decomposition.PCA(n_components=2)
+pca.fit(unique_vectors_mitosis)
+#pca.fit(samples)
+
+
+X_pca = []
+for chain in range(10):   
+    X_pca += [pca.transform(sample_parameters_mitosis[chain])]
+
+
+fig = pl.figure(figsize=(4,4),dpi=200)
+ax = fig.add_subplot(111)
+
+for chain in range(10) :
+    ax.scatter(X_pca[chain][:,0], X_pca[chain][:,1],c = colors[chain], alpha = 0.25,s = 0.05);
+    ax.plot(X_pca[chain][:,0], X_pca[chain][:,1], c = colors[chain], alpha = 0.5, lw = 0.25, ls = '--');
+    ax.plot(X_pca[chain][0,0], X_pca[chain][0,1],c=colors[chain], marker='+')
+    ax.plot(X_pca[chain][-1,0], X_pca[chain][-1,1],c=colors[chain], marker='o')
+
+pl.savefig(path + "/../report/figures/pydream/frac_prolif/chains_running_pca_10chains_gamma10_before_burning_unique_mitosis_parameters_only.pdf")
+
+
+
+#################################################
+#after burning
+
+#pca
+pca = decomposition.PCA(n_components=2)
+pca.fit(unique_vectors)
+
+X_pca = []
+for chain in range(10):   
+    X_pca += [pca.transform(samples_after_burning[chain])]
+
+fig = pl.figure(figsize=(3,3),dpi=200)
+ax = fig.add_subplot(111)
+for chain in range(10) :
+    ax.scatter(X_pca[chain][:,0], X_pca[chain][:,1],c = colors[chain], alpha = 0.25,s = 0.05);
+    ax.plot(X_pca[chain][:,0], X_pca[chain][:,1], c = colors[chain], alpha = 0.5, lw = 0.25, ls = '--');
+    ax.plot(X_pca[chain][0,0], X_pca[chain][0,1],c=colors[chain], marker='+')
+    ax.plot(X_pca[chain][-1,0], X_pca[chain][-1,1],c=colors[chain], marker='o')
+pl.savefig(path + "/../report/figures/pydream/frac_prolif/chains_running_pca_10chains_gamma10_after_burning.pdf")
+
+
+#umap   
+trans = umap.UMAP().fit(samples)
+
+X_umap = []
+for chain in range(10):   
+    X_umap += [trans.transform(samples_after_burning[chain])]
+
+
+fig = pl.figure(figsize=(3,3),dpi=200)
+ax = fig.add_subplot(111)
+for chain in range(10) :
+    ax.scatter(X_umap[chain][:,0], X_umap[chain][:,1],c = colors[chain], alpha = 0.25,s = 0.05);
+    ax.plot(X_umap[chain][:,0], X_umap[chain][:,1], c = colors[chain], alpha = 0.5, lw = 0.25, ls = '--');
+    ax.plot(X_umap[chain][0,0], X_umap[chain][0,1],c=colors[chain], marker='+')
+    ax.plot(X_umap[chain][-1,0], X_umap[chain][-1,1],c=colors[chain], marker='o')
+pl.savefig(path + "/../report/figures/pydream/frac_prolif/chains_running_umap_10chains_gamma10_after_burning.pdf")
+
+#tsne
+
+from sklearn.manifold import TSNE
+
+X_embedded = TSNE(n_components=2)
+X_embedded.fit_transform(samples)
+
 
 
 ############################################################
-import seaborn as sns
-from matplotlib import pyplot as plt
-
-pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF"]
-
-total_iterations = len(old_samples[0])
-
-burnin = int(total_iterations / 2)
-
-samples = np.concatenate([old_samples[i][burnin:, :] for i in range(10)])
-logps_tot_p = np.concatenate([logps_tot[i][burnin:] for i in range(10)])
-
-#removing bad values :
-
-np.where(logps_tot_p >-1000000)
-np.where(logps_tot_p <-1000000)
-
-
-
-samples=samples[np.where(logps_tot_p >-1000000)[0],:]
-logps_tot_p=logps_tot_p[np.where(logps_tot_p >-1000000)[0]]
-
-
-np.where(logps_tot_p >-60)
-samples=samples[np.where(logps_tot_p >-60)[0],:]
-
-
-len(samples)
-parameter_vector = 10**samples[500]
-
-parameter_vector = 10**samples[58]
 
 #Test
+samples 
+all_logps 
 
-max(logps_tot_p)
-np.argmax(logps_tot_p)
+max(all_logps)
 
+10**samples[np.argmax(all_logps)]
 
-min(logps_tot_p)
-np.argmin(logps_tot_p)
+max(cellular_cycle_dreamzs_5chain_logps_chain_8_0)
+10**cellular_cycle_dreamzs_5chain_sampled_params_chain_0_0[np.argmax(cellular_cycle_dreamzs_5chain_logps_chain_0_0)]
+
+min(all_logps)
+np.argmin(all_logps)
 
 
 from cost_function_BngSimulator_bis_reduced import cost_function_reduced
@@ -207,12 +411,14 @@ from cost_function_BngSimulator_frac_prolif_quiescence_DMSO_only_21_parameters i
 
 from cost_function_BngSimulator_frac_death_rate_DMSO_only_switch_death_parameters import  cost_function_reduced_death_rate_DMSO_switch_death_parameters
 
+from cost_function_BngSimulator_frac_prolif_quiescence_DMSO_only_30_parameters import  cost_function_reduced_quiescence_DMSO_only_30_parameters
+
 
 parameter_vector = 10**samples[15]
 
-parameter_vector = 10**samples[np.argmax(logps_tot_p)]
+parameter_vector = 10**samples[np.argmax(all_logps)]
 
-parameter_vector = 10**samples[np.argmin(logps_tot_p)]
+parameter_vector = 10**samples[np.argmin(all_logps)]
 
 ##bis_log
 #parameter_vector = np.array([0.76062416, 0.02256117, 0.30398523, 0.94528072, 1.34990567, 0.30460912, 0.11683466, 0.10229111, 0.82909919, 0.74736298])
@@ -238,7 +444,14 @@ parameter_vector = 10**samples[np.argmin(logps_tot_p)]
 #frac prolif
 #parameter_vector = np.array([5.08434023e-03, 4.14619045e-01, 1.58080261e+00, 1.87548356e-02, 2.43834294e-04, 2.67242878e-03, 9.17533143e-02, 2.39374299e-04, 3.14708506e-03, 1.37142120e-01, 7.69247749e-01, 1.41305571e-04, 1.90911690e-04, 1.03374254e-03, 3.77969796e+00, 1.22245523e-03, 8.07754038e-04, 6.38585894e+00, 4.09374334e-02, 1.73584598e-03, 4.19911872e-01])
 
+#frac prolif 30
+#parameter_vector = np.array([1.35981351e-03, 3.27621894e-04, 3.33605499e-01, 1.67110971e+01, 1.33333794e+01, 7.26881136e-04, 7.24728198e+01, 1.56434290e+01, 8.28685189e-02, 3.77250858e+01, 1.46225845e+00, 4.07452470e-03, 2.57708238e+00, 1.69128821e-02, 4.33971772e-01, 3.08585275e+01, 1.58804859e-02, 3.60589231e-03, 8.64121317e-02, 5.59717739e-01, 3.23506196e-01, 2.41717684e-04, 2.24990105e+01, 3.05306899e-01, 3.12691267e+00, 4.82800772e-02, 1.72436648e-03, 1.11840705e-02, 2.60040648e-02, 3.36539927e-02])
 
+#parameter_vector = np.array([9.73436639e+01, 1.20482457e+00, 9.44180958e-03, 8.09900119e+00, 2.78845243e-01, 3.87094008e+01, 1.65148700e-03, 1.46029110e+00, 1.81932279e-03, 8.32673504e+01, 1.31658430e+00, 9.29026540e-04, 4.17686561e+00, 4.23690936e-01, 1.62391120e-01, 1.90052578e-03, 1.63257207e-03, 1.12756428e-04, 2.55672808e-02, 1.47315792e-04, 2.15972787e-04, 8.14881900e+01, 5.62618511e+00, 4.78496152e-02, 2.84263099e+01, 2.24898042e-03, 1.87618954e-03, 8.22937520e-01, 4.10033319e+00, 4.31574492e-04])
+
+#parameter_vector = np.array([1.14637063e-01, 2.13614373e-04, 2.08256410e-02, 4.84990660e-02, 6.03643430e+00, 1.74932077e-04, 2.65252075e-04, 4.81838284e+00, 7.25610453e-03, 3.67227612e-02, 9.11806494e-02, 4.50512863e+01, 5.21316141e-03, 5.09559069e-03, 2.85905519e+00, 1.36298838e-02, 2.10806043e-03, 7.26355984e+00, 1.16149358e-03, 1.14447665e-03, 4.05081200e-03, 7.21596812e+01, 4.07609420e+00, 4.40626117e-04, 1.54503854e+00, 1.22937820e-03, 8.39269962e-03, 5.11573206e+00, 1.34492066e-02, 4.18501642e-01])
+
+    
 logps_tot_p[350]
 
 test0 = cost_function_reduced(parameter_vector)
@@ -248,6 +461,7 @@ test_21 = cost_function_reduced_quiescence_DMSO_only_21_parameters(parameter_vec
 
 test_death = cost_function_reduced_death_rate_DMSO_switch_death_parameters(parameter_vector)
 
+test = cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector)
 ##############################################################################
 #plot distributions
 
@@ -264,11 +478,11 @@ for dim in range(ndims):
     
     
 dict_param={}
-pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF"]
+#pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF"]
 #or
-pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "k_b"]
+#pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "k_b"]
 
-pysb_sampled_parameter_names = ["kf1","kf2","kb","kasbaxmbcl2","kdsbaxmbcl2","k1sbh3","k2sbh3","kdbh3","kasbh3bcl2","kdsbh3bcl2"]
+#pysb_sampled_parameter_names = ["kf1","kf2","kb","kasbaxmbcl2","kdsbaxmbcl2","k1sbh3","k2sbh3","kdbh3","kasbh3bcl2","kdsbh3bcl2"]
 
 
 for p in range(10):
@@ -314,11 +528,8 @@ dimension_reduction="PCA"
 #umap
 import umap
 
-
 trans = umap.UMAP().fit(samples)
-
 X1=trans.transform(samples)
-
 dimension_reduction="umap"
 
 
@@ -326,7 +537,6 @@ dimension_reduction="umap"
 from sklearn.manifold import TSNE
 
 X_embedded = TSNE(n_components=2).fit_transform(X)
-
 
 
 dimension_reduction="tsne"

@@ -5,11 +5,9 @@ Created on Tue Feb 11 17:48:30 2020
 @author: Grim.M
 Title: runStochCell
 """
-path="/home/jeremie"
-#path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
 
 import sys
-sys.path.insert(0, path+"/cellular_cycle") #add a pathway to the model
+sys.path.insert(0, "../cellular_cycle") #add a pathway to the model
 
 from peakfinder import peakfinder
 from pysb.simulator import ScipyOdeSimulator
@@ -31,6 +29,13 @@ def runStochcell(model) :
     
     simres = ScipyOdeSimulator(model, t, verbose=False).run();
     yout = simres.all;
+    
+    for obs in model.observables : 
+        print(obs.name)
+        print(np.any(yout[obs.name]>2000)) #concentration too high
+        
+        if np.any(yout[obs.name]>1000) :
+            return {}
     
     a, maxima = peakfinder(yout['obsCdc20'], [], 0.2);   #find the peak of cdc20 - last protein to peak
     

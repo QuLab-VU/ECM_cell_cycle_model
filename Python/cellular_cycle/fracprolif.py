@@ -5,6 +5,10 @@ Created on Sat Aug 22 11:24:52 2020
 @author: Grim.M
 """
 
+path="/home/jeremie"
+
+
+
 import numpy as np
 from scipy.optimize import minimize, fmin_l_bfgs_b, brentq, approx_fprime, least_squares
 from scipy.special import erf
@@ -15,7 +19,7 @@ from sklearn.linear_model import LinearRegression
 from scipy.optimize import leastsq
 
 #############################################################################
-    
+
 def demg(x, mu=0, sigma=1, lambd=1):
     return (lambd/2) * np.exp((lambd/2)*(2*mu -2*x + lambd*(sigma*sigma))) * (1 - erf((-x+mu+lambd*(sigma**2))/(np.sqrt(2)*sigma)))
 
@@ -44,7 +48,7 @@ def mle(mitotic_lifespans, censored_lifespans):
         #global mitotic_lifespans, censored_lifespans
         return - sum([np.log(1-Q) + np.log(demg(i, mu = mu, sigma = sigma, lambd = lambd)) for i in  mitotic_lifespans]) - sum([np.log(Q+(1-Q)*pemg(i,  mu = mu, sigma = sigma, lambd = lambd, lower_tail = False)) for i in censored_lifespans])
     
-    bounds = [(8,60), (0.01, (max(mitotic_lifespans) - min(mitotic_lifespans))), (0.01, 10), (1e-31, 0.9999999)]
+    bounds = [(1, 100), (0.01, (max(mitotic_lifespans) - min(mitotic_lifespans))), (0.001, 100), (1e-41, 0.999999999999)]
     #
     #m = minimize(qsurvival_nllik, x0, method='nelder-mead', bounds=bounds) #Change the method to minimize
     #x: array([18.89482881,  1.67120341,  0.09735528,  0.59049594])
@@ -53,11 +57,22 @@ def mle(mitotic_lifespans, censored_lifespans):
     #m = minimize(qsurvival_nllik, x0, method="L-BFGS-B", bounds=bounds)
     
     #m = minimize(qsurvival_nllik, x0, method="TNC", bounds=bounds)
-    m = minimize(qsurvival_nllik, x0, method="SLSQP", bounds=bounds)
+    print(mitotic_lifespans)
+    print(censored_lifespans)
+    print(x0)
+    print(bounds)
+    try:
+        m = minimize(qsurvival_nllik, x0, method="SLSQP", bounds=bounds)
+        return m
+    except:
+        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/mitotic_lifespans.npy", mitotic_lifespans)
+        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/censored_lifespans.npy", censored_lifespans)
+        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/x0.npy", x0)
+        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/bounds.npy", bounds)
     #m = minimize(qsurvival_nllik, x0, method="trust-constr", bounds=bounds)        
-    return m
 
-def q_rates_inner(m_x) :
+
+def q_rates_inner(m_x) : #m_x is 
     def integrand(t, v):
         return np.exp(-v*t)*demg(t, mu=m_x[0], sigma=m_x[1], lambd=m_x[2])
     def integr(v) : 
@@ -216,7 +231,7 @@ v = q_rates(m)
 #         d          q
 #0.02475328 0.03569364 
 
-half_imt, untreated_division_rate, a = death_rate(Time_h, card_total, v) 
+half_imt, untreated_division_rate, a = death_rate(Time_h, card_total, card_total_e16000, v)
 
 #          a 
 #0.004111099 

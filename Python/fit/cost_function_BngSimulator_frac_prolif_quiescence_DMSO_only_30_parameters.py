@@ -4,20 +4,35 @@ Created on Wed May 20 10:42:26 2020
 
 @author: Grim.M
 """
+#time stopper:
+
+import signal
+
+class TimeoutException(RuntimeError):
+    """ Time out occurred! """
+    pass
+
+def handler(signum, frame):
+    print('forever is over!')
+    raise TimeoutException()
+
+# Register the signal function handler
+signal.signal(signal.SIGALRM, handler)
+
+
 
 path="/home/jeremie"
+#path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
 
-path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
 
 import sys
-sys.path.insert(0, path+"/cellular_cycle") #add a pathway to the model
-sys.path.insert(0, path+"/fit") #add a pathway to the model
+sys.path.insert(0, __file__ + "/../cellular_cycle") #add a pathway to the model
+#sys.path.insert(0, path + "/cellular_cycle") #add a pathway to the model
 
 from Austin_proliferation_model_concentration_3 import model
 model_concentration=model
 from Austin_proliferation_model_population_3 import model
 model_population=model
-
 
 
 from pysb.simulator import BngSimulator
@@ -60,13 +75,14 @@ all_events_exp = {}
 
 run_time=102.3
 omega=200
-init=10
+init=12
+
 
 
 
 IMT_eoe_counts = pd.DataFrame(columns=['End_of_Expt', 'Death' ,'Birthtime','Lifespan'])
 
-df = pd.read_csv(path+'/cell_fates/ds8_06_DMSO_fates.csv')
+df = pd.read_csv(path + '/cell_fates/ds8_06_DMSO_fates.csv')
 lines = {}
 for col in df :
     lines[col]=df[col].dropna().tolist()
@@ -98,7 +114,7 @@ parameters_exp['0.6 kPa DMSO']['lambda'] = m['x'][2]
 parameters_exp['0.6 kPa DMSO'].update(fp.q_rates(m))
 
 
-df = pd.read_csv(path+'/cell_fates/ds8_06_DMSO_fates.csv')
+df = pd.read_csv(path + '/cell_fates/ds8_06_DMSO_fates.csv')
 lines = {}
 for col in df :
     lines[col]=df[col].dropna().tolist()
@@ -113,6 +129,8 @@ parameter_names = ['a','d','q']
 observed_cells_time = 30
 
 
+#parameter_vector = parameter_vector_error
+#parameter_vector = parameter_vector_error_over_60_sec002
 
 
 def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector):    
@@ -127,7 +145,7 @@ def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector):
         #Change model parameter values to current location in parameter space
         model_population.parameters[pname].value = (pvalue)
         model_concentration.parameters[pname].value = (pvalue)
-
+        
     parameters_sim={}
     cost=0
     
@@ -185,48 +203,96 @@ def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector):
                 model_population.parameters['FAK'].value = 1.075820621939 * omega
                 model_population.parameters['AKT'].value = 0.585067267459499 * omega
         
+        
         #running the simulation with the experiment parameters (run_time)
-        (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population)
-        
-        if cells == 0:
-            return 1000000
-        
-        IMT_eoe_counts = retrieve_cellState(run_time, init, cells)
-        all_events_simulated = all_events(run_time, IMT_eoe_counts)
-        
-        #finding the parameters for the EMG and fractional proliferation model
-        
-        if len(all_events_simulated)==0:
-            return 10000000
-        
-        
-        mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
-        censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
-        
-        number_of_deaths = len(all_events_simulated) - (all_events_simulated['event']=='apoptosis').value_counts()[0]
-        cell_time_total = sum(all_events_simulated['Lifespan'])
-        
-        m = fp.mle(mitotic_lifespans, censored_lifespans)
-        
-        parameters_sim[condition] ={}
-
-        parameters_sim[condition]['a'] = number_of_deaths/cell_time_total
-        parameters_sim[condition]['mu'] = m['x'][0]
-        parameters_sim[condition]['sigma'] = m['x'][1]
-        parameters_sim[condition]['lambda'] = m['x'][2]
-        
-        parameters_sim[condition].update(fp.q_rates(m))
-        
-        #comparing those parameters:
-        
-        for name in parameter_names:
-            print(name)
-            if parameters_exp[condition][name]==0:
-                parameters_exp[condition][name] = 1e-100
-            if parameters_sim[condition][name]==0:
-                parameters_sim[condition][name] = 1e-100
+        signal.alarm(60)
+        try:
+            (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population)
+            signal.alarm(0)
             
-            cost += (np.log(parameters_sim[condition][name]) - np.log(parameters_exp[condition][name]))**2
-            print(cost)
+            
+            if cells == 0:
+                return np.inf
+            
+            IMT_eoe_counts = retrieve_cellState(run_time, init, cells)
+            all_events_simulated = all_events(run_time, IMT_eoe_counts)
+            all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<30)]
+
+            
+            #finding the parameters for the EMG and fractional proliferation model
+            
+            if len(all_events_simulated)<=1 : #not enough events to optimize the fractional proliferation model
+                return np.inf
+            
+            
+            mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
+            
+            censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
+            
+            if len(mitotic_lifespans)<=1 : #not enough events to optimize the fractional proliferation model
+                return np.inf
+            
+            try :
+                number_of_deaths = len(all_events_simulated) - (all_events_simulated['event']=='apoptosis').value_counts()[0]
+                cell_time_total = sum(all_events_simulated['Lifespan'])
+                
+                m = fp.mle(mitotic_lifespans, censored_lifespans)
+                
+                parameters_sim[condition] = {}
+                
+                parameters_sim[condition]['a'] = number_of_deaths/cell_time_total
+                
+            except : 
+                
+                #np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/mle_censored_lifespans.npy", censored_lifespans)
+                #np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/mle_mitotic_lifespans.npy", mitotic_lifespans)
+                return np.inf
+            
+            try :
+                parameters_sim[condition]['mu'] = m['x'][0]
+                parameters_sim[condition]['sigma'] = m['x'][1]
+                parameters_sim[condition]['lambda'] = m['x'][2]
+                parameters_sim[condition].update(fp.q_rates(m))
+            except :
+                #np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/parameter_vector_error.npy", parameter_vector)
+                #np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/mitotic_lifespans.npy", mitotic_lifespans)
+                #np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/censored_lifespans.npy", censored_lifespans)
+                #np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/all_events_simulated.npy", all_events_simulated)
+                return np.inf
+                
+                
+            #comparing those parameters:
+            
+            for name in parameter_names:
+                print(name)
+                if parameters_exp[condition][name]<10**-5:
+                    parameters_exp[condition][name] = 1e-5
+                if parameters_sim[condition][name]<10**-5:
+                    parameters_sim[condition][name] = 1e-5
+                
+                cost += abs(np.log(parameters_sim[condition][name]) - np.log(parameters_exp[condition][name]))
+                
+                
+                
+                
+                print(cost)
+        
+        except TimeoutException as exc:
+            #np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/parameter_vector_error_over_60_sec.npy", parameter_vector)
+            return np.inf
         
     return cost
+
+
+
+#
+#
+#all_events_simulated = np.load(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/error2/all_events_simulated.npy", allow_pickle=True)
+#
+#all_events = pd.DataFrame(columns=['event' ,'Birthtime','Lifespan'])
+#
+#for i in range(len(all_events_simulated)):
+#    all_events = all_events.append(dict(zip(all_events.columns,all_events_simulated[i].tolist())), ignore_index=True)
+#    
+#all_events_simulated = all_events
+    

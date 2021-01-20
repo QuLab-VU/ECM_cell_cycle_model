@@ -24,6 +24,8 @@ import sys
 # 
 # 
  
+
+
 def peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=0, interpolate=0): 
     
     len0 = len(x0)
@@ -162,7 +164,7 @@ def peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=0, interpolate=0):
             if length>0:
                 [peakMags,xInd] = [[max(x)], np.argmax(x)];
             print(x0)
-            if peakMags > minMag + sel :
+            if peakMags[0] > minMag + sel :
                 peakInds = [ind[xInd]];
             else :
                 peakMags = [];

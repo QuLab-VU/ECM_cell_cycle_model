@@ -1,0 +1,319 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed May 20 10:42:26 2020
+
+@author: Grim.M
+"""
+#time stopper:
+
+import signal
+
+class TimeoutException(RuntimeError):
+    """ Time out occurred! """
+    pass
+
+def handler(signum, frame):
+    print('forever is over!')
+    raise TimeoutException()
+
+# Register the signal function handler
+signal.signal(signal.SIGALRM, handler)
+
+
+path="/home/jeremie"
+#path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
+
+
+import sys
+sys.path.insert(0, __file__ + "/../cellular_cycle") #add a pathway to the model
+#sys.path.insert(0, path + "/cellular_cycle") #add a pathway to the model
+#sys.path.insert(0, path + "/fit") #add a pathway to the model
+
+from Austin_proliferation_model_concentration_3 import model
+model_concentration=model
+from Austin_proliferation_model_population_3 import model
+model_population=model
+
+
+from pysb.simulator import BngSimulator
+
+
+import random
+
+import os
+os.environ["PYOPENCL_CTX"] ="0"
+
+import pylab as pl
+import pandas as pd
+import math
+import numpy as np
+from runAKTERK_2_fixed_initial_concentrations import runAKTERK
+from retrieve_cellState_dw import retrieve_cellState
+from plot_frac_div_q_ap1 import all_events
+import numpy as np
+import pandas as pd
+from pysb.simulator import BngSimulator
+from pysb.simulator import StochKitSimulator
+from pysb.simulator import ScipyOdeSimulator
+
+from pysb.simulator import  CupSodaSimulator
+import matplotlib.pyplot as plt
+import pylab as pl
+import fracprolif as fp
+from rbf_mmd import nmmd2_rbf
+import random
+
+
+
+tmp_t=pl.linspace(0, 10, 100)
+sim = BngSimulator(model_population, tspan=tmp_t, verbose=True)
+traj = sim.run()
+
+
+sim = ScipyOdeSimulator(model_concentration, tspan=tmp_t, verbose=True)
+traj = sim.run()
+
+###############################################################################
+all_events_exp = {}
+
+run_time=102.3
+omega=200
+init=8
+
+
+
+
+IMT_eoe_counts = pd.DataFrame(columns=['End_of_Expt', 'Death' ,'Birthtime','Lifespan'])
+
+df = pd.read_csv(path + '/cell_fates/ds8_06_DMSO_fates.csv')
+lines = {}
+for col in df :
+    lines[col]=df[col].dropna().tolist()
+
+for (death, mitotic_time, end_time, lifetime) in zip(lines['Death'], lines['Mitotic Time'], lines['End Time'], lines['Lifetime']):
+    tmp_counts = {'End_of_Expt' : end_time==102.3, 'Death' : death==1, 'Birthtime' : mitotic_time, 'Lifespan' : lifetime}
+    IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
+
+all_events_exp['0.6 kPa DMSO'] = all_events(run_time, IMT_eoe_counts)
+
+
+
+mitotic_lifespans_exp = all_events_exp['0.6 kPa DMSO']['Lifespan'][all_events_exp['0.6 kPa DMSO']['event']=='mitosis']
+censored_lifespans_exp = all_events_exp['0.6 kPa DMSO']['Lifespan'][all_events_exp['0.6 kPa DMSO']['event']=='End_of_Expt']
+
+number_of_deaths = len(all_events_exp['0.6 kPa DMSO']) - (all_events_exp['0.6 kPa DMSO']['event']=='apoptosis').value_counts()[0]
+cell_time_total = sum(all_events_exp['0.6 kPa DMSO']['Lifespan'])
+
+
+m = fp.mle(mitotic_lifespans_exp, censored_lifespans_exp)
+
+parameters_exp={}
+parameters_exp['0.6 kPa DMSO'] ={}
+
+parameters_exp['0.6 kPa DMSO']['a'] = number_of_deaths/cell_time_total
+parameters_exp['0.6 kPa DMSO']['mu'] = m['x'][0]
+parameters_exp['0.6 kPa DMSO']['sigma'] = m['x'][1]
+parameters_exp['0.6 kPa DMSO']['lambda'] = m['x'][2]
+parameters_exp['0.6 kPa DMSO'].update(fp.q_rates(m))
+
+
+df = pd.read_csv(path + '/cell_fates/ds8_06_DMSO_fates.csv')
+lines = {}
+for col in df :
+    lines[col]=df[col].dropna().tolist()
+
+pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2"]
+
+
+##############################################################################
+conditions=['0.6 kPa DMSO']
+parameter_names = ['a','d','q']
+
+observed_cells_time = 30
+
+
+#parameter_vector = parameter_vector_error
+#parameter_vector = parameter_vector_error_over_60_sec
+#parameter_vector = parameter_vector_error_runakterk
+
+
+
+def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector,cells):    
+    
+    print("The parameters are ")
+    print(parameter_vector)
+    
+    global model_concentration, model_population, init, run_time, observed_cells_time
+    
+    param_dict = {pname: pvalue for pname, pvalue in zip(pysb_sampled_parameter_names, parameter_vector)}   
+    for pname, pvalue in param_dict.items():
+        #Change model parameter values to current location in parameter space
+        model_population.parameters[pname].value = (pvalue)
+        model_concentration.parameters[pname].value = (pvalue)
+    
+    parameters_sim={}
+    cost=0
+    
+    for condition in conditions:
+        print(condition)
+        
+        if 'DMSO' in condition:            
+            if '0.6 kPa' in condition :
+                model_concentration.parameters['ERK'].value = 1.06970165050038 
+                model_concentration.parameters['FAK'].value = 0.337143388171177
+                model_concentration.parameters['AKT'].value = 0.616658111482869
+                
+                model_population.parameters['ERK'].value = 1.06970165050038 * omega
+                model_population.parameters['FAK'].value = 0.337143388171177 * omega
+                model_population.parameters['AKT'].value = 0.616658111482869 * omega
+            elif '4 kPa' in condition :
+                model_concentration.parameters['ERK'].value = 0.897485095798471
+                model_concentration.parameters['FAK'].value = 0.594150207445117
+                model_concentration.parameters['AKT'].value = 1.01975420186633
+                
+                model_population.parameters['ERK'].value = 0.897485095798471 * omega
+                model_population.parameters['FAK'].value = 0.594150207445117 * omega
+                model_population.parameters['AKT'].value = 1.01975420186633 * omega
+            else : #55 kPa
+                model_concentration.parameters['ERK'].value = 1
+                model_concentration.parameters['FAK'].value = 1
+                model_concentration.parameters['AKT'].value = 1
+                
+                model_population.parameters['ERK'].value = 1 * omega
+                model_population.parameters['FAK'].value = 1 * omega
+                model_population.parameters['AKT'].value = 1 * omega
+        else : #ERL treated
+            if '0.6 kPa' in condition :
+                model_concentration.parameters['ERK'].value = 0.186745227418267
+                model_concentration.parameters['FAK'].value = 0.397060244114162
+                model_concentration.parameters['AKT'].value = 0.245702711121333
+                
+                model_population.parameters['ERK'].value = 0.186745227418267 * omega
+                model_population.parameters['FAK'].value = 0.397060244114162 * omega
+                model_population.parameters['AKT'].value = 0.245702711121333 * omega
+            elif '4 kPa' in condition :
+                model_concentration.parameters['ERK'].value = 0.211453830597783
+                model_concentration.parameters['FAK'].value = 0.709172297576571
+                model_concentration.parameters['AKT'].value = 0.598518145949655
+                
+                model_population.parameters['ERK'].value = 0.211453830597783 * omega
+                model_population.parameters['FAK'].value = 0.709172297576571 * omega
+                model_population.parameters['AKT'].value = 0.598518145949655 * omega
+            else : #55 kPa
+                model_concentration.parameters['ERK'].value = 0.273618423688386
+                model_concentration.parameters['FAK'].value = 1.075820621939
+                model_concentration.parameters['AKT'].value = 0.585067267459499
+                
+                model_population.parameters['ERK'].value = 0.273618423688386 * omega
+                model_population.parameters['FAK'].value = 1.075820621939 * omega
+                model_population.parameters['AKT'].value = 0.585067267459499 * omega
+        
+        
+        #running the simulation with the experiment parameters (run_time)
+        #signal.alarm(60)
+        try:
+            try:
+                (cells, cell_count) = runAKTERK(cells, init, run_time, observed_cells_time, model_concentration, model_population)
+                #signal.alarm(0)
+            except :
+                cells=0
+                np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/parameter_vector_error_runakterk.npy", parameter_vector)
+            
+            if cells == 0:
+                return np.inf
+            
+            IMT_eoe_counts = retrieve_cellState(run_time, init, cells)
+            all_events_simulated = all_events(run_time, IMT_eoe_counts)
+            all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<30)]
+            
+            
+            #finding the parameters for the EMG and fractional proliferation model
+            
+            if len(all_events_simulated)<=1 : #not enough events to optimize the fractional proliferation model
+                return np.inf
+            
+            
+            mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
+            
+            censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
+            
+            if len(mitotic_lifespans)<=1 : #not enough events to optimize the fractional proliferation model
+                return np.inf
+            
+            try :
+                number_of_deaths = len(all_events_simulated) - (all_events_simulated['event']=='apoptosis').value_counts()[0]
+                cell_time_total = sum(all_events_simulated['Lifespan'])
+                
+                m = fp.mle(mitotic_lifespans, censored_lifespans)
+                
+                parameters_sim[condition] = {}
+                
+                parameters_sim[condition]['a'] = number_of_deaths/cell_time_total
+                
+            except : 
+                np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/parameter_vector_error_mle.npy", parameter_vector)
+                np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/mle_censored_lifespans.npy", censored_lifespans)
+                np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/mle_mitotic_lifespans.npy", mitotic_lifespans)
+                return np.inf
+            
+            try :
+                parameters_sim[condition]['mu'] = m['x'][0]
+                parameters_sim[condition]['sigma'] = m['x'][1]
+                parameters_sim[condition]['lambda'] = m['x'][2]
+                parameters_sim[condition].update(fp.q_rates(m))
+            except :
+                np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/parameter_vector_error_qrates.npy", parameter_vector)
+                np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/mitotic_lifespans.npy", mitotic_lifespans)
+                np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/censored_lifespans.npy", censored_lifespans)
+                np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/all_events_simulated.npy", all_events_simulated)
+                return np.inf
+                
+                
+            #comparing those parameters and mmd:
+            
+            number_of_IMT_to_sample = min (len(mitotic_lifespans), len(mitotic_lifespans_exp))
+            
+            simulated_IMT = random.sample(mitotic_lifespans.to_list(), number_of_IMT_to_sample)
+            experimental_IMT = random.sample(mitotic_lifespans_exp.to_list(), number_of_IMT_to_sample)
+            
+            cost+=nmmd2_rbf(np.array([simulated_IMT]).transpose(), np.array([experimental_IMT]).transpose(), 1)
+            
+            for name in parameter_names:
+                print(name)
+                if parameters_exp[condition][name]<10**-5:
+                    parameters_exp[condition][name] = 1e-5
+                if parameters_sim[condition][name]<10**-5:
+                    parameters_sim[condition][name] = 1e-5
+                
+                cost += abs(np.log(parameters_sim[condition][name]) - np.log(parameters_exp[condition][name]))
+                
+                
+                print(cost)
+
+        except :#TimeoutException as exc:
+            np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/parameter_vector_error_over_60_sec" + str(random.random()) + ".npy", parameter_vector)
+#            return np.inf
+        
+    return cost
+
+
+
+#
+#
+#all_events_simulated = np.load(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/error2/all_events_simulated.npy", allow_pickle=True)
+#
+#all_events = pd.DataFrame(columns=['event' ,'Birthtime','Lifespan'])
+#
+#for i in range(len(all_events_simulated)):
+#    all_events = all_events.append(dict(zip(all_events.columns,all_events_simulated[i].tolist())), ignore_index=True)
+#    
+#all_events_simulated = all_events
+    
+
+#different types of error
+    
+
+#over 60 sec running : parameter_vector_error_over_60_sec: should b okay now
+#runakterk doesn't work : parameter_vector_error_runakterk : should b okay now
+#fractional proliferation model is not fitted by the data : mle_censored_lifespans and mle_mitotic_lifespans : 
+    
