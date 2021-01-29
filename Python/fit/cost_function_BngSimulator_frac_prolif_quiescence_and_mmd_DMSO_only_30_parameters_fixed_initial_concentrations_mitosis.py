@@ -16,8 +16,11 @@ def handler(signum, frame):
     print('forever is over!')
     raise TimeoutException()
 
+
+
 # Register the signal function handler
 signal.signal(signal.SIGALRM, handler)
+
 
 
 path="/home/jeremie"
@@ -138,7 +141,7 @@ observed_cells_time = 30
 
 
 
-def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector,cells):    
+def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector):    
     
     print("The parameters are ")
     print(parameter_vector)
@@ -210,11 +213,11 @@ def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector,ce
         
         
         #running the simulation with the experiment parameters (run_time)
-        #signal.alarm(60)
+        signal.alarm(100)
         try:
             try:
-                (cells, cell_count) = runAKTERK(cells, init, run_time, observed_cells_time, model_concentration, model_population)
-                #signal.alarm(0)
+                (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population)
+                signal.alarm(0)
             except :
                 cells=0
                 np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/parameter_vector_error_runakterk.npy", parameter_vector)
@@ -290,9 +293,9 @@ def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector,ce
                 
                 print(cost)
 
-        except :#TimeoutException as exc:
+        except TimeoutException as exc:
             np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/parameter_vector_error_over_60_sec" + str(random.random()) + ".npy", parameter_vector)
-#            return np.inf
+            return np.inf
         
     return cost
 
