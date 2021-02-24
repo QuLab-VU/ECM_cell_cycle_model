@@ -31,7 +31,7 @@ BH3=y(21);
 BH3BCL2 = y(22);
 BAXm=p.BAXt-BAX-BAXmBCL2;
 BCL2=p.BCL2t-BH3BCL2-BAXmBCL2;
-Stress=2-AKT-ERK;
+Stress=1-0.8*AKT-0.2*ERK;
  
  
 %RUN THIS IN THE PRESENCE AND ABSENCE OF FAK on P1  so dialing p.V_Fp from
@@ -96,7 +96,6 @@ dydt(9) = p.s*(((p.k_P1*CycD*Rb)/((p.K_CD)+Rb)) + ((p.k_P2*CycE*Rb)/((p.K_CE)+Rb
 dydt(10) = p.s*(((p.k_E*(Myc/((p.K_M)+Myc))*(E2F/((p.K_E)+E2F)))+((p.k_b*Myc)/((p.K_M)+Myc)))+...
     ((p.k_P1*CycD*RbE2F)/((p.K_CD)+RbE2F))+((p.k_P2*CycE*RbE2F)/((p.K_CE)+RbE2F))-...
     ((p.k_RE)*Rb*E2F)-(p.d_E*E2F)-(((p.V_2E2F*E2F*CycA)/((p.K_2E2F)+E2F))));
- 
 %RB E2F bind complex is degraded , removed from phosphorylation by cyc D
 %and cycE 
 dydt(11) = p.s*(((p.k_RE)*Rb*E2F)-(1*(((p.k_P1*CycD*RbE2F)/((p.K_CD)+RbE2F))+((p.k_P2*CycE*RbE2F)/((p.K_CE)+RbE2F))...
@@ -111,7 +110,7 @@ dydt(12) = p.s*(p.V_1Me *E2F*(p.a+p.b1*CycE)*(p.CycE_tot-CycE-CycEp21)/(p.K_1Me+
 dydt(13) = p.s*((p.k_c3*CycE*p21)-(p.k_c4*CycEp21));
  
 %Cyclin A  - You want this constrained by the form - matching the Skeleton
-%Model
+%Modelvscdh1a 
 dydt(14) = p.s*(p.V_1Ma * E2F*(p.CycA_tot-CycAp21-CycA)/(p.K_1Ma+p.CycA_tot-CycAp21-CycA)...
     -(p.k_c5*CycA*p21)+(p.k_c6*CycAp21)-(p.V_2Ma*Cdc20*(CycA/(p.K_2Ma+CycA))));
 dydt(15) = p.s*((p.k_c5*CycA*p21)-(p.k_c6*CycAp21));

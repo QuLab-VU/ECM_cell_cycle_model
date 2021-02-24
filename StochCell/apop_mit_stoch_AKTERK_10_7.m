@@ -108,7 +108,7 @@ BH3 = x(21);
 BH3BCL2 = x(22);
 BAXm=x(23);
 BCL2=x(24);
-Stress=2-p.AKT-p.ERK;
+Stress=1-0.8*p.AKT-0.2*p.ERK;
 
 %skp2
 w1=p.s*(p.V_sskp2*p.omega); %Basal skp2 synthesis
