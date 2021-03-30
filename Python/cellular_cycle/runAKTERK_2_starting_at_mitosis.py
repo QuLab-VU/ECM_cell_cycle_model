@@ -28,9 +28,11 @@ from peakfinder import peakfinder
 
 omega=200
 
+
+
 #######################################################################
 
-def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population):
+def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population, idx):
     
     
     
@@ -43,9 +45,11 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     v = 0.05;     
     sys_size=200; #cell size
     
-    variable_range = runStochcell(model_concentration);
+    variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx);
+    print(tmp_score)
+    print(check)
     
-    if variable_range=={} or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0): #the model doesn't oscillate o the model allows negativ concentrations (possible for the apoptosis module)
+    if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.1: #the model doesn't oscillate o the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
         return (0,0)
     
     variable_range= {'obsSkp2': [19], 'obsp21': [7], 'obsp21p': [6], 'obscdh1act': [7],  'obscdh1inact': [193], 'obsMyc': [89], 'obsCycD': [59], 'obsCycDp21': [6], 'obspRb': [47], 'obspRbp': [101], 'obsE2F': [12], 'obspRbE2F': [140], 'obsCycE': [4],  'obsCycEp21': [0], 'obsCycA': [17], 'obsCycAp21': [10], 'obsCycB': [94], 'obsCycBp21': [1], 'obsCdc20': [164], 'obsBAX': [200], 'obsBAXmBCL2': [0], 'obsBH3': [0], 'obsBH3BCL2': [7], 'obsBAXm': [0], 'obsBCL2': [183]}
@@ -95,6 +99,7 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                     for j in cells['molecules'][ii] :
                         Initial=Initial+[cells['molecules'][ii][j][-1]]
                     simres = sim.run(initials=Initial, stop_if = 'obsBH3>200');
+                    #simres = sim.run(initials=Initial, stop_if = 'obsSkp2>400||obsp21>400||obsp21p>400||obscdh1act>400||obscdh1inact>400||obsMyc>400||obsCycD>400||obsCycDp21>400||obspRb>400||obspRbp>400||obsE2F>400||obspRbE2F>400||obsCycE>400||obsCycEp21>400||obsCycA>400||obsCycAp21>400||obsCycB>400||obsCycBp21>400||obsCdc20>400||obsBAX>400||obsBAXmBCL2>400||obsBH3>200||obsBH3BCL2>400||obsBAXm>400||obsBCL2>400', method='ssa', max_sim_steps = T * 2000);
                     print(parameter_vector_original)
                     print("simulation done")
                     

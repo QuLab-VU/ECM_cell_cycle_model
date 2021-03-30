@@ -6,25 +6,26 @@ Created on Wed May 20 10:42:26 2020
 """
 #time stopper:
 
-import signal
-
-class TimeoutException(RuntimeError):
-    """ Time out occurred! """
-    pass
-
-def handler(signum, frame):
-    print('forever is over!')
-    raise TimeoutException()
-
+#
+#import signal
+#
+#class TimeoutException(RuntimeError):
+#    """ Time out occurred! """
+#    pass
+#
+#def handler(signum, frame):
+#    print('forever is over!')
+#    raise TimeoutException()
+#
 
 
 # Register the signal function handler
-signal.signal(signal.SIGALRM, handler)
+#signal.signal(signal.SIGALRM, handler)
 
 
 
 path="/home/jeremie"
-#path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
+path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
 
 
 import sys
@@ -32,9 +33,9 @@ sys.path.insert(0, __file__ + "/../cellular_cycle") #add a pathway to the model
 #sys.path.insert(0, path + "/cellular_cycle") #add a pathway to the model
 #sys.path.insert(0, path + "/fit") #add a pathway to the model
 
-from Austin_proliferation_model_concentration_3 import model
+from Austin_proliferation_model_concentration_4 import model
 model_concentration=model
-from Austin_proliferation_model_population_3 import model
+from Austin_proliferation_model_population_4 import model
 model_population=model
 
 
@@ -81,7 +82,7 @@ all_events_exp = {}
 
 run_time=102.3
 omega=200
-init=8
+init=50
 
 
 
@@ -129,24 +130,39 @@ pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","
 
 
 ##############################################################################
+def RBS(x,x0,sigma) :
+    observations , dimensions= np.shape(x0)
+    s=0
+    for i in range(observations):
+        s+=math.exp(-np.linalg.norm(x-x0[i])**2/(2*sigma**2)) / (sigma*math.sqrt(2*math.pi))
+    if observations != 0:
+        return s/observations
+    else:
+        return s
+    
+    
+##############################################################################
+        
 conditions=['0.6 kPa DMSO']
 parameter_names = ['a','d','q']
 
 observed_cells_time = 30
+sigma=5
 
 
 #parameter_vector = parameter_vector_error
 #parameter_vector = parameter_vector_error_over_60_sec
 #parameter_vector = parameter_vector_error_runakterk
+#parameter_vector = [0.01796364778625122, 0.11362811190427101, 0.0008276599610971477, 0.6451204157405731, 4.515842910184013, 0.016427851822702934, 6.794676345427822, 0.06526961947442374, 0.1934733242502379, 0.34232423258816486, 82.19791287433931, 0.3610094736457807, 116.75734850864045, 2.368276243820679, 5.816445291899858, 1.5990499381060275, 0.04505357247470116, 43.70269268253706, 19.379783033100328, 23.761725463454734, 0.3705507155537046, 60.679678761195824, 0.021925638754823482, 709.7991617788466, 0.03004544205271144, 5.955282169100989e-05, 0.0020243858391033893, 0.30033748241996405, 0.33677088633493957, 0.0028291772439897416]
 
 
 
-def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector):    
+def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector, idx):    
     
     print("The parameters are ")
     print(parameter_vector)
     
-    global model_concentration, model_population, init, run_time, observed_cells_time
+    global model_concentration, model_population, init, run_time, observed_cells_time, sigma
     
     param_dict = {pname: pvalue for pname, pvalue in zip(pysb_sampled_parameter_names, parameter_vector)}   
     for pname, pvalue in param_dict.items():
@@ -155,6 +171,8 @@ def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector):
         model_concentration.parameters[pname].value = (pvalue)
     
     parameters_sim={}
+    cost_frac_prolif_model=0
+    cost_mmd=0
     cost=0
     
     for condition in conditions:
@@ -213,11 +231,11 @@ def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector):
         
         
         #running the simulation with the experiment parameters (run_time)
-        signal.alarm(100)
+        #signal.alarm(100)
         try:
             try:
-                (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population)
-                signal.alarm(0)
+                (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population, idx)
+                #signal.alarm(0)
             except :
                 cells=0
                 np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/parameter_vector_error_runakterk.npy", parameter_vector)
@@ -228,7 +246,7 @@ def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector):
             IMT_eoe_counts = retrieve_cellState(run_time, init, cells)
             all_events_simulated = all_events(run_time, IMT_eoe_counts)
             all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<30)]
-            
+            all_events_simulated.to_pickle(path + "/fit_data/sobol_seq/cost_function_model_4/all_events_simulated/all_events_simulated_" + str(idx) + "_50_initial_cells.pkl")
             
             #finding the parameters for the EMG and fractional proliferation model
             
@@ -274,13 +292,18 @@ def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector):
                 
             #comparing those parameters and mmd:
             
-            number_of_IMT_to_sample = min (len(mitotic_lifespans), len(mitotic_lifespans_exp))
-            
-            simulated_IMT = random.sample(mitotic_lifespans.to_list(), number_of_IMT_to_sample)
-            experimental_IMT = random.sample(mitotic_lifespans_exp.to_list(), number_of_IMT_to_sample)
-            
-            cost+=nmmd2_rbf(np.array([simulated_IMT]).transpose(), np.array([experimental_IMT]).transpose(), 1)
-            
+            try:
+                #number_of_IMT_to_sample = min (len(mitotic_lifespans), len(mitotic_lifespans_exp))
+                number_of_IMT_to_sample=72
+                
+                simulated_IMT = random.sample(mitotic_lifespans.to_list(), number_of_IMT_to_sample)
+                experimental_IMT = random.sample(mitotic_lifespans_exp.to_list(), number_of_IMT_to_sample)
+                
+                cost_mmd += nmmd2_rbf(np.array([simulated_IMT]).transpose(), np.array([experimental_IMT]).transpose(), 1) #difference between IMT distribution
+                
+            except:
+                cost_mmd+=60
+                
             for name in parameter_names:
                 print(name)
                 if parameters_exp[condition][name]<10**-5:
@@ -288,13 +311,27 @@ def cost_function_reduced_quiescence_DMSO_only_30_parameters(parameter_vector):
                 if parameters_sim[condition][name]<10**-5:
                     parameters_sim[condition][name] = 1e-5
                 
-                cost += abs(np.log(parameters_sim[condition][name]) - np.log(parameters_exp[condition][name]))
+                cost_frac_prolif_model += abs(np.log(parameters_sim[condition][name]) - np.log(parameters_exp[condition][name]))
+                
+            cost += cost_frac_prolif_model + cost_mmd
+                
+            print(cost)
                 
                 
-                print(cost)
-
-        except TimeoutException as exc:
-            np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/parameter_vector_error_over_60_sec" + str(random.random()) + ".npy", parameter_vector)
+                
+            x=np.linspace(0,120,360)
+            y=[RBS(i, np.transpose([mitotic_lifespans.tolist()]), sigma) for i in x]
+            np.save(path + "/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/IMT_distribution_" + str(idx) + "_50_initial_cells.npy",np.array(y))
+            
+            frac_prolif_parameters_temp = {"index":[idx], "a":[parameters_sim['0.6 kPa DMSO']['a']], "d":[parameters_sim['0.6 kPa DMSO']['d']], "q":[parameters_sim['0.6 kPa DMSO']['q']], "cost":[cost], "cost_mmd":[cost_mmd], "cost_frac_prolif_model":[cost_frac_prolif_model]}
+            frac_prolif_parameters_temp = pd.DataFrame(data=frac_prolif_parameters_temp)
+            frac_prolif_parameters_temp.to_pickle(path + "/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/parameters_" + str(idx) + "_50_initial_cells.pkl")
+    
+    
+                
+                
+        except :#TimeoutException as exc:
+            np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/parameter_vector_error_over_X_sec" + str(random.random()) + ".npy", parameter_vector)
             return np.inf
         
     return cost
