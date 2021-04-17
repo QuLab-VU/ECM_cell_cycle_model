@@ -19,7 +19,10 @@ model_population=model
 
 path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
 
-frac_prolif_parameters = pd.read_pickle(path + r"/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/frac_prolif_parameters_all_parameters_50_initial_cells.pkl")
+#frac_prolif_parameters = pd.read_pickle(path + r"/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/frac_prolif_parameters_all_parameters_50_initial_cells.pkl")
+
+frac_prolif_parameters = pd.read_pickle(path + r"/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/frac_prolif_parameters_all_parameters_006_55_kPa.pkl")
+
 
 IMT_distribution = pd.read_pickle(path + r"/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/IMT_distribution_all_parameters_50_initial_cells.pkl")
 
@@ -34,7 +37,9 @@ frac_prolif_parameters.sort_values(by=['cost'])
 #generate th sobol sequence
 
 pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2"]
+
 loc=[]
+
 for parameter in pysb_sampled_parameter_names:
     print((model.parameters[parameter].value))
     loc+=[np.log10(model.parameters[parameter].value)]
@@ -48,9 +53,9 @@ l2 = 4*l + (np.array(loc)-2)
 #selecting the best parameters
 #example: the ten best
 
-frac_prolif_parameters.sort_values(by=['cost'])[0:10]
+frac_prolif_parameters.sort_values(by=['cost_total'])[0:100]
 
-indices = [int(i)-1 for i in frac_prolif_parameters.sort_values(by=['cost'])["index"].tolist()[0:10]] #indices in the sobol sequence
+indices = [int(i)-1 for i in frac_prolif_parameters.sort_values(by=['cost_total'])["index"].tolist()[0:100]] #indices in the sobol sequence
 
 parameters = [l2[i] for i in indices]
 
