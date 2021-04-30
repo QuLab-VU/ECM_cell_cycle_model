@@ -34,6 +34,29 @@ frac_prolif_parameters.sort_values(by=['cost'])
 #frac_prolif_parameters.sort_values(by=['cost_mmd'])
 
 ##########
+
+#ploting cost distribution
+
+#setting the global cost
+sum_column = frac_prolif_parameters["cost_006"] +frac_prolif_parameters["cost_frac_prolif_model_006"] + 0 * frac_prolif_parameters["cost_mmd_55"]/2
+
+frac_prolif_parameters["cost_total"] = sum_column
+
+#different plots:
+sns.distplot(frac_prolif_parameters['cost_mmd_006'])
+#sns.distplot(frac_prolif_parameters['cost_frac_prolif_model_006'])
+sns.distplot(frac_prolif_parameters['cost_006'])
+
+plt.scatter(frac_prolif_parameters['cost_mmd_55']/2,frac_prolif_parameters['cost_006'])
+
+sns.distplot(frac_prolif_parameters['cost_total'])
+sns.distplot(frac_prolif_parameters['cost_mmd_55']/2)
+sns.distplot(frac_prolif_parameters['cost_006'])
+
+np.mean(frac_prolif_parameters['cost_mmd_55']/3)
+np.mean(frac_prolif_parameters['cost_006'])
+
+##########
 #generate th sobol sequence
 
 pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2"]
@@ -60,3 +83,4 @@ indices = [int(i)-1 for i in frac_prolif_parameters.sort_values(by=['cost_total'
 parameters = [l2[i] for i in indices]
 
 
+#########################
