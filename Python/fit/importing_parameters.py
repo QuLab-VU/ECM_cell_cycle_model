@@ -11,9 +11,9 @@ import sobol_seq
 import pylab as pl
 
 ##
-from Austin_proliferation_model_concentration_4 import model
+from Austin_proliferation_model_concentration_5 import model
 model_concentration=model
-from Austin_proliferation_model_population_4 import model
+from Austin_proliferation_model_population_5 import model
 model_population=model
 
 from pysb.simulator import BngSimulator

@@ -12,10 +12,10 @@ path="/home/jeremie"
 import sys
 sys.path.insert(0, path+"/cellular_cycle") #add a pathway to the model
 
-from Austin_proliferation_model_concentration_4 import model
+from Austin_proliferation_model_concentration_5 import model
 model_concentration=model
 
-from Austin_proliferation_model_population_4 import model
+from Austin_proliferation_model_population_5 import model
 model_population=model
 
 
@@ -35,7 +35,7 @@ import matplotlib.pyplot as plt
 #Compare with matlab simulations
 
 from scipy.io import loadmat
-y = loadmat('C:/Users/Grim.M/Ecole/ens/Master/S2/Stage/Code/cellular_cycle/y.mat')
+y = loadmat('C:/Users/Grim.M/Ecole/ens/Master/S2/Stage/Code/cellular_cycle/y_4.mat')
 L=np.transpose(y['y'])
 l=L.tolist()
 #
@@ -74,8 +74,11 @@ print('\n'.join(f'{n}: {o}' for n,o in enumerate(model.odes)))
 #3rd version, changing the parameters:
 
 import mat73
+
 data_dict = mat73.loadmat(path+'/v1_test/params_8_20.mat')
 data_dict_2 = mat73.loadmat(path+'/cellular_cycle/parameters__.mat')
+
+data_dict_2 = mat73.loadmat(path+'/v1/params_7_11_21.mat')
 
 new_param=data_dict['p']
 del new_param['GF']
@@ -94,7 +97,7 @@ for key in new_param_2.keys():
 
 
 for key in new_param_2.keys():
-    print(key)
+    #print(key)
     if model_population.parameters[key].value == new_param_2[key]:
         print('')    
     else:
@@ -155,6 +158,13 @@ model_population.parameters['s'].value * model_population.parameters['V_dskp2'].
 model_population.parameters['s'].value * model_population.parameters['Skp2_0'].value * model_population.parameters['k_ddskp2'].value
     
 
+print('\n'.join(f'{n}: {o}' for n,o in enumerate(model_concentration.odes)))
+print('\n'.join(f'{n}: {o}' for n,o in enumerate(model.odes)))
+
+
+model_concentration.species
+
+
 ####Deterministic simulation
 
 model_concentration.parameters['AKT'].value = 1
@@ -185,7 +195,7 @@ pl.plot(t,yout['obsBCL2'], label='obsBCL2', lw=2)
 ####Comparison with Matlab deterministic simulation
 
 from pathlib import Path
-fn = Path(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle\comparison_pysb_matlab_4_0-300.pdf').expanduser()
+fn = Path(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle\comparison_pysb_matlab_5_0-300.pdf').expanduser()
 
 obs = ['obsSkp2', 'obsp21', 'obsp21p', 'obscdh1act', 'obsMyc', 'obsCycD', 'obsCycDp21', 'obspRb', 'obspRbp', 'obsE2F', 'obspRbE2F', 'obsCycE', 'obsCycEp21', 'obsCycA', 'obsCycAp21', 'obsCycB', 'obsCycBp21', 'obsCdc20', 'obsBAX', 'obsBAXmBCL2', 'obsBH3','obsBH3BCL2','obsBAXm','obsBCL2']
 
@@ -204,7 +214,7 @@ for ax in axs.flat:
 plt.savefig(fn, bbox_inches = 'tight')
 
 
-fn = Path(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle\comparison_pysb_matlab_4.pdf').expanduser()
+fn = Path(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle\comparison_pysb_matlab_4_.pdf').expanduser()
 
 fig, axs = plt.subplots(6, 4)
 
