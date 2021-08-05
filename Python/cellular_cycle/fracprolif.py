@@ -57,10 +57,10 @@ def mle(mitotic_lifespans, censored_lifespans):
     #m = minimize(qsurvival_nllik, x0, method="L-BFGS-B", bounds=bounds)
     
     #m = minimize(qsurvival_nllik, x0, method="TNC", bounds=bounds)
-    print(mitotic_lifespans)
-    print(censored_lifespans)
-    print(x0)
-    print(bounds)
+    #print(mitotic_lifespans)
+    #print(censored_lifespans)
+    #print(x0)
+    #print(bounds)
     try:
         m = minimize(qsurvival_nllik, x0, method="SLSQP", bounds=bounds)
         return m

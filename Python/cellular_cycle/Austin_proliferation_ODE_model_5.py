@@ -37,9 +37,9 @@ Monomer('ERK', )
 
 ###Parameter
 
-Parameter('AKT',200)
-Parameter('ERK',200)
-Parameter('FAK',200)
+Parameter('AKT',1)
+Parameter('ERK',1)
+Parameter('FAK',1)
 
 Parameter('m', 3)
 Parameter('BCL2t', 0.95)
@@ -302,12 +302,12 @@ Expression('kinact_Cdc20', s * ((V_2cdc20 * omega) * (1 / (K_2cdc20 * omega + ob
 
 
 ##Switch apoptosis
-Expression('kact_BAXm', m * (kf1 + (kf2 / omega) * obsBH3))
+Expression('kact_BAXm', m * (kf1  + (kf2 / omega) * obsBH3))
 Expression('kinact_BAXm', m * kb)
 Expression('kasso_BAXm_BCL2', m * (kasbaxmbcl2 / omega))
 Expression('kdiss_BAXmBCL2', m * kdsbaxmbcl2)
 Expression('kinact_BAXmBCL2', m * kb)
-Expression('ks_BH3', m * ((k1sbh3 * omega) + k2sbh3 * (200 - 0.8 * AKT - 0.2 * ERK)))
+Expression('ks_BH3', m * (k1sbh3 * omega + k2sbh3 * (omega - 0.8 * AKT - 0.2 * ERK)))
 Expression('kd_BH3', m * kdbh3)
 Expression('kasso_BH3_BCL2', m * (kasbh3bcl2 / omega))
 Expression('kdiss_BH3BCL2', m * kdsbh3bcl2)

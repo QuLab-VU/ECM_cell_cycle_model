@@ -22,25 +22,26 @@ import scipy.stats as ss
 
 #model=model_concentration
 
-def runStochcell(model_population, model_concentration, index) :
+def runStochcell(model_population, model_concentration, index, condition) :
     
     v = 0.05;     
     sys_size=200;
     run_time=500;    
     CI=0;
-    path="/home/jeremie"
-    path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
+#    path="/home/jeremie"
+#    path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
     t = np.linspace(0, 800, 800)
     
-    
-    simres = ScipyOdeSimulator(model_concentration, t, verbose=True).run();
+    #print("ode simulation starting")
+    simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run();
     yout = simres.all;
     
-    simres_2 = BngSimulator(model_population, t, verbose=True).run();
+    simres_2 = BngSimulator(model_population, t, verbose=False).run();
     
     for obs in model_concentration.observables : 
-        print(obs.name)
-        print(np.any(yout[obs.name]>15)) #concentration too high
+        #pl.plot(yout[obs.name])
+        #print(obs.name)
+        #print(np.any(yout[obs.name]>15)) #concentration too high
         
         if np.any(yout[obs.name]>15) :
             return {}, False, 1
@@ -75,22 +76,23 @@ def runStochcell(model_population, model_concentration, index) :
     
     check=False
     
-    print(check)
+    #print(check)
     
     if arg_freq_max_Cdc20>1 and arg_freq_max_CycD>1 and arg_freq_max_CycE>1 and np.abs(fft_Cdc20[(f>0.005)*(f<0.1)])[arg_freq_max_Cdc20]>np.abs(fft_Cdc20[(f>0.005)*(f<0.1)])[arg_freq_max_Cdc20-1] and np.abs(fft_Cdc20[(f>0.005)*(f<0.1)])[arg_freq_max_Cdc20]>np.abs(fft_Cdc20[(f>0.005)*(f<0.1)])[arg_freq_max_Cdc20+1] and np.abs(fft_CycD[(f>0.005)*(f<0.1)])[arg_freq_max_CycD]>np.abs(fft_CycD[(f>0.005)*(f<0.1)])[arg_freq_max_CycD-1] and np.abs(fft_CycD[(f>0.005)*(f<0.1)])[arg_freq_max_CycD]>np.abs(fft_CycD[(f>0.005)*(f<0.1)])[arg_freq_max_CycD+1] and np.abs(fft_CycE[(f>0.005)*(f<0.1)])[arg_freq_max_CycE]>np.abs(fft_CycE[(f>0.005)*(f<0.1)])[arg_freq_max_CycE-1] and np.abs(fft_CycE[(f>0.005)*(f<0.1)])[arg_freq_max_CycE]>np.abs(fft_CycE[(f>0.005)*(f<0.1)])[arg_freq_max_CycE+1] :
         
         #Not necessary here
         check=True
-        print(check)
+        #print("Check=")
+        #print(check)
 
         
     (a,max_tmp_cdc) = peakfinder(simres_2.observables['obsCdc20'], 0.15*sys_size, 0.15*sys_size, 1, includeEndpoints=1);
     (b,max_tmp_cyce) = peakfinder(simres_2.observables['obsCycE'], 0.15*sys_size, 0.15*sys_size, 1, includeEndpoints=1);
     
     tmp_score=1
-    print(tmp_score)
-    print(len(max_tmp_cdc))
-    print(len(max_tmp_cdc))
+    #print(tmp_score)
+    #print(len(max_tmp_cdc))
+    #print(len(max_tmp_cdc))
     
     if len(max_tmp_cdc)>2 and len(max_tmp_cyce)>2 :
         ranks = ss.rankdata(np.concatenate([max_tmp_cdc, max_tmp_cyce]))
@@ -116,20 +118,32 @@ def runStochcell(model_population, model_concentration, index) :
         
     #variable_range = np.transpose(np.array(variable_range))
     
-    print(tmp_score)
-    print(path)
+    #print("tmp_score is")
+    #print(tmp_score)
+    #print(path)
     
-    if check==True and tmp_score<0.15:
-        np.save(path + "/fit_data/sobol_seq/cost_function_model_4/biochemical_data/ODE_timecourse_CycE_index_" + str(index), simres.observables['obsCycE'])
-        np.save(path + "/fit_data/sobol_seq/cost_function_model_4/biochemical_data/ODE_timecourse_CycD_index_" + str(index), simres.observables['obsCycD'])
-        np.save(path + "/fit_data/sobol_seq/cost_function_model_4/biochemical_data/ODE_timecourse_Cdc20_index_" + str(index) , simres.observables['obsCdc20'])
-        
-        np.save(path + "/fit_data/sobol_seq/cost_function_model_4/biochemical_data/ssa_timecourse_CycE_index_" + str(index), simres_2.observables['obsCycE'])
-        np.save(path + "/fit_data/sobol_seq/cost_function_model_4/biochemical_data/ssa_timecourse_CycD_index_" + str(index) , simres_2.observables['obsCycD'])
-        np.save(path + "/fit_data/sobol_seq/cost_function_model_4/biochemical_data/ssa_timecourse_Cdc20_index_" + str(index) , simres_2.observables['obsCdc20'])
-        
+#    if check==True and tmp_score<0.15:
+#        print(path + "/fit_data/sobol_seq/cost_function_model_5/biochemical_data/ODE_timecourse_CycE_index_" + str(index) + "_" + condition.replace(' ','_').replace('.','0'))
+#        np.save(path + "/fit_data/sobol_seq/cost_function_model_5/biochemical_data/ODE_timecourse_CycE_index_" + str(index) + "_" + condition.replace(' ','_').replace('.','0'), simres.observables['obsCycE'])
+#        np.save(path + "/fit_data/sobol_seq/cost_function_model_5/biochemical_data/ODE_timecourse_CycD_index_" + str(index) + "_" + condition.replace(' ','_').replace('.','0'), simres.observables['obsCycD'])
+#        np.save(path + "/fit_data/sobol_seq/cost_function_model_5/biochemical_data/ODE_timecourse_Cdc20_index_" + str(index) + "_" + condition.replace(' ','_').replace('.','0'), simres.observables['obsCdc20'])
+#        
+#        np.save(path + "/fit_data/sobol_seq/cost_function_model_5/biochemical_data/ssa_timecourse_CycE_index_" + str(index) + "_" + condition.replace(' ','_').replace('.','0'), simres_2.observables['obsCycE'])
+#        np.save(path + "/fit_data/sobol_seq/cost_function_model_5/biochemical_data/ssa_timecourse_CycD_index_" + str(index) + "_" + condition.replace(' ','_').replace('.','0'), simres_2.observables['obsCycD'])
+#        np.save(path + "/fit_data/sobol_seq/cost_function_model_5/biochemical_data/ssa_timecourse_Cdc20_index_" + str(index) + "_" + condition.replace(' ','_').replace('.','0'), simres_2.observables['obsCdc20'])
+#        
+#        print(path + "/fit_data/pso/high_and_low_stiffness_cost/biochemical_data/ODE_timecourse_CycE_index_" + str(index) + "_" + condition.replace(' ','_').replace('.','0'))
+#        np.save(path + "/fit_data/pso/high_and_low_stiffness_cost/biochemical_data/ODE_timecourse_CycE_index_" + str(index) + "_" + condition.replace(' ','_').replace('.','0'), simres.observables['obsCycE'])
+#        np.save(path + "/fit_data/pso/high_and_low_stiffness_cost/biochemical_data/ODE_timecourse_CycD_index_" + str(index) + "_" + condition.replace(' ','_').replace('.','0'), simres.observables['obsCycD'])
+#        np.save(path + "/fit_data/pso/high_and_low_stiffness_cost/biochemical_data/ODE_timecourse_Cdc20_index_" + str(index) + "_" + condition.replace(' ','_').replace('.','0'), simres.observables['obsCdc20'])
+#        
+#        np.save(path + "/fit_data/pso/high_and_low_stiffness_cost/biochemical_data/ssa_timecourse_CycE_index_" + str(index) + "_" + condition.replace(' ','_').replace('.','0'), simres_2.observables['obsCycE'])
+#        np.save(path + "/fit_data/pso/high_and_low_stiffness_cost/biochemical_data/ssa_timecourse_CycD_index_" + str(index) + "_" + condition.replace(' ','_').replace('.','0'), simres_2.observables['obsCycD'])
+#        np.save(path + "/fit_data/pso/high_and_low_stiffness_cost/biochemical_data/ssa_timecourse_Cdc20_index_" + str(index) + "_" + condition.replace(' ','_').replace('.','0'), simres_2.observables['obsCdc20'])
+#        
     
-    print(tmp_score)
+    #print(tmp_score)
+    #print(check)
     
     return variable_range, check, tmp_score
     

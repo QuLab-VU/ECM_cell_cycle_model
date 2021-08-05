@@ -28,7 +28,7 @@ from pysb.logging import EXTENDED_DEBUG
 
 import pylab as pl
 import numpy as np
-from pysb.export import export 
+from pysb.export import export
 import matplotlib.pyplot as plt
 
 
@@ -47,11 +47,11 @@ l=L.tolist()
 #tmp_t=tmp_t['tmp_t']
 
 
-tmp_x = loadmat('C:/Users/Grim.M/Ecole/ens/Master/S2/Stage/Code/cellular_cycle/tmp_x.mat')
+tmp_x = loadmat('C:/Users/Grim.M/Ecole/ens/Master/S2/Stage/Code/cellular_cycle/tmp_x_5.mat')
 L=np.transpose(tmp_x['tmp_x'])
 tmp_x=L.tolist()
 
-tmp_t = loadmat('C:/Users/Grim.M/Ecole/ens/Master/S2/Stage/Code/cellular_cycle/tmp_t.mat')
+tmp_t = loadmat('C:/Users/Grim.M/Ecole/ens/Master/S2/Stage/Code/cellular_cycle/tmp_t_5.mat')
 tmp_t=tmp_t['tmp_t']
 
 
@@ -122,7 +122,7 @@ for key in new_param_2.keys():
         model_population.parameters[key].value = new_param_2[key]
     if model_concentration.parameters[key].value != new_param_2[key]:
         model_concentration.parameters[key].value = new_param_2[key]
-        
+
 
 
 for key in new_param.keys():
@@ -135,13 +135,14 @@ for key in new_param.keys():
         
         
         
-        
+
 model_population.parameters['FAK'].value = (new_param['FAK']*200)
 model_population.parameters['ERK'].value = (new_param['ERK']*200)
 model_population.parameters['AKT'].value = (new_param['AKT']*200)
 model_population.parameters['omega'].value 
 
 #or 
+model_population.parameters['k_EMY'].value
 
 model_population.parameters['FAK'].value = (1*200)
 model_population.parameters['ERK'].value = (1*200)
@@ -154,6 +155,8 @@ model_population.parameters['s'].value*model_population.parameters['V_s2skp'].va
 
 model_population.parameters['s'].value * model_population.parameters['V_dskp2'].value * model_population.parameters['omega'].value * model_population.parameters['Skp2_0'].value / ( model_population.parameters['K_dskp2'].value * model_population.parameters['omega'].value + model_population.parameters['Skp2_0'].value ) * model_population.parameters['cdh1act_0'].value / ( model_population.parameters['K_cdh1'].value* model_population.parameters['omega'].value + model_population.parameters['cdh1act_0'].value)
 
+model_concentration.parameters['m'].value*(-( model_concentration.parameters['kf1'].value + model_concentration.parameters['kf2'].value/model_concentration.parameters['omega'].value*model_concentration.parameters['BH3_0'].value)* model_concentration.parameters['BAX_0'].value + model_concentration.parameters['kb'].value * model_concentration.parameters['BAXm_0'].value + model_concentration.parameters['kb'].value * model_concentration.parameters['BAXmBCL2_0'].value)
+
 
 model_population.parameters['s'].value * model_population.parameters['Skp2_0'].value * model_population.parameters['k_ddskp2'].value
     
@@ -162,10 +165,13 @@ print('\n'.join(f'{n}: {o}' for n,o in enumerate(model_concentration.odes)))
 print('\n'.join(f'{n}: {o}' for n,o in enumerate(model.odes)))
 
 
-model_concentration.species
+model_concentration.species[19]
+
+
 
 
 ####Deterministic simulation
+
 
 model_concentration.parameters['AKT'].value = 1
 model_concentration.parameters['ERK'].value = 1
@@ -187,10 +193,15 @@ pl.show()
 
 pl.plot(t,yout['obsCdc20'], label='obsCdc20', lw=2)
 
-pl.plot(t,yout['obsBAXmBCL2'] + yout['obsBAXm'] + yout['obsBAX'], label='obsBAXmBCL2', lw=2)
-pl.plot(t, yout['obsBAXmBCL2'] + yout['obsBH3BCL2'] + yout['obsBCL2'], label='obsBAXmBCL2', lw=2)
+pl.plot(t,yout['obsBAXmBCL2'] + yout['obsBAXm'] + yout['obsBAX'], label='obsBAX tot', lw=2)
+pl.plot(t, yout['obsBAXmBCL2'] + yout['obsBH3BCL2'] + yout['obsBCL2'], label='obsBCL2 tot', lw=2)
 pl.plot(t,yout['obsBAX'], label='obsBAX', lw=2)
 pl.plot(t,yout['obsBCL2'], label='obsBCL2', lw=2)
+
+pl.plot(l[23])
+
+pl.plot(l[22])
+
 
 ####Comparison with Matlab deterministic simulation
 
@@ -233,7 +244,7 @@ plt.savefig(fn, bbox_inches='tight')
 
 ####Stochastic simulation
 
-t = pl.linspace(0, 400, 4000)
+t = pl.linspace(0, 120, 170000)
 
 sim = BngSimulator(model_population, tspan=t, verbose=True)
 simres = sim.run(method='ssa', verbose=True)
@@ -247,6 +258,17 @@ for obs in range(5) :
     plt.plot(t,yout[observables[obs]], label=observables[obs], lw=2)
 plt.legend(loc=0)
 plt.show()
+
+observables=['obsCycE','obsCdc20', 'obsCycD']
+#observables=['obsSkp2']
+
+
+for obs in range(3) :    
+    plt.plot(t,yout[observables[obs]], label=observables[obs], lw=2)
+plt.legend(loc=0)
+plt.show()
+
+
 
 ###########
 #save to matlab
@@ -278,7 +300,7 @@ plt.savefig(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\report\figures\stoch_sim
 ####Comparing
 
 from pathlib import Path
-fn = Path(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle\comparison_pysb_matlab_stoch.pdf').expanduser()
+fn = Path(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle\comparison_pysb_matlab_stoch_5.pdf').expanduser()
 
 obs=['obsSkp2', 'obsp21', 'obsp21p', 'obscdh1act', 'obsMyc', 'obsCycD', 'obsCycDp21', 'obspRb', 'obspRbp', 'obsE2F', 'obspRbE2F', 'obsCycE', 'obsCycEp21', 'obsCycA', 'obsCycAp21', 'obsCycB', 'obsCycBp21', 'obsCdc20', 'obsBAX', 'obsBAXmBCL2', 'obsBH3','obsBH3BCL2','obsBAXm','obsBCL2']
 
@@ -294,9 +316,15 @@ for i in range(6):
 
 for ax in axs.flat:
     ax.label_outer()
-    
+
+
 plt.savefig(fn, bbox_inches='tight')
 
+j=0
+i=4
+plt.plot(t,yout[obs[j+i*4]], label=obs[j+i*4] +' PySB', lw=1, color='orange')
+plt.plot(tmp_t,tmp_x[j+i*4], label=obs[j+i*4] +' Matlab', lw=1, color='blue')
+plt.show()
 
 #############################################
 

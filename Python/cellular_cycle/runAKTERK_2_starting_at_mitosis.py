@@ -6,7 +6,7 @@ Created on Tue Feb 11 18:19:31 2020
 Title: runAKTERK
 """
 
-path="/home/jeremie"
+#path="/home/jeremie"
 
 #path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
 
@@ -32,7 +32,7 @@ omega=200
 
 #######################################################################
 
-def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population, idx):
+def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population, idx, condition):
     
     
     
@@ -45,11 +45,12 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     v = 0.05;     
     sys_size=200; #cell size
     
-    variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx);
-    print(tmp_score)
-    print(check)
+    variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx, condition);
+    #print(tmp_score);
+    #print(check);
     
     if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.1: #the model doesn't oscillate o the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
+        #print("check didn't pass");
         return (0,0)
     
     variable_range= {'obsSkp2': [19], 'obsp21': [7], 'obsp21p': [6], 'obscdh1act': [7],  'obscdh1inact': [193], 'obsMyc': [89], 'obsCycD': [59], 'obsCycDp21': [6], 'obspRb': [47], 'obspRbp': [101], 'obsE2F': [12], 'obspRbE2F': [140], 'obsCycE': [4],  'obsCycEp21': [0], 'obsCycA': [17], 'obsCycAp21': [10], 'obsCycB': [94], 'obsCycBp21': [1], 'obsCdc20': [164], 'obsBAX': [200], 'obsBAXmBCL2': [0], 'obsBH3': [0], 'obsBH3BCL2': [7], 'obsBAXm': [0], 'obsBCL2': [183]}
@@ -74,19 +75,19 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     current_time=np.transpose(np.concatenate([np.zeros((1,len(cells['molecules']))), np.ones((1,len(cells['molecules'])))])); #keeps track of the current time of each cell and whether it's dead or not 
     
     while any(cells['recording']) : #run the code only if there are cells that are recorded
-        print('while loop is starting')
+        #print('while loop is starting');
         
         cell_count_tmp=np.zeros((1,2)); #temporary cell count with current cell time and whether a cell was added, taken away, or not
         
-        print(cell_count_tmp)
+        #print(cell_count_tmp);
         for ii in range(len(cells['molecules'])) :
-            print(current_time)
-            print("new cell")
+            #print(current_time);
+            #print("new cell");
             
             #If the time is between 0 to observed_cells_time
             
             if current_time[ii,0]<observed_cells_time and cells['living_cell'][ii] :#if there's time left and the cell has not died
-                print('before')
+                #print('before');
                 
                 T = 20
                 
@@ -100,13 +101,13 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                         Initial=Initial+[cells['molecules'][ii][j][-1]]
                     simres = sim.run(initials=Initial, stop_if = 'obsBH3>200');
                     #simres = sim.run(initials=Initial, stop_if = 'obsSkp2>400||obsp21>400||obsp21p>400||obscdh1act>400||obscdh1inact>400||obsMyc>400||obsCycD>400||obsCycDp21>400||obspRb>400||obspRbp>400||obsE2F>400||obspRbE2F>400||obsCycE>400||obsCycEp21>400||obsCycA>400||obsCycAp21>400||obsCycB>400||obsCycBp21>400||obsCdc20>400||obsBAX>400||obsBAXmBCL2>400||obsBH3>200||obsBH3BCL2>400||obsBAXm>400||obsBCL2>400', method='ssa', max_sim_steps = T * 2000);
-                    print(parameter_vector_original)
-                    print("simulation done")
+                    #print(parameter_vector_original);
+                    #print("simulation done");
                     
                 else :
                     simres = sim.run(verbose=False, stop_if = 'obsBH3>200');
-                    print(parameter_vector_original)
-                    print("simulation done")
+                    #print(parameter_vector_original);
+                    #print("simulation done");
                     
                 tmp_t = simres.tout[0]
                     
@@ -150,7 +151,7 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                     for index in range(cells['division'][ii], len(max_tmp_cdc)) :
 
                         div_ind = (max_tmp_cdc[index]);
-                        print('index')
+                        #print('index');
                         
                         if index==0 : #first cell, there is no need to check if CycE has cycled (it can have cycled before recording), it will be checked between two mitosis
                             cells['division'][ii] = cells['division'][ii]+1;               
@@ -219,7 +220,7 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
             #if the time is > to observed_cells_time, we don't take into account new cells, only the fate of the cells that are already born.
             
             elif current_time[ii,0]<run_time and current_time[ii,0]>=observed_cells_time and cells['recording'][ii]:#if there's time left and the cell has not died/or no fate after observed_cells_time
-                print('after')
+                #print('after');
                 T = 41 - (current_time[ii,0]>(run_time-40))*(40 - run_time + current_time[ii,0])
                 
                 tmp_t = pl.linspace(0, T, int(T*10))
@@ -230,11 +231,11 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                     for j in cells['molecules'][ii] :
                         Initial=Initial+[cells['molecules'][ii][j][-1]]
                     simres = sim.run(initials=Initial, stop_if = 'obsBH3>200');
-                    print(parameter_vector_original)
+                    #print(parameter_vector_original);
                     
                 else :
                     simres = sim.run(verbose=False, stop_if = 'obsBH3>200');
-                    print(parameter_vector_original)
+                    #print(parameter_vector_original);
                 
                 tmp_t = simres.tout[0]
                 yout = simres.observables
@@ -254,8 +255,8 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 a, max_tmp_cycE = peakfinder(cells['molecules'][ii]['obsCycE'],0.15*200,0.15*200);  #cycE
             #min_tmp=peakfinder(cells{ii,2}(:,14),[],30,-1);   #cdc20
                 
-                if len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])>20 or np.any(np.array(cells['molecules'][ii]['obsBAXm'])>=40) or np.any(np.array(cells['molecules'][ii]['obsBH3'])>=200) :#dying cell   #baxm >20 then apoptosis
-                    print('death')
+                if len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])>20 or np.any(np.array(cells['molecules'][ii]['obsBAXm'])>=40) or np.any(np.array(cells['molecules'][ii]['obsBH3'])>=200) :#dying cell   #baxm >20 then apoptosis;
+                    #print('death');
                     cells['living_cell'][ii]=False; #the cell dies
                     cells['recording'][ii]=False; #Stop the recording
                     death=[i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 20];
@@ -277,7 +278,7 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                         cells['recording'][ii]=False
 
                         div_ind = (max_tmp_cdc[index]);
-                        print('index')
+                        #print('index');
                         
                         if index==0: #first cell, there is no need to check id CycE has cycled, it will be checked between two mitosis
                             cells['division'][ii] = cells['division'][ii]+1;               
@@ -331,7 +332,7 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                     
                     
                 else : #size(max_tmp_cdc,1)==cells{ii,4} && length(find(cells{ii,2}(:,23)>25))<20 #quiescent cell$
-                    print('quiescence')
+                    #print('quiescence');
                     current_time[ii,0]=cells['time'][ii][-1];
                     cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][-1], 0], axis=0);
                     if current_time[ii,0]>=run_time : #if the cell reached the end of the experiment
@@ -394,8 +395,9 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
             cell_count=cell_count[indices,:];
         #disp(cell_count(end,:)) 
         except:
-            np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cell_count_tmp.npy", cell_count_tmp)
-            np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cell_count_tmp.npy", cell_count)
-            np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/ii.npy", ii)
+            print("except runakterk");
+#            np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cell_count_tmp.npy", cell_count_tmp)
+#            np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cell_count_tmp.npy", cell_count)
+#            np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/ii.npy", ii)
             
     return (cells, cell_count)
