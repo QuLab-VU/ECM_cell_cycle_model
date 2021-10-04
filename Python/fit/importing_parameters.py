@@ -26,10 +26,10 @@ path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
 
 #frac_prolif_parameters = pd.read_pickle(path + r"/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/frac_prolif_parameters_all_parameters_50_initial_cells.pkl")
 
-frac_prolif_parameters = pd.read_pickle(path + r"/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/frac_prolif_parameters_all_parameters_006_55_kPa.pkl")
+frac_prolif_parameters = pd.read_pickle(path + r"/fit_data/sobol_seq/cost_function_model_5/cost_and_IMT_distribution/frac_prolif_parameters_all_parameters_006_55_kPa.pkl")
 
 
-IMT_distribution = pd.read_pickle(path + r"/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/IMT_distribution_all_parameters_50_initial_cells.pkl")
+IMT_distribution = pd.read_pickle(path + r"/fit_data/sobol_seq/cost_function_model_5/cost_and_IMT_distribution/IMT_distribution_all_parameters_50_initial_cells.pkl")
 
 #import parameters and their costs
 
@@ -97,28 +97,21 @@ frac_prolif_parameters_pso = pd.read_pickle(r"C:/Users/Grim.M/Ecole/ens/Master/S
 
 position_history = np.load(r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\fit_data\pso\high_and_low_stiffness_cost\compilation\position_history.npy", allow_pickle=True).tolist()
 
-#Parameters sampled from the simulation with the 5th set of hyperparameters :
-frac_prolif_parameters_pso[frac_prolif_parameters_pso["hyperparameters"]==5]
-
-hyp=4
+#Parameters sampled from the simulation
 
 parameters_log_best=[]
 cost_limit = frac_prolif_parameters.sort_values(by=['cost_total'])[0:1]['cost_total'].tolist()[-1] #set the cost limit to the best found in sobol sequence, can be changed
 
+frac_prolif_parameters_pso['cost_total'].tolist()
 
-for idx in frac_prolif_parameters_pso[frac_prolif_parameters_pso['hyperparameters']==5]['index']:
+for idx in frac_prolif_parameters_pso['index']:
     if frac_prolif_parameters_pso.loc[frac_prolif_parameters_pso['index']==idx].iloc[0]['cost_total']<cost_limit: #select the cost  lower than cost limit
         print(idx)
         frac_prolif_parameters_pso_temp = frac_prolif_parameters_pso.loc[frac_prolif_parameters_pso['index']==idx]
-                
-        
         parameter = particle_positions_pso[particle_positions_pso['identification']==idx]['parameter_vector'].iloc[0]
-        
-        pos = np.where(position_history[hyp][:,:,:] == parameter)
-        
-        position_history[hyp][pos[0][0],pos[1][0],:]
-        
-        parameters_log_best += [position_history[hyp][pos[0][0],pos[1][0],:].tolist()]
+        pos = np.where(position_history[:,:,:] == parameter)
+        position_history[pos[0][0],pos[1][0],:]
+        parameters_log_best += [position_history[pos[0][0],pos[1][0],:].tolist()]
 
 
 parameters_log_best = np.array(parameters_log_best) #here is the set of parameters, note it's a log scale
