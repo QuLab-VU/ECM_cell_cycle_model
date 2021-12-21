@@ -1,0 +1,60 @@
+Runs for included model inputs are as follows:
+
+Low stiffness, +ERL
+erl_7-7_1_1.csv, erl_7-7_1_2.csv, erl_7-7_1_3.csv
+
+Int. stiffness, +ERL
+erl_7-7_2_1.csv, erl_7-7_2_2.csv, erl_7-7_2_3.csv
+
+High stiffness, +ERL
+erl_7-7_3_1.csv, erl_7-7_3_2.csv, erl_7-7_3_3.csv
+
+Low stiffness, -ERL
+dmso_7-7_1.csv
+
+Int. stiffness, -ERL
+dmso_7-7_2.csv
+
+High stiffness, -ERL
+dmso_7-7_3.csv
+
+All are the interpolated, stochastic output with columns representing protein species. Protein species by column are: 
+
+1. Skp2
+2. p21
+3. p21p 
+4. Cdh1
+5. Myc
+6. CycD  
+7. CycDp21
+8. Rb
+9. pRb
+10. E2F
+11. RbE2F
+12. CycE
+13. CycEp21
+14. CycA
+15. CycAp21
+16. CycB
+17. CycBp21
+18. Cdc20
+19. BAX
+20. BAXmBCL2
+21. BH3
+22. BH3BCL2
+23. BAXm
+24. BCL2
+
+When I do any type of analysis, the protein species are normalized against the greatest level across all inputs. Most of the analysis is on species
+1-18.
+
+All runs are for 5000 hours with 0.1 hour time steps. I included a time file just for reference. 
+
+I've been using find_peaks in python for my peak finding:
+from scipy.signal import find_peaks
+
+and find the peak of cycE to mark the G1/S transition and the peak of cdc20 mark mitosis:
+peaks_E, _ = find_peaks(all_prot[:, 11], prominence = 40/200, distance = 10)
+peaks_cdc, _ = find_peaks(all_prot[:, 17], prominence = 40/200, distance = 10)
+
+
