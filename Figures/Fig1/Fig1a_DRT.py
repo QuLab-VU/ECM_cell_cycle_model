@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# ### Figure 1a
+# # Figure 1a
 # Cell population dynamics -/+ erlotinib on different stiffnesses
 
 # #### Load libraries
@@ -70,19 +70,19 @@ t1 = np.arange(0,363/3,1/3)
 # In[5]:
 
 
-lin_fits = []
-for ii in range(4):
-    coef = np.polyfit(t[215:],means[ii][215:],deg=1)
-    poly1d_fn = np.poly1d(coef)
-    lin_fits.append(poly1d_fn(t[215:]))
+# lin_fits = []
+# for ii in range(4):
+#     coef = np.polyfit(t[215:],means[ii][215:],deg=1)
+#     poly1d_fn = np.poly1d(coef)
+#     lin_fits.append(poly1d_fn(t[215:]))
     
-for ii in range(4,6):
-    coef = np.polyfit(t1[215:],means[ii][215:],deg=1)
-    poly1d_fn = np.poly1d(coef)
-    lin_fits.append(poly1d_fn(t1[215:]))
+# for ii in range(4,6):
+#     coef = np.polyfit(t1[215:],means[ii][215:],deg=1)
+#     poly1d_fn = np.poly1d(coef)
+#     lin_fits.append(poly1d_fn(t1[215:]))
 
 
-# In[ ]:
+# In[6]:
 
 
 win = 21
