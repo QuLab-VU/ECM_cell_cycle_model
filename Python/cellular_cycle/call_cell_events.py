@@ -14,10 +14,11 @@ import numpy as np
 def call_events(run_time, IMT_eoe_counts):
     IMT_eoe_counts = IMT_eoe_counts.reset_index()
     IMT_eoe_counts['event'] = "undefined"
-    IMT_eoe_counts.loc((IMT_eoe_counts['End_of_Expt']==False).to_numpy() & (IMT_eoe_counts['Death']==False).to_numpy())['event'] = "mitosis"
-    # IMT_eoe_counts[IMT_eoe_counts['End_of_Expt'] == True & IMT_eoe_counts['Death'] == False & IMT_eoe_counts['Birthtime']==0]['event'] = "quiescence"
-    # IMT_eoe_counts[IMT_eoe_counts['End_of_Expt'] == True & IMT_eoe_counts['Death'] == False & IMT_eoe_counts['Birthtime']!=0]['event'] = "End_of_Expt"
-    # IMT_eoe_counts[IMT_eoe_counts['End_of_Expt'] == False & IMT_eoe_counts['Death'] == True]['event'] = "apoptosis"
+    
+    IMT_eoe_counts.loc[IMT_eoe_counts.Death == True, 'event'] = "apoptosis"
+    IMT_eoe_counts.loc[(IMT_eoe_counts.Death == False) & (IMT_eoe_counts.End_of_Expt == False), 'event'] = "mitosis"
+    IMT_eoe_counts.loc[(IMT_eoe_counts.Death == False) & (IMT_eoe_counts.End_of_Expt == True) & (IMT_eoe_counts.Birthtime==0), 'event'] = "quiescence"
+    IMT_eoe_counts.loc[(IMT_eoe_counts.Death == False) & (IMT_eoe_counts.End_of_Expt == True) & (IMT_eoe_counts.Birthtime!=0), 'event'] = "End_of_Expt"
+    
     out = IMT_eoe_counts[['event','Birthtime','Lifespan']]
     return(out)
-
