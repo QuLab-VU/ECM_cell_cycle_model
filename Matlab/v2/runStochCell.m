@@ -3,7 +3,7 @@ clear cells
 init_cell=init;
 v = 0.05;     
 sys_size=200;
-run_time=500;
+run_time=120;
 
 % run ode model to get initial starting protein levels ie. every cell is
 % going to be at a different point of the cell cycle
