@@ -138,7 +138,7 @@ dydt(18)= p.s*((p.V_1cdc20 * CycB *(p.Cdc20_tot - Cdc20)/(p.K_1cdc20+(p.Cdc20_to
     -(p.V_2cdc20*(Cdc20/(p.K_2cdc20+Cdc20))));%cdc20 inactivation
 
 %BAX
-dydt(19)= p.m*(-(p.kf1+p.kf2*BAX)*BH3...%bax activation from bh3
+dydt(19)= p.m*(-(p.kf1+p.kf2*BH3)*BAX...%bax activation from bh3
     +p.kb*BAXm...%baxm inactivation to bax
     +p.kb*BAXmBCL2);%baxmblc2 inactivation to bax
 

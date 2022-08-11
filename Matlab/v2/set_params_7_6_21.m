@@ -62,10 +62,10 @@ p.V_2Ma = 0.6;     %0.6         % Rate constant for inactivation of cyclinA/Cdk2
 p.V_1Mb = 1;       %1         % Rate for activation of cyclinB/Cdk1 by cyclinA/Cdk2; /uM*h
 p.V_2Mb = 0.8;        %0.8      % Rate constant for inactivation of cyclinB/Cdk1 by Cdc20; /h
 
-p.k_M =  0.18;%0.11; %0.27%0.1
-p.k_EMY = 0.25;%0.18; %0.37%0.1
+p.k_M =  0.27;%0.18;%0.11; %0.27%0.1
+p.k_EMY = 0.37;%0.25;%0.18; %0.37%0.1
 p.k_CD = 0.03; %0.03
-p.k_CDS = 0.18;%0.11;  %0.25%0.5
+p.k_CDS = 0.25;%0.18;%0.11;  %0.25%0.5
 p.k_ED = 0.2; %0.23%0.08
 
 
