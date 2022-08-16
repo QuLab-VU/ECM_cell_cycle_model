@@ -1,4 +1,4 @@
-function [p] = set_params_7_6_21(sys_size,AKT,ERK)
+function [p] = set_params(sys_size,AKT,ERK)
 p.omega=sys_size;
 p.m = 3;
 p.BCL2t = 0.95;

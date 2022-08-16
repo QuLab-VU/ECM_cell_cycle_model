@@ -1,4 +1,9 @@
-function [cells, cell_count] = runStochCell(AKT,ERK,FAK,init)
+function [cells, cell_count] = runStochCell(AKT,ERK,FAK,init,dt)
+SAVEDIR = strcat(matlabroot, "\ECM_UMAP_output");
+if ~isdir(SAVEDIR)
+    mkdir(SAVEDIR)
+end
+
 clear cells
 init_cell=init;
 v = 0.05;     
@@ -8,7 +13,7 @@ run_time=120;
 % run ode model to get initial starting protein levels ie. every cell is
 % going to be at a different point of the cell cycle
 
-[p] = set_params_7_6_21(sys_size,AKT,ERK);
+[p] = set_params(sys_size,AKT,ERK);
 p.AKT=1;
 p.ERK=1;
 p.FAK=FAK;
@@ -32,7 +37,7 @@ BCL2 = p.BCL2t - BH3BCL2 -BAXmBCL2;
 Initial = horzcat(Initial,BAXm,BCL2);
 TIMES = (0:1/3:1000);
 
-[t,y] = ode23(@(t,y) cell_ode_07_06_21(t,y,p), TIMES, Initial); 
+[t,y] = ode23(@(t,y) cell_ode(t,y,p), TIMES, Initial); 
 
 
 %set up initial conditions
@@ -44,6 +49,11 @@ p.AKT=AKT;
 p.ERK=ERK;
 
 runAKTERK
+
+[cell_table] = restructure_for_UMAP(cells,dt,p);
+csvwrite(strcat(SAVEDIR, '\cells_count_',num2str(AKT*100),'_',num2str(ERK*100),...
+    '_',num2str(FAK*100),'.csv'),cell_count)
+
 
 end
 

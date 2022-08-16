@@ -34,13 +34,13 @@ p.run_time=5000;
 AKTs = [0.3 0.6 0.6];
 ERKs = [0.2 0.2 0.2];
 FAKs = [0.4 0.6 1];
-for ii = 3
-    for jj = 1:3
+for ii = 1:3
+    for jj = 1
         p.AKT=AKTs(ii);
         p.ERK=ERKs(ii);
         p.FAK=FAKs(ii);
         [t,x] = cell_stoch_07_06_21(sys_size,p,Initial_s);
-        filename1=strcat('erl_7-7_',num2str(ii),'_',num2str(jj));
+        filename1=strcat('C:\Program Files\MATLAB\R2018b\ECM_UMAP_output\erl_long_',num2str(ii),'_',num2str(jj));
         save(filename1,'t','x');
         ii
         jj

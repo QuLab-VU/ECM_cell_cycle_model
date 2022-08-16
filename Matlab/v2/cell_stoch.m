@@ -1,4 +1,4 @@
-function [t,x] = cell_stoch_07_06_21(sys_size,p,Initial)
+function [t,x] = cell_stoch(sys_size,p,Initial)
 
 %% Rate Constants
 p.omega=sys_size;

@@ -1,4 +1,4 @@
-function [dydt]=cell_ode_07_06_21(t,y,p)
+function [dydt]=cell_ode(t,y,p)
  
 dydt = zeros(size(y));
 FAK=p.FAK;
