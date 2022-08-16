@@ -14,6 +14,8 @@ path="/home/jeremie"
 import sys
 #sys.path.insert(0, path + "\cellular_cycle") #add a pathway to the model
 
+sys.path.insert(0, r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\cellular_cycle')
+
 sys.path.insert(0, __file__ + "/../cellular_cycle")
 from pysb import * 
 import numpy as np
@@ -55,7 +57,7 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     cells['time']=[]; #
     cells['division']=[]; #
     cells['living_cell']=[]; #living cell?
-    cells['recording']=[];
+    cells['recording']=[]; #are we recording or not (end of life is it has divided or if it dies or if end of experiment)
     
     for i in range(init) :
         cells['molecules']=cells['molecules']+[{}]
