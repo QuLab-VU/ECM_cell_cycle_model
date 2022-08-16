@@ -3,7 +3,7 @@
 ### Creating conda env
 To create a conda environment to run umap-generating code, use the following command:
 
-`conda create -n ECM_model -c conda-forge umap-learn python=3.8 seaborn matplotlib pandas joblib numpy bokeh jupyter jupyterlab sobol_seq`
+`conda create -n ECM_model -c conda-forge umap-learn python=3.8 seaborn matplotlib pandas joblib numpy bokeh jupyter jupyterlab pylablib cython`
   
 Add the pysb module:
   
