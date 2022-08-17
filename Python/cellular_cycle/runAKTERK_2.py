@@ -6,15 +6,13 @@ Created on Tue Feb 11 18:19:31 2020
 Title: runAKTERK
 """
 
-path="/home/jeremie"
-
+# path="/home/jeremie"
 #path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
 
 
 import sys
 #sys.path.insert(0, path + "\cellular_cycle") #add a pathway to the model
-
-sys.path.insert(0, r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\cellular_cycle')
+# sys.path.insert(0, r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\cellular_cycle')
 
 sys.path.insert(0, __file__ + "/../cellular_cycle")
 from pysb import * 
@@ -32,10 +30,7 @@ omega=200
 
 #######################################################################
 
-def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population,idx, condition):
-    
-    
-    
+def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population,idx, condition):    
     pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2"]
     parameter_vector_original=[]
     for pname in pysb_sampled_parameter_names:
@@ -50,7 +45,6 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.1: #the model doesn't oscillate o the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
         #print("check didn't pass");
         return (0,0)
-    
     
     cells={}
     cells['molecules']=[]; #Number of molecules taken randomly at one point during the cell cycle
