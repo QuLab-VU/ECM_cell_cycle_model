@@ -1,9 +1,9 @@
 # ECM_cell_cycle_model
 
 ### Creating conda env
-To create a conda environment to run umap-generating code, use the following command:
+To create a conda environment to run umap-generating code, use the following command:  
 
-`conda create -n ECM_model -c conda-forge umap-learn python=3.8 seaborn matplotlib pandas joblib numpy bokeh jupyter jupyterlab pylablib cython`
+`conda create -n ECM_model -c conda-forge umap-learn python=3.8 seaborn matplotlib pandas joblib numpy bokeh jupyter jupyterlab cython`
   
 Add the pysb module:
   
