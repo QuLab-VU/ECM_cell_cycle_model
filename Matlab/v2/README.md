@@ -14,7 +14,7 @@ division events.
 
 **Inputs**: AKT, ERK, FAK activity levels each in a range from 0 - 1 (1 represents the maximum value as determined experimentally) and the initial number
 of cells.  
-**Output**: cell structure [cells] containing the molecular species behavior, time, number of divisions, and death. Matrix [cell_count] containing
+**Output**: dataframe [cells] containing the molecular species behavior, time, number of divisions, and death. Matrix [cell_count] containing
 time of division or death (i.e. adding or subtracting a cell from the simulation) used to measure cell population response.
 
 Using MATLAB function runStochCell.m define AKT, ERK, FAK, and initial cell count. This function returns a cell structure [cells] and [cell_count].
