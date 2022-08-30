@@ -38,70 +38,85 @@ for ii = 1:size(cells,1)
     new_x=cells{ii,2}(nind,:);
     
     max_tmp_cdc=peakfinder(new_x(:,18),0.2*p.omega,0.2*p.omega,'false');
+    new_x_n = new_x./200;
+
     
-    if length(max_tmp_cdc) > 1 
+    if length(max_tmp_cdc) > 1 && new_x(end,23) < 20
         for jj = 1:length(max_tmp_cdc)-1
             tmp_cell = [];
             tmp_cell(:,1) = ones(length(max_tmp_cdc(jj):max_tmp_cdc(jj+1)),1).*count;
             tmp_cell(:,2) = zeros(length(max_tmp_cdc(jj):max_tmp_cdc(jj+1)),1);
             tmp_cell(:,3) = zeros(length(max_tmp_cdc(jj):max_tmp_cdc(jj+1)),1);
             tmp_cell(:,4) = new_t(max_tmp_cdc(jj):max_tmp_cdc(jj+1));
-            tmp_cell(:,5:28) = new_x(max_tmp_cdc(jj):max_tmp_cdc(jj+1),:);
+            tmp_cell(:,5:28) = new_x_n(max_tmp_cdc(jj):max_tmp_cdc(jj+1),:);
             all_cells = [all_cells; num2cell(tmp_cell)];
             count = count+1;
         end
-    end
-    if new_t(end) == 120
+    elseif length(max_tmp_cdc) == 1 && new_x(end,23) < 20
         tmp_cell = [];
         tmp_cell(:,1) = ones(length(new_t(max_tmp_cdc(end):end)),1).*count;
         tmp_cell(:,2) = ones(length(new_t(max_tmp_cdc(end):end)),1);
         tmp_cell(:,3) = zeros(length(new_t(max_tmp_cdc(end):end)),1);
         tmp_cell(:,4) = new_t(max_tmp_cdc(end):end);
-        tmp_cell(:,5:28) = new_x(max_tmp_cdc(end):end,:);
+        tmp_cell(:,5:28) = new_x_n(max_tmp_cdc(end):end,:);
         all_cells = [all_cells; num2cell(tmp_cell)];
         count = count+1;
-        
-%         tmp_cell = {'time', 'traj', 'eoe', 'death'};
-%         tmp_cell{1,1} = new_t(max_tmp_cdc(end):end);
-%         tmp_cell{1,2} = new_x(max_tmp_cdc(end):end,:);
-%         tmp_cell{1,3} = 1;
-%         tmp_cell{1,4} = 0;
-%         all_cells = [all_cells; tmp_cell];
-    elseif ~isempty(max_tmp_cdc)
+    elseif isempty(max_tmp_cdc) && new_x(end,23) < 20
+        tmp_cell = [];
+        tmp_cell(:,1) = ones(length(new_t(:)),1).*count;
+        tmp_cell(:,2) = ones(length(new_t(:)),1);
+        tmp_cell(:,3) = zeros(length(new_t(:)),1);
+        tmp_cell(:,4) = new_t(:);
+        tmp_cell(:,5:28) = new_x_n(:,:);
+        all_cells = [all_cells; num2cell(tmp_cell)];
+        count = count+1;
+
+    elseif length(max_tmp_cdc) > 1 && new_x(end,23) > 20
+        for jj = 1:length(max_tmp_cdc)-1
+            if jj < length(max_tmp_cdc)-1
+                tmp_cell = [];
+                tmp_cell(:,1) = ones(length(max_tmp_cdc(jj):max_tmp_cdc(jj+1)),1).*count;
+                tmp_cell(:,2) = zeros(length(max_tmp_cdc(jj):max_tmp_cdc(jj+1)),1);
+                tmp_cell(:,3) = zeros(length(max_tmp_cdc(jj):max_tmp_cdc(jj+1)),1);
+                tmp_cell(:,4) = new_t(max_tmp_cdc(jj):max_tmp_cdc(jj+1));
+                tmp_cell(:,5:28) = new_x_n(max_tmp_cdc(jj):max_tmp_cdc(jj+1),:);
+                all_cells = [all_cells; num2cell(tmp_cell)];
+                count = count+1;
+            else
+                tmp_cell = [];
+                tmp_cell(:,1) = ones(length(max_tmp_cdc(jj):max_tmp_cdc(jj+1)),1).*count;
+                tmp_cell(:,2) = zeros(length(max_tmp_cdc(jj):max_tmp_cdc(jj+1)),1);
+                tmp_cell(:,3) = ones(length(max_tmp_cdc(jj):max_tmp_cdc(jj+1)),1);
+                tmp_cell(:,4) = new_t(max_tmp_cdc(jj):max_tmp_cdc(jj+1));
+                tmp_cell(:,5:28) = new_x_n(max_tmp_cdc(jj):max_tmp_cdc(jj+1),:);
+                all_cells = [all_cells; num2cell(tmp_cell)];
+                count = count+1;
+            end
+        end
+
+    elseif length(max_tmp_cdc) == 1 && new_x(end,23) > 20
         tmp_cell = [];
         tmp_cell(:,1) = ones(length(new_t(max_tmp_cdc(end):end)),1).*count;
         tmp_cell(:,2) = zeros(length(new_t(max_tmp_cdc(end):end)),1);
         tmp_cell(:,3) = ones(length(new_t(max_tmp_cdc(end):end)),1);
         tmp_cell(:,4) = new_t(max_tmp_cdc(end):end);
-        tmp_cell(:,5:28) = new_x(max_tmp_cdc(end):end,:);
+        tmp_cell(:,5:28) = new_x_n(max_tmp_cdc(end):end,:);
         all_cells = [all_cells; num2cell(tmp_cell)];
         count = count+1;
-        
-%         tmp_cell = {'time', 'traj', 'eoe', 'death'};
-%         tmp_cell{1,1} = new_t(max_tmp_cdc(end):end);
-%         tmp_cell{1,2} = new_x(max_tmp_cdc(end):end,:);
-%         tmp_cell{1,3} = 0;
-%         tmp_cell{1,4} = 1;
-%         all_cells = [all_cells; tmp_cell];
-    else
+    elseif isempty(max_tmp_cdc) && new_x(end,23) > 20
         tmp_cell = [];
-        tmp_cell(:,1) = ones(length(new_t),1).*count;
-        tmp_cell(:,2) = zeros(length(new_t),1,1);
-        tmp_cell(:,3) = ones(length(new_t),1,1);
-        tmp_cell(:,4) = new_t;
-        tmp_cell(:,5:28) = new_x;
+        tmp_cell(:,1) = ones(length(new_t(:)),1).*count;
+        tmp_cell(:,2) = zeros(length(new_t(:)),1);
+        tmp_cell(:,3) = ones(length(new_t(:)),1);
+        tmp_cell(:,4) = new_t(:);
+        tmp_cell(:,5:28) = new_x_n(:,:);
         all_cells = [all_cells; num2cell(tmp_cell)];
         count = count+1;
-        
-%         tmp_cell = {'time', 'traj', 'eoe', 'death'};
-%         tmp_cell{1,1} = new_t;
-%         tmp_cell{1,2} = new_x;
-%         tmp_cell{1,3} = 0;
-%         tmp_cell{1,4} = 1;
-%         all_cells = [all_cells; tmp_cell];
     end   
     
 end
+
+
 
 cell_table = cell2table(all_cells, "VariableNames",v_names);
 writetable(cell_table,strcat(SAVEDIR, '\cells_',num2str(p.AKT*100),'_',num2str(p.ERK*100),...

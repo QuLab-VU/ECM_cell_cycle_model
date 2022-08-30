@@ -39,7 +39,7 @@ while isempty(find(current_time(:,2)==1 & current_time(:,1)<run_time,1))==false 
             if length(find(cells{ii,2}(:,23)>25))>20 && size(max_tmp_cdc,1)>cells{ii,4}
                 death=find(cells{ii,2}(:,23)>25);
                 div_ind = (max_tmp_cdc(cells{ii,4}+1));
-                if death < div_ind
+                if death(1) < div_ind
                     death=find(cells{ii,2}(:,23)>25);      
                     cells{ii,5}=false;
                     current_time(ii,1)=cells{ii,3}(death(1));
