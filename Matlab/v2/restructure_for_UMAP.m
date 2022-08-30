@@ -5,9 +5,11 @@ if ~isdir(SAVEDIR)
 end
 
 
-all_cells = {'id', 'eoe', 'death', 'time', 'Skp2', 'p21', 'p21p', 'Cdh1', 'Myc', 'CycD', 'CycDp21',...
+all_cells = {};
+v_names = {'id', 'eoe', 'death', 'time', 'Skp2', 'p21', 'p21p', 'Cdh1', 'Myc', 'CycD', 'CycDp21',...
     'Rb', 'pRb', 'E2F', 'RbE2F', 'CycE', 'CycEp21', 'CycA', 'CycAp21', 'CycB', 'CycBp21', 'Cdc20',...
     'BAX', 'BAXmBCL2', 'BH3', 'BH3BCL2', 'BAXm', 'BCL2'};
+
 count = 1;
 for ii = 1:size(cells,1) 
     new_t = cells{ii,3}(1):dt:cells{ii,3}(end);
@@ -101,7 +103,7 @@ for ii = 1:size(cells,1)
     
 end
 
-cell_table = cell2table(all_cells);
+cell_table = cell2table(all_cells, "VariableNames",v_names);
 writetable(cell_table,strcat(SAVEDIR, '\cells_',num2str(p.AKT*100),'_',num2str(p.ERK*100),...
     '_',num2str(p.FAK*100),'.csv'));
     
