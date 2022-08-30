@@ -4,20 +4,17 @@ Created on Tue Feb 11 18:19:31 2020
 
 @author: Grim.M
 Title: runAKTERK
+
+Edited by Darren Tyson
+
+As of 2022-08-20, still need to add ability to define path to save output files, including temp dir if errors caught
 """
 
-# path="/home/jeremie"
-#path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
-
-
 import sys
-#sys.path.insert(0, path + "\cellular_cycle") #add a pathway to the model
-# sys.path.insert(0, r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\cellular_cycle')
 
 sys.path.insert(0, __file__ + "/../cellular_cycle")
 from pysb import * 
 import numpy as np
-import pylab as pl
 
 from runStochCell import runStochcell
 
@@ -31,7 +28,10 @@ omega=200
 #######################################################################
 
 def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population,idx, condition):    
-    pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2"]
+    pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF",
+                                    "d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", 
+                                    "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", 
+                                    "kdbh3", "kasbh3bcl2", "kdsbh3bcl2"]
     parameter_vector_original=[]
     for pname in pysb_sampled_parameter_names:
         #Change model parameter values to current location in parameter space
@@ -42,7 +42,8 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     
     variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx, condition);
     
-    if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.1: #the model doesn't oscillate o the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
+    if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.1: 
+        #the model doesn't oscillate or the model allows negative concentrations (possible for the apoptosis module) or tmpscore>0.1
         #print("check didn't pass");
         return (0,0)
     
@@ -64,7 +65,10 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
         cells['recording']=cells['recording'] + [True] #recording the cell = True (if it isn't dead and if no event didn't occur after observed_cells_time)
         
     cell_count=np.array([[0., len(cells['molecules'])]]);   #start the cell counter at time zero and with number of initial cells
-    current_time=np.transpose(np.concatenate([np.zeros((1,len(cells['molecules']))), np.ones((1,len(cells['molecules'])))])); #keeps track of the current time of each cell and whether it's dead or not 
+    
+    # keeps track of the current time of each cell and whether it's dead or not 
+    current_time=np.transpose(np.concatenate([np.zeros((1,len(cells['molecules']))), 
+                                              np.ones((1,len(cells['molecules'])))])); 
     
     while any(cells['recording']) : #run the code only if there are cells that are recorded
         #print('while loop is starting')
@@ -83,7 +87,7 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 
                 T = 20
                 
-                tmp_t = pl.linspace(0, T, int(T*10))
+                tmp_t = np.linspace(0, T, int(T*10))
                 
                 sim = BngSimulator(model_population, tspan=tmp_t, verbose=False);
                 
@@ -120,7 +124,10 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 a, max_tmp_cycE = peakfinder((cells['molecules'][ii]['obsCycE']), 0.15*omega, 0.15*omega, 1, includeEndpoints=1);  #cycE
             #min_tmp=peakfinder(cells{ii,2}(:,14),[],30,-1);   #cdc20
                 
-                if len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])>20 or np.any(np.array(cells['molecules'][ii]['obsBAXm'])>=40) or np.any(np.array(cells['molecules'][ii]['obsBH3'])>=200) :#dying cell   #baxm >25 then apoptosis for 20 time steps or BAXm>=40 (it means it has started with more than 40 molecules of BAXm)
+                if (len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])>20 or 
+                    np.any(np.array(cells['molecules'][ii]['obsBAXm'])>=40) or 
+                    np.any(np.array(cells['molecules'][ii]['obsBH3'])>=200)): #dying cell   
+                    #baxm >25 then apoptosis for 20 time steps or BAXm>=40 (it means it has started with more than 40 molecules of BAXm)
                     cells['living_cell'][ii]=False; #the cell dies
                     cells['recording'][ii]=False; #the record stops
                     death=[i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 20];
@@ -129,24 +136,27 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                     for obs in list(cells['molecules'][ii].keys()) :
                         cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:death[0]+1]
                     
-                    
                     cells['time'][ii]=cells['time'][ii][0:death[0]+1];
                     
                     current_time[ii,1]=0; #cell is death
                     
+                    cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][death[0]], -1], axis=0); 
+                    #one cell to be removed to the count
                     
-                    cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][death[0]], -1], axis=0); #one cell to be removed to the count
-                    
-                elif len(max_tmp_cdc) > cells['division'][ii] and len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])<20 : #dividing cell
+                elif (len(max_tmp_cdc) > cells['division'][ii] and 
+                      len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])<20): #dividing cell
 
                     for index in range(cells['division'][ii], len(max_tmp_cdc)) :
 
                         div_ind = (max_tmp_cdc[index]);
                         #print('index')
                         
-                        if index==0 : #first cell, there is no need to check if CycE has cycled (it can have cycled before recording), it will be checked between two mitosis
+                        if index==0 : 
+                            # first cell, there is no need to check if CycE has cycled (it can have cycled before recording), 
+                            # searching for two mitosis events
                             cells['division'][ii] = cells['division'][ii]+1;               
-                            current_time[ii,0]=cells['time'][ii][-1]; #no change because this is the time and cell_count_tmp for the cell
+                            current_time[ii,0]=cells['time'][ii][-1]; 
+                            #no change because this is the time and cell_count_tmp for the cell
                             cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][div_ind], 1], axis=0);
                         #add a new cell : Change to the time and concentrations of the previous cell but at time = div_ind
                             tmp_num=len(cells['time']);
@@ -164,11 +174,13 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                                 
                                 cells['recording']=cells['recording']+[True];
                                 
-                                current_time = np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); #changed to the real time of the division
+                                current_time = np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); 
+                                #changed to the real time of the division
                             
                             
                         else :                                
-                            if np.any(np.logical_and(max_tmp_cdc[index-1] < np.array(max_tmp_cycE) ,np.array(max_tmp_cycE) < max_tmp_cdc[index])) : #just checking if Cyc2 is actully oscillating between Cdc20
+                            if np.any(np.logical_and(max_tmp_cdc[index-1] < np.array(max_tmp_cycE) ,np.array(max_tmp_cycE) < max_tmp_cdc[index])): 
+                                #just checking if Cyc2 is actully oscillating between Cdc20
                             
                                 #cells['time'][ii]=cells['time'][ii][0:div_ind];
                                 cells['division'][ii] = cells['division'][ii]+1; #it divides so let keep this
@@ -197,7 +209,8 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                                     else : #mitosis happens right on the end time (almost impossible)
                                         cells['recording']=cells['recording']+[False];
                                         
-                                    current_time=np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); #changed to the real time of the division
+                                    current_time=np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); 
+                                    #changed to the real time of the division
 
 
                 else : #size(max_tmp_cdc,1)==cells{ii,4} && length(find(cells{ii,2}(:,23)>25))<20 #quiescent cell
@@ -210,11 +223,14 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 
             #if the time is > to observed_cells_time, we don't take into account new cells, only the fate of the cells that are already born.
             
-            elif current_time[ii,0]<run_time and current_time[ii,0]>=observed_cells_time and cells['recording'][ii]:#if there's time left and the cell has not died/or no fate after observed_cells_time
+            elif (current_time[ii,0]<run_time and 
+                  current_time[ii,0]>=observed_cells_time and 
+                  cells['recording'][ii]):
+                #if there's time left and the cell has not died/or no fate after observed_cells_time
                 #print('after')
                 T = 41 - (current_time[ii,0]>(run_time-40))*(40 - run_time + current_time[ii,0])
                 
-                tmp_t = pl.linspace(0, T, int(T*10))
+                tmp_t = np.linspace(0, T, int(T*10))
                 
                 sim = BngSimulator(model_population, tspan=tmp_t, verbose=False);
                 if len(model_population.species)>0 :
@@ -246,7 +262,9 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 a, max_tmp_cycE = peakfinder(cells['molecules'][ii]['obsCycE'],0.15*200,0.15*200);  #cycE
             #min_tmp=peakfinder(cells{ii,2}(:,14),[],30,-1);   #cdc20
                 
-                if len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])>20 or np.any(np.array(cells['molecules'][ii]['obsBAXm'])>=40) or np.any(np.array(cells['molecules'][ii]['obsBH3'])>=200) :#dying cell   #baxm >20 then apoptosis
+                if (len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])>20 or 
+                    np.any(np.array(cells['molecules'][ii]['obsBAXm'])>=40) or 
+                    np.any(np.array(cells['molecules'][ii]['obsBH3'])>=200)): #dying cell   #baxm >20 then apoptosis
                     #print('death')
                     cells['living_cell'][ii]=False; #the cell dies
                     cells['recording'][ii]=False; #Stop the recording
@@ -260,10 +278,11 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                     
                     current_time[ii,1]=0; #cell is death
                     
-                    cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][death[0]], -1], axis=0); #one cell to be removed to the count
+                    cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][death[0]], -1], axis=0); 
+                    #one cell to be removed to the count
                     
-                elif len(max_tmp_cdc) > cells['division'][ii] and len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])<20 : #dividing cell
-                    
+                elif (len(max_tmp_cdc) > cells['division'][ii] and 
+                      len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])<20): #dividing cell
                     
                     for index in range(cells['division'][ii]-1, len(max_tmp_cdc)-1) :
                         cells['recording'][ii]=False
@@ -290,10 +309,12 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                                 
                                 cells['recording']=cells['recording']+[False];
                                 
-                                current_time=np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); #changed to the real time of the division
+                                current_time=np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); 
+                                #changed to the real time of the division
                             
                         else :                                
-                            if np.any(np.logical_and(max_tmp_cdc[index-1] < np.array(max_tmp_cycE) ,np.array(max_tmp_cycE) < max_tmp_cdc[index])) : #if cycE oscillates between two CDC20 peaks
+                            if np.any(np.logical_and(max_tmp_cdc[index-1] < np.array(max_tmp_cycE) ,np.array(max_tmp_cycE) < max_tmp_cdc[index])): 
+                                #if cycE oscillates between two CDC20 peaks
                             
                                 #cells['time'][ii]=cells['time'][ii][0:div_ind];
                                 cells['division'][ii] = cells['division'][ii]+1; #it divides so let keep this
@@ -319,9 +340,9 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                                     cells['living_cell']=cells['living_cell']+[True];
                                     cells['recording']=cells['recording']+[False];
                                         
-                                    current_time=np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); #changed to the real time of the division
-                    
-                    
+                                    current_time=np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); 
+                                    #changed to the real time of the division
+                                    
                 else : #size(max_tmp_cdc,1)==cells{ii,4} && length(find(cells{ii,2}(:,23)>25))<20 #quiescent cell$
                     #print('quiescence')
                     current_time[ii,0]=cells['time'][ii][-1];
