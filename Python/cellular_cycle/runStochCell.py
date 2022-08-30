@@ -28,8 +28,6 @@ def runStochcell(model_population, model_concentration, index, condition) :
     sys_size=200;
     run_time=500;    
     CI=0;
-#    path="/home/jeremie"
-#    path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
     t = np.linspace(0, 800, 800)
     
     #print("ode simulation starting")
@@ -50,7 +48,7 @@ def runStochcell(model_population, model_concentration, index, condition) :
     a, maxima = peakfinder(yout['obsCdc20'], [], 0.2);   #find the peak of cdc20 - last protein to peak
     b, maxima_b = peakfinder(yout['obsCycD'], [], 0.2);   #find the peak of cdc20 - last protein to peak
     
-    variable_range={}
+    variable_range={};
     
     if len(a)>=2 and len(b)>=2:
         for k in range(len(model_concentration.observables)) :
