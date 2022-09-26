@@ -6,27 +6,17 @@ Created on Tue Feb 11 18:19:31 2020
 Title: runAKTERK
 """
 
-#path="/home/jeremie"
-
-#path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
-
 
 import sys
-#sys.path.insert(0, path + "\cellular_cycle") #add a pathway to the model
-
 sys.path.insert(0, __file__ + "/../cellular_cycle")
 from pysb import * 
 import numpy as np
 import pylab as pl
 
 from runStochCell import runStochcell
-
 from pysb.simulator import BngSimulator
 from pysb.simulator import StochKitSimulator
-
 from peakfinder import peakfinder
-
-omega=200
 
 
 
@@ -42,7 +32,7 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
         #Change model parameter values to current location in parameter space
         parameter_vector_original+=[model_population.parameters[pname].value]
     
-    v = 0.05;     
+    v = 0.05;
     sys_size=200; #cell size
     
     variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx, condition);
@@ -53,7 +43,7 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
         #print("check didn't pass");
         return (0,0)
     
-    variable_range= {'obsSkp2': [19], 'obsp21': [7], 'obsp21p': [6], 'obscdh1act': [7],  'obscdh1inact': [193], 'obsMyc': [89], 'obsCycD': [59], 'obsCycDp21': [6], 'obspRb': [47], 'obspRbp': [101], 'obsE2F': [12], 'obspRbE2F': [140], 'obsCycE': [4],  'obsCycEp21': [0], 'obsCycA': [17], 'obsCycAp21': [10], 'obsCycB': [94], 'obsCycBp21': [1], 'obsCdc20': [164], 'obsBAX': [200], 'obsBAXmBCL2': [0], 'obsBH3': [0], 'obsBH3BCL2': [7], 'obsBAXm': [0], 'obsBCL2': [183]}
+    variable_range= {'obsSkp2': [19], 'obsp21': [7], 'obsp21p': [6], 'obscdh1act': [7],  'obscdh1inact': [193], 'obsMyc': [89], 'obsCycD': [59], 'obsCycDp21': [6], 'obspRb': [47], 'obspRbp': [101], 'obsE2F': [12], 'obspRbE2F': [140], 'obsCycE': [4],  'obsCycEp21': [0], 'obsCycA': [17], 'obsCycAp21': [10], 'obsCycB': [94], 'obsCycBp21': [1], 'obsCdc20': [164], 'obsBAX': [200], 'obsBAXmBCL2': [0], 'obsBH3': [0], 'obsBH3BCL2': [7], 'obsBAXm': [0], 'obsBCL2': [183]} #starting at mitosis
     
     cells={}
     cells['molecules']=[]; #Number of molecules taken randomly at one point during the cell cycle
@@ -75,21 +65,22 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     current_time=np.transpose(np.concatenate([np.zeros((1,len(cells['molecules']))), np.ones((1,len(cells['molecules'])))])); #keeps track of the current time of each cell and whether it's dead or not 
     
     while any(cells['recording']) : #run the code only if there are cells that are recorded
-        #print('while loop is starting');
+        #print('while loop is starting')
         
         cell_count_tmp=np.zeros((1,2)); #temporary cell count with current cell time and whether a cell was added, taken away, or not
         
-        #print(cell_count_tmp);
+        #print(cell_count_tmp)
         for ii in range(len(cells['molecules'])) :
-            #print(current_time);
-            #print("new cell");
+            #print(current_time)
+            #print("new cell")
             
             #If the time is between 0 to observed_cells_time
             
             if current_time[ii,0]<observed_cells_time and cells['living_cell'][ii] :#if there's time left and the cell has not died
-                #print('before');
+                #print('before')
+                #print(ii)
                 
-                T = 20
+                T = 30 #80
                 
                 tmp_t = pl.linspace(0, T, int(T*10))
                 
@@ -100,14 +91,13 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                     for j in cells['molecules'][ii] :
                         Initial=Initial+[cells['molecules'][ii][j][-1]]
                     simres = sim.run(initials=Initial, stop_if = 'obsBH3>200');
-                    #simres = sim.run(initials=Initial, stop_if = 'obsSkp2>400||obsp21>400||obsp21p>400||obscdh1act>400||obscdh1inact>400||obsMyc>400||obsCycD>400||obsCycDp21>400||obspRb>400||obspRbp>400||obsE2F>400||obspRbE2F>400||obsCycE>400||obsCycEp21>400||obsCycA>400||obsCycAp21>400||obsCycB>400||obsCycBp21>400||obsCdc20>400||obsBAX>400||obsBAXmBCL2>400||obsBH3>200||obsBH3BCL2>400||obsBAXm>400||obsBCL2>400', method='ssa', max_sim_steps = T * 2000);
-                    #print(parameter_vector_original);
-                    #print("simulation done");
+                    #print(parameter_vector_original)
+                    #print("simulation done")
                     
                 else :
                     simres = sim.run(verbose=False, stop_if = 'obsBH3>200');
-                    #print(parameter_vector_original);
-                    #print("simulation done");
+                    #print(parameter_vector_original)
+                    #print("simulation done")
                     
                 tmp_t = simres.tout[0]
                     
@@ -118,42 +108,52 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                     cells['molecules'][ii][obs]=cells['molecules'][ii][obs][:-1]+yout[obs].tolist(); #evolution of different species
                     
                     
-            #if type(cells['time'][ii])!=list : #if it's an array
-            #    cells['time'][ii]=cells['time'][ii].tolist()
-                
+
                 
                 cells['time'][ii] = cells['time'][ii] + [x+cells['time'][ii][-1] for x in tmp_t[1:].tolist()]; #time step
                 current_ind_length=len(cells['molecules'][ii]['obsCdc20']);
                 
-                a, max_tmp_cdc = peakfinder(cells['molecules'][ii]['obsCdc20'], 0.15*omega, 0.15*omega, 1, includeEndpoints=1);      #cdc20
-                a, max_tmp_cycE = peakfinder((cells['molecules'][ii]['obsCycE']), 0.15*omega, 0.15*omega, 1, includeEndpoints=1);  #cycE
-            #min_tmp=peakfinder(cells{ii,2}(:,14),[],30,-1);   #cdc20
+                a, max_tmp_cdc = peakfinder(cells['molecules'][ii]['obsCdc20'], 0.15*model_population.parameters['omega'].value, 0.15*model_population.parameters['omega'].value, 1, includeEndpoints=1);      #cdc20
+                a, max_tmp_cycE = peakfinder((cells['molecules'][ii]['obsCycE']), 0.15*model_population.parameters['omega'].value, 0.15*model_population.parameters['omega'].value, 1, includeEndpoints=1);  #cycE
                 
-                if len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])>20 or np.any(np.array(cells['molecules'][ii]['obsBAXm'])>=40) or np.any(np.array(cells['molecules'][ii]['obsBH3'])>=200) :#dying cell   #baxm >25 then apoptosis for 20 time steps or BAXm>=40 (it means it has started with more than 40 molecules of BAXm)
-                    cells['living_cell'][ii]=False; #the cell dies
-                    cells['recording'][ii]=False; #the record stops
-                    death=[i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 20];
-                    current_time[ii,0]=cells['time'][ii][death[0]]; #death at time t
-                    
-                    for obs in list(cells['molecules'][ii].keys()) :
-                        cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:death[0]+1]
-                    
-                    
-                    cells['time'][ii]=cells['time'][ii][0:death[0]+1];
-                    
-                    current_time[ii,1]=0; #cell is death
-                    
-                    
-                    cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][death[0]], -1], axis=0); #one cell to be removed to the count
-                    
-                elif len(max_tmp_cdc) > cells['division'][ii] and len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])<20 : #dividing cell
+                death = np.array([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 20]) if len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])>20 else np.array([])
+                
 
-                    for index in range(cells['division'][ii], len(max_tmp_cdc)) :
-
+###############################################################################
+                #Cell apoptosis
+                        
+                if death.size>0 and np.min(death) < max_tmp_cdc[min([cells['division'][ii], len(max_tmp_cdc)-1])]:# or np.any(np.array(cells['molecules'][ii]['obsBH3'])>=200) :#dying cell   #baxm >25 then apoptosis for 20 time steps or BAXm>=40 (it means it has started with more than 40 molecules of BAXm) # or np.any(np.array(cells['molecules'][ii]['obsBAXm'])>=40)
+                        
+                        cells['living_cell'][ii]=False; #the cell dies
+                        cells['recording'][ii]=False; #the record stops
+                        
+                        current_time[ii,0] = cells['time'][ii][death[0]]; #death at time t
+                        for obs in list(cells['molecules'][ii].keys()) :
+                            cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:death[0]+1]
+                        cells['time'][ii]=cells['time'][ii][0:death[0]+1];
+                        current_time[ii,1]=0; #cell is dead
+                        
+                        cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][death[0]], -1], axis=0); #one cell to be removed to the count
+                        #print('death 1')
+                
+###############################################################################
+                #Dividing cell 
+                
+                elif len(max_tmp_cdc) > cells['division'][ii]:
+                    
+                    divisions_tmp = np.count_nonzero(np.min(death) > np.array(max_tmp_cdc)) if  death.size != 0 else len(max_tmp_cdc) #divisions before apoptosis happens
+                    
+                    #print('division 1')
+                    for index in range(cells['division'][ii], divisions_tmp) :
+                        
+                        
                         div_ind = (max_tmp_cdc[index]);
-                        #print('index');
+                        #print('index')
+                        #print(index)
                         
                         if index==0 : #first cell, there is no need to check if CycE has cycled (it can have cycled before recording), it will be checked between two mitosis
+                            #print('division 1 0')
+                            
                             cells['division'][ii] = cells['division'][ii]+1;               
                             current_time[ii,0]=cells['time'][ii][-1]; #no change because this is the time and cell_count_tmp for the cell
                             cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][div_ind], 1], axis=0);
@@ -172,11 +172,10 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                                 cells['living_cell'] =cells['living_cell']+[True];
                                 
                                 cells['recording']=cells['recording']+[True];
-                                
                                 current_time = np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); #changed to the real time of the division
                             
-                            
-                        else :                                
+                        else : 
+                            #print('division 1 1')
                             if np.any(np.logical_and(max_tmp_cdc[index-1] < np.array(max_tmp_cycE) ,np.array(max_tmp_cycE) < max_tmp_cdc[index])) : #just checking if Cyc2 is actully oscillating between Cdc20
                             
                                 #cells['time'][ii]=cells['time'][ii][0:div_ind];
@@ -190,7 +189,7 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                             
                                 tmp_num=len(cells['time']);
                                 
-                                if cells['time'][ii][div_ind] < observed_cells_time: #record the new cell only if it appears after the
+                                if cells['time'][ii][div_ind] < observed_cells_time: #record the new cell only if the cdc20 appears after the cyc E peak
                                     
                                     initial_new_cell={}
                                     for obs in list(cells['molecules'][ii].keys()) :
@@ -202,25 +201,48 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                                     cells['living_cell'] = cells['living_cell']+[True];
                                     
                                     if cells['time'][ii][div_ind]==run_time:
-                                        cells['recording']=cells['recording']+[True];
-                                    else : #mitosis happens right on the end time (almost impossible)
                                         cells['recording']=cells['recording']+[False];
+                                    else : #mitosis happens right on the end time (almost impossible)
+                                        cells['recording']=cells['recording']+[True];
                                         
                                     current_time=np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); #changed to the real time of the division
+                    if death.size != 0: #apoptosis right after mitosis
+                    
+                        cells['living_cell'][ii]=False; #the cell dies
+                        cells['recording'][ii]=False; #the record stops
+                        
+                        current_time[ii,0] = cells['time'][ii][death[0]]; #death at time t
+                        for obs in list(cells['molecules'][ii].keys()) :
+                            cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:death[0]+1]
+                        cells['time'][ii]=cells['time'][ii][0:death[0]+1];
+                        current_time[ii,1]=0; #cell is dead
+                        
+                        cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][death[0]], -1], axis=0); #one cell to be removed to the count
+                        #print('apoptosis after division 1')
 
+###############################################################################
+                        #quiescent cell
 
                 else : #size(max_tmp_cdc,1)==cells{ii,4} && length(find(cells{ii,2}(:,23)>25))<20 #quiescent cell
                     current_time[ii,0]=cells['time'][ii][-1];
                     cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][-1], 0], axis=0);
-            
+                    #print('quiescence 1')
+
+###############################################################################
+
+
             if current_time[ii,0]>=run_time : #if the cell reached the end of the experiment
+                #print('stop cell recording')
                 cells['recording'][ii]=False; #Stop the recording
                 
                 
             #if the time is > to observed_cells_time, we don't take into account new cells, only the fate of the cells that are already born.
-            
-            elif current_time[ii,0]<run_time and current_time[ii,0]>=observed_cells_time and cells['recording'][ii]:#if there's time left and the cell has not died/or no fate after observed_cells_time
-                #print('after');
+
+###############################################################################
+###############################################################################
+
+            if current_time[ii,0]<run_time and current_time[ii,0]>=observed_cells_time and cells['recording'][ii]:#if there's time left and the cell has not died/or no fate after observed_cells_time
+                #print('after')
                 T = 41 - (current_time[ii,0]>(run_time-40))*(40 - run_time + current_time[ii,0])
                 
                 tmp_t = pl.linspace(0, T, int(T*10))
@@ -231,18 +253,19 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                     for j in cells['molecules'][ii] :
                         Initial=Initial+[cells['molecules'][ii][j][-1]]
                     simres = sim.run(initials=Initial, stop_if = 'obsBH3>200');
-                    #print(parameter_vector_original);
+                    #print(parameter_vector_original)
                     
                 else :
                     simres = sim.run(verbose=False, stop_if = 'obsBH3>200');
-                    #print(parameter_vector_original);
+                    #print(parameter_vector_original)
+                #print('stoch sim 2')
                 
                 tmp_t = simres.tout[0]
                 yout = simres.observables
                 
                 for obs in list(cells['molecules'][ii].keys()) :
                     cells['molecules'][ii][obs]=cells['molecules'][ii][obs][:-1]+yout[obs].tolist(); #evolution of different species
-                    
+
                     
             #if type(cells['time'][ii])!=list : #if it's an array
             #    cells['time'][ii]=cells['time'][ii].tolist()
@@ -255,32 +278,42 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 a, max_tmp_cycE = peakfinder(cells['molecules'][ii]['obsCycE'],0.15*200,0.15*200);  #cycE
             #min_tmp=peakfinder(cells{ii,2}(:,14),[],30,-1);   #cdc20
                 
-                if len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])>20 or np.any(np.array(cells['molecules'][ii]['obsBAXm'])>=40) or np.any(np.array(cells['molecules'][ii]['obsBH3'])>=200) :#dying cell   #baxm >20 then apoptosis;
-                    #print('death');
-                    cells['living_cell'][ii]=False; #the cell dies
-                    cells['recording'][ii]=False; #Stop the recording
-                    death=[i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 20];
-                    current_time[ii,0]=cells['time'][ii][death[0]]; #death at time t
-                    for obs in list(cells['molecules'][ii].keys()) :
-                        cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:death[0]+1]
-                    
-                    
-                    cells['time'][ii]=cells['time'][ii][0:death[0]+1];
-                    
-                    current_time[ii,1]=0; #cell is death
-                    
-                    cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][death[0]], -1], axis=0); #one cell to be removed to the count
-                    
-                elif len(max_tmp_cdc) > cells['division'][ii] and len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])<20 : #dividing cell
-                    
-                    
-                    for index in range(cells['division'][ii]-1, len(max_tmp_cdc)-1) :
-                        cells['recording'][ii]=False
+                death = np.array([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 20]) if len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])>20 else np.array([])
+                
+                
 
+###############################################################################
+                #Cell apoptosis
+                if death.size>0 and np.min(death) < max_tmp_cdc[min([cells['division'][ii], len(max_tmp_cdc)-1])] :#dying cell   #baxm >25 then apoptosis for 20 time steps or BAXm>=40 (it means it has started with more than 40 molecules of BAXm) # or np.any(np.array(cells['molecules'][ii]['obsBAXm'])>=40) # or np.any(np.array(cells['molecules'][ii]['obsBH3'])>=200)
+                        #print('apoptosis 2')
+                        #print('death')
+                        cells['recording'][ii]=False; #the record stops
+                        cells['living_cell'][ii]=False; #the cell dies
+                        death=[i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 20];
+                        current_time[ii,0]=cells['time'][ii][death[0]]; #death at time t
+                        for obs in list(cells['molecules'][ii].keys()) :
+                            cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:death[0]+1]
+                        cells['time'][ii]=cells['time'][ii][0:death[0]+1];
+                        current_time[ii,1]=0; #cell is death
+                        cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][death[0]], -1], axis=0); #one cell to be removed to the count
+                    
+###############################################################################
+
+                elif len(max_tmp_cdc) > cells['division'][ii]:
+                    #print('DIVISION 2')
+                    divisions_tmp = np.count_nonzero(np.min(death) > np.array(max_tmp_cdc)) if  death.size != 0 else len(max_tmp_cdc)
+                    
+                    cells['recording'][ii]=False; #the record stops
+
+                    for index in range(cells['division'][ii], divisions_tmp) :
+                        
                         div_ind = (max_tmp_cdc[index]);
-                        #print('index');
+                        #print('index')
+                        
+
                         
                         if index==0: #first cell, there is no need to check id CycE has cycled, it will be checked between two mitosis
+                            #print('DIVISION 2 0')
                             cells['division'][ii] = cells['division'][ii]+1;               
                             current_time[ii,0]=cells['time'][ii][-1]; #no change because this is the time and cell_count_tmp for the cell
                             cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][div_ind], 1], axis=0);
@@ -301,7 +334,8 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                                 
                                 current_time=np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); #changed to the real time of the division
                             
-                        else :                                
+                        else : 
+                            #print('DIVISION 2 1')                               
                             if np.any(np.logical_and(max_tmp_cdc[index-1] < np.array(max_tmp_cycE) ,np.array(max_tmp_cycE) < max_tmp_cdc[index])) : #if cycE oscillates between two CDC20 peaks
                             
                                 #cells['time'][ii]=cells['time'][ii][0:div_ind];
@@ -329,22 +363,45 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                                     cells['recording']=cells['recording']+[False];
                                         
                                     current_time=np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); #changed to the real time of the division
-                    
-                    
+                    if death.size != 0: #apoptosis right after mitosis
+                        #print('apoptosis after DIVISION 2')
+                        cells['living_cell'][ii]=False; #the cell dies
+                        cells['recording'][ii]=False; #the record stops
+                        
+                        current_time[ii,0] = cells['time'][ii][death[0]]; #death at time t
+                        for obs in list(cells['molecules'][ii].keys()) :
+                            cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:death[0]+1]
+                        cells['time'][ii]=cells['time'][ii][0:death[0]+1];
+                        current_time[ii,1]=0; #cell is dead
+                        
+                        cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][death[0]], -1], axis=0); #one cell to be removed to the count
+###############################################################################
+                #Quiescent cell
+                
                 else : #size(max_tmp_cdc,1)==cells{ii,4} && length(find(cells{ii,2}(:,23)>25))<20 #quiescent cell$
-                    #print('quiescence');
+                    #print('quiescence')
+                    #print('quiescence 2')
                     current_time[ii,0]=cells['time'][ii][-1];
                     cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][-1], 0], axis=0);
-                    if current_time[ii,0]>=run_time : #if the cell reached the end of the experiment
-                        cells['recording'][ii]=False; #Stop the recording
-                        
                     
+                    if current_time[ii,0]>=run_time : cells['recording'][ii]=False ; ##if the cell reached the end of the experiment the record stops
+
+                        
+###############################################################################
+###############################################################################
+
             else :
                 cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][-1], 0], axis=0);
                 
             combo = [ii, cells['time'][ii][-1]];
-            
+
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+
         try :
+            #print('updating cell count')
             for ii in range(len(cell_count_tmp)) : #updating cell_count (cell population count)
             
                 if cell_count_tmp[ii,1]==1 : #new cell
@@ -393,11 +450,9 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                     
             u, indices = np.unique(cell_count[:,0], return_index=True)
             cell_count=cell_count[indices,:];
-        #disp(cell_count(end,:)) 
-        except:
-            print("except runakterk");
-#            np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cell_count_tmp.npy", cell_count_tmp)
-#            np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/cell_count_tmp.npy", cell_count)
-#            np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/ii.npy", ii)
+
+        except :
+            print("Cell population simulation error")
+
             
     return (cells, cell_count)
