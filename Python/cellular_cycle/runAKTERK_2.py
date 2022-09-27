@@ -120,8 +120,18 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
 
 ###############################################################################
                 #Cell apoptosis
-                        
-                if death.size>0 and np.min(death) < max_tmp_cdc[min([cells['division'][ii], len(max_tmp_cdc)-1])]:# or np.any(np.array(cells['molecules'][ii]['obsBH3'])>=200) :#dying cell   #baxm >25 then apoptosis for 20 time steps or BAXm>=40 (it means it has started with more than 40 molecules of BAXm) # or np.any(np.array(cells['molecules'][ii]['obsBAXm'])>=40)
+                
+                
+                mitosis_after_apoptosis = False
+                no_new_mitosis = False
+                
+                if death.size>0 :
+                    no_new_mitosis = cells['division'][ii] == len(max_tmp_cdc)
+                    if not no_new_mitosis: mitosis_after_apoptosis = max_tmp_cdc[cells['division'][ii]] > np.min(death)
+                
+                
+                
+                if no_new_mitosis or mitosis_after_apoptosis:# or np.any(np.array(cells['molecules'][ii]['obsBH3'])>=200) :#dying cell   #baxm >25 then apoptosis for 20 time steps or BAXm>=40 (it means it has started with more than 40 molecules of BAXm) # or np.any(np.array(cells['molecules'][ii]['obsBAXm'])>=40)
                         
                         cells['living_cell'][ii]=False; #the cell dies
                         cells['recording'][ii]=False; #the record stops
