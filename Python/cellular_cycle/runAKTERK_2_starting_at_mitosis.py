@@ -80,9 +80,8 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 #print('before')
                 #print(ii)
                 
-                T = 30 #80
-                
-                tmp_t = pl.linspace(0, T, int(T*10))
+                T = min(30, run_time+1-current_time[ii,0])  #80
+                tmp_t = np.linspace(0, T, max(3,int(T*10)))
                 
                 sim = BngSimulator(model_population, tspan=tmp_t, verbose=False);
                 
@@ -235,12 +234,17 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 #print('stop cell recording')
                 cells['recording'][ii]=False; #Stop the recording
                 
+                ind_tmp = np.where(np.array(cells['time'][ii])<=run_time)[-1][-1]
+                cells['time'][ii] = cells['time'][ii][0:ind_tmp+1]
+                for obs in list(cells['molecules'][ii].keys()) : cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:ind_tmp+1]
+                current_time[ii,1]=cells['time'][ii][-1]; 
                 
+
+###############################################################################
+###############################################################################
+
             #if the time is > to observed_cells_time, we don't take into account new cells, only the fate of the cells that are already born.
-
-###############################################################################
-###############################################################################
-
+                
             if current_time[ii,0]<run_time and current_time[ii,0]>=observed_cells_time and cells['recording'][ii]:#if there's time left and the cell has not died/or no fate after observed_cells_time
                 #print('after')
                 T = 41 - (current_time[ii,0]>(run_time-40))*(40 - run_time + current_time[ii,0])

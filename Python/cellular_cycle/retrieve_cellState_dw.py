@@ -14,7 +14,7 @@ import numpy as np
 from tempfile import TemporaryDirectory
 
 def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
-    all_prot = np.empty((0,len(cells['molecules'][0])+5)) #cell ind, time, relative time, protein time courses
+    all_prot = np.empty((0,len(cells['molecules'][0])+3)) #cell ind, time, relative time, protein time courses
     index_cell=0 #cell identification nber
     omega=200
     IMT_eoe_counts = pd.DataFrame(columns=['End_of_Expt', 'Death' ,'Birthtime','Lifespan'])
@@ -33,11 +33,6 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
                     # choose threshold values
                     (a,max_tmp_cdc) = peakfinder(cells['molecules'][ii]['obsCdc20'], 0.15*omega, 0.15*omega, 1, includeEndpoints=1);
                     (a,max_tmp_cycE) = peakfinder(cells['molecules'][ii]['obsCycE'], 0.15*omega, 0.15*omega, 1, includeEndpoints=1); 
-                    max_tmp_cdc = [tmp for tmp in max_tmp_cdc if tmp<=end_index[-1]]
-                    max_tmp_cycE = [tmp for tmp in max_tmp_cycE if tmp<=end_index[-1]]
-                    
-                    end_index[-1]
-                    
                 except:
                     np.save(TemporaryDirectory("pydream_frac_prolif_quiescence_obscycE.npy"), 
                             cells['molecules'][ii]['obsCycE'])
@@ -66,9 +61,9 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
 #                            print(cells['time'][ii][0])
 #                            print(cells['time'][ii][div_ind[0]])
                             cell_info_tmp = np.array(
-                                [[False for i in range(div_ind[1] -  div_ind[0])]] +
-                                [[False for i in range(div_ind[1] -  div_ind[0])]] +
-                                [[index_cell for i in range(div_ind[1] -  div_ind[0])]] + 
+                                [[False for i in range( div_ind[1] -  div_ind[0])]] +
+                                [[False for i in range( div_ind[1] -  div_ind[0])]] +
+                                [[index_cell for i in range( div_ind[1] -  div_ind[0])]] + 
                                 [(np.array(cells['time'][ii][div_ind[0]: div_ind[1]]) - cells['time'][ii][div_ind[0]]).tolist()] + 
                                 [cells['time'][ii][div_ind[0]: div_ind[1]]] + 
                                 [cells['molecules'][ii][obs][div_ind[0]: div_ind[1]] for obs in cells['molecules'][0].keys()]).T
@@ -89,9 +84,9 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
                         
                         if return_all_prot:
                             cell_info_tmp = np.array(
-                                [[False for i in range(div_ind[1] -  div_ind[0])]] +
-                                [[False for i in range(div_ind[1] -  div_ind[0])]] +
-                                [[index_cell for i in range(div_ind[1] -  div_ind[0])]] + 
+                                [[False for i in range( div_ind[1] -  div_ind[0])]] +
+                                [[False for i in range( div_ind[1] -  div_ind[0])]] +
+                                [[index_cell for i in range( div_ind[1] -  div_ind[0])]] + 
                                 [(np.array(cells['time'][ii][div_ind[0]: div_ind[1]]) - cells['time'][ii][div_ind[0]]).tolist()] + 
                                 [cells['time'][ii][div_ind[0]: div_ind[1]]] + 
                                 [cells['molecules'][ii][obs][div_ind[0]: div_ind[1]] for obs in cells['molecules'][0].keys()]).T
@@ -113,9 +108,9 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
                                     'Lifespan' : (cells['time'][ii][div_ind[jj+1]] - cells['time'][ii][div_ind[jj]])}
                                 if return_all_prot:
                                     cell_info_tmp = np.array(
-                                        [[False for i in range(div_ind[jj+1] -  div_ind[jj])]] +
-                                        [[False for i in range(div_ind[jj+1] -  div_ind[jj])]] +
-                                        [[index_cell for i in range(div_ind[jj+1] -  div_ind[jj])]] + 
+                                        [[False for i in range( div_ind[1] -  div_ind[0])]] +
+                                        [[False for i in range( div_ind[1] -  div_ind[0])]] +
+                                        [[index_cell for i in range( div_ind[jj+1] -  div_ind[jj])]] + 
                                         [(np.array(cells['time'][ii][div_ind[jj]: div_ind[jj+1]]) - 
                                           cells['time'][ii][div_ind[jj]]).tolist()] + 
                                         [cells['time'][ii][div_ind[jj]: div_ind[jj+1]]] + 
@@ -130,18 +125,6 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
                                               'Death' : False, 
                                               'Birthtime' : cells['time'][ii][div_ind[jj]], 
                                               'Lifespan' : (run_time - cells['time'][ii][div_ind[jj]])}
-                                if return_all_prot:
-                                    cell_info_tmp = np.array(
-                                        [[True for i in range(len(cells['time'][ii][div_ind[jj]:end_index[-1]]))]] +
-                                        [[False for i in range(len(cells['time'][ii][div_ind[jj]:end_index[-1]]))]] +
-                                        [[index_cell for i in range(len(cells['time'][ii][div_ind[jj]:end_index[-1]]))]] + 
-                                        [(np.array(cells['time'][ii][div_ind[jj]:end_index[-1]]) - 
-                                          cells['time'][ii][div_ind[jj]]).tolist()] + 
-                                        [cells['time'][ii][div_ind[jj]:end_index[-1]]] + 
-                                        [cells['molecules'][ii][obs][
-                                            div_ind[jj]:end_index[-1]] for obs in cells['molecules'][0].keys()]).T
-                                    all_prot = np.append(all_prot, cell_info_tmp , axis=0)
-                                    index_cell+=1
                             IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
             
                     elif len(div_ind)==1 and cells['living_cell'][ii] : # one division
@@ -149,19 +132,6 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
                                       'Death' : False, 
                                       'Birthtime' : cells['time'][ii][div_ind[0]], 
                                       'Lifespan' : (run_time - cells['time'][ii][div_ind[0]])}
-                        if return_all_prot:
-                            cell_info_tmp = np.array(
-                                [[True for i in range(len(cells['time'][ii][div_ind[0]:end_index[-1]]))]] +
-                                [[False for i in range(len(cells['time'][ii][div_ind[0]:end_index[-1]]))]] +
-                                [[index_cell for i in range(len(cells['time'][ii][div_ind[0]:end_index[-1]]))]] + 
-                                [(np.array(cells['time'][ii][div_ind[0]:end_index[-1]]) - 
-                                  cells['time'][ii][div_ind[0]]).tolist()] + 
-                                [cells['time'][ii][div_ind[0]:end_index[-1]]] + 
-                                [cells['molecules'][ii][obs][
-                                    div_ind[0]:end_index[-1]] for obs in cells['molecules'][0].keys()]).T
-                            all_prot = np.append(all_prot, cell_info_tmp , axis=0)
-                            index_cell+=1
-                                    
                         IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
 
                             
@@ -171,20 +141,6 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
                                       'Birthtime' : cells['time'][ii][0], 
                                       'Lifespan' : (run_time - cells['time'][ii][0])}
                         IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
-                        
-                        if return_all_prot:
-                            cell_info_tmp = np.array(
-                                [[True for i in range(end_index[-1] - cells['time'][ii][0])]] +
-                                [[False for i in range(end_index[-1] - cells['time'][ii][0])]] +
-                                [[index_cell for i in range(end_index[-1] - cells['time'][ii][0])]] + 
-                                [(np.array(cells['time'][ii][:end_index[-1]]) - 
-                                  cells['time'][ii][0]).tolist()] + 
-                                [cells['time'][ii][:end_index[-1]]] + 
-                                [cells['molecules'][ii][obs][:end_index[-1]] for obs in cells['molecules'][0].keys()]).T
-                            all_prot = np.append(all_prot, cell_info_tmp , axis=0)
-                            index_cell+=1
-                            
-                            len(cell_info_tmp[4])
 
                         
                     elif len(div_ind)>=2 and cells['living_cell'][ii]==False :
@@ -196,9 +152,9 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
                                               'Lifespan' : (cells['time'][ii][div_ind[jj+1]] - cells['time'][ii][div_ind[jj]])}
                                 if return_all_prot:
                                     cell_info_tmp = np.array(
-                                        [[False for i in range(div_ind[jj+1] -  div_ind[jj])]] +
-                                        [[False for i in range(div_ind[jj+1] -  div_ind[jj])]] +
-                                        [[index_cell for i in range(div_ind[jj+1] -  div_ind[jj])]] + 
+                                        [[False for i in range( div_ind[1] -  div_ind[0])]] +
+                                        [[False for i in range( div_ind[1] -  div_ind[0])]] +
+                                        [[index_cell for i in range( div_ind[jj+1] -  div_ind[jj])]] + 
                                         [(np.array(cells['time'][ii][div_ind[jj]: div_ind[jj+1]]) - 
                                           cells['time'][ii][div_ind[jj]]).tolist()] + 
                                         [cells['time'][ii][div_ind[jj]: div_ind[jj+1]]] + 
@@ -211,18 +167,6 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
                                               'Death' : True, 
                                               'Birthtime' : cells['time'][ii][div_ind[jj]], 
                                               'Lifespan' : (cells['time'][ii][-1] - cells['time'][ii][div_ind[jj]])}
-                                if return_all_prot:
-                                    cell_info_tmp = np.array(
-                                        [[False for i in range(len(cells['time'][ii]) -div_ind[jj])]] +
-                                        [[True for i in range(len(cells['time'][ii]) -div_ind[jj])]] +
-                                        [[index_cell for i in range(len(cells['time'][ii]) -div_ind[jj])]] + 
-                                        [(np.array(cells['time'][ii][div_ind[jj]:]) - 
-                                          cells['time'][ii][div_ind[jj]]).tolist()] + 
-                                        [cells['time'][ii][div_ind[jj]:]] + 
-                                        [cells['molecules'][ii][obs][                                            div_ind[jj]:] for obs in cells['molecules'][0].keys()]).T
-                                    all_prot = np.append(all_prot, cell_info_tmp , axis=0)
-                                    index_cell+=1
-                                
                             IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)                
 
                     elif len(div_ind)==1 and cells['living_cell'][ii]==False :
@@ -230,18 +174,8 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
                                       'Death' : True, 
                                       'Birthtime' : cells['time'][ii][div_ind[0]], 
                                       'Lifespan' : (cells['time'][ii][-1] - cells['time'][ii][div_ind[0]])}
+                        
                         IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
-                        if return_all_prot:
-                            cell_info_tmp = np.array(
-                                [[False for i in range(len(cells['time'][ii]) -div_ind[0])]] +
-                                [[True for i in range(len(cells['time'][ii]) -div_ind[0])]] +
-                                [[index_cell for i in range(len(cells['time'][ii]) -div_ind[0])]] + 
-                                [(np.array(cells['time'][ii][div_ind[0]:]) - 
-                                  cells['time'][ii][div_ind[0]]).tolist()] + 
-                                [cells['time'][ii][div_ind[0]:]] + 
-                                [cells['molecules'][ii][obs][                                            div_ind[0]:] for obs in cells['molecules'][0].keys()]).T
-                            all_prot = np.append(all_prot, cell_info_tmp , axis=0)
-                            index_cell+=1
                 else:
                     if len(div_ind)>=1 and cells['living_cell'][ii]:
                         for jj in range(len(div_ind)):
@@ -252,17 +186,6 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
                                               'Death' : False, 
                                               'Birthtime' : cells['time'][ii][div_ind[jj]], 
                                               'Lifespan' : run_time - cells['time'][ii][div_ind[jj]]}
-                                if return_all_prot:
-                                    cell_info_tmp = np.array(
-                                        [[True for i in range(end_index[-1] - cells['time'][ii][div_ind[jj]])]] +
-                                        [[False for i in range(end_index[-1] - cells['time'][ii][div_ind[jj]])]] +
-                                        [[index_cell for i in range(end_index[-1] - cells['time'][ii][div_ind[jj]])]] + 
-                                        [(np.array(cells['time'][ii][div_ind[jj]:end_index[-1]]) - 
-                                          cells['time'][ii][div_ind[jj]]).tolist()] + 
-                                        [cells['time'][ii][div_ind[jj]:end_index[-1]]] + 
-                                        [cells['molecules'][ii][obs][div_ind[jj]:end_index[-1]] for obs in cells['molecules'][0].keys()]).T
-                                    all_prot = np.append(all_prot, cell_info_tmp , axis=0)
-                                    index_cell+=1
                             
                             else:
                                 tmp_counts = {'End_of_Expt' : False, 
@@ -271,9 +194,9 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
                                               'Lifespan' : (cells['time'][ii][div_ind[jj+1]] - cells['time'][ii][div_ind[jj]])}
                                 if return_all_prot:
                                     cell_info_tmp = np.array(
-                                        [[False for i in range(div_ind[jj+1] -  div_ind[jj])]] +
-                                        [[False for i in range(div_ind[jj+1] -  div_ind[jj])]] +
-                                        [[index_cell for i in range(div_ind[jj+1] -  div_ind[jj])]] + 
+                                        [[False for i in range( div_ind[1] -  div_ind[0])]] +
+                                        [[False for i in range( div_ind[1] -  div_ind[0])]] +
+                                        [[index_cell for i in range( div_ind[jj+1] -  div_ind[jj])]] + 
                                         [(np.array(cells['time'][ii][div_ind[jj]: div_ind[jj+1]]) - 
                                           cells['time'][ii][div_ind[jj]]).tolist()] + 
                                         [cells['time'][ii][div_ind[jj]: div_ind[jj+1]]] + 
@@ -292,18 +215,6 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
                                               'Death' : True, 
                                               'Birthtime' : cells['time'][ii][div_ind[jj]], 
                                               'Lifespan' : (cells['time'][ii][-1] - cells['time'][ii][div_ind[jj]])}
-                                if return_all_prot:
-                                    cell_info_tmp = np.array(
-                                        [[False for i in range(len(cells['time'][ii]) -  div_ind[jj])]] +
-                                        [[True for i in range(len(cells['time'][ii]) -  div_ind[jj])]] +
-                                        [[index_cell for i in range(len(cells['time'][ii]) -  div_ind[jj])]] + 
-                                        [(np.array(cells['time'][ii][div_ind[jj]:]) - 
-                                          cells['time'][ii][div_ind[jj]]).tolist()] + 
-                                        [cells['time'][ii][div_ind[jj]:]] + 
-                                        [cells['molecules'][ii][obs][
-                                            div_ind[jj]:] for obs in cells['molecules'][0].keys()]).T
-                                    all_prot = np.append(all_prot, cell_info_tmp , axis=0)
-                                    index_cell+=1
                             else:
                                 tmp_counts = {'End_of_Expt' : False, 
                                               'Death' : False, 
@@ -311,9 +222,9 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
                                               'Lifespan' : (cells['time'][ii][div_ind[jj+1]] - cells['time'][ii][div_ind[jj]])}
                                 if return_all_prot:
                                     cell_info_tmp = np.array(
-                                        [[False for i in range(div_ind[jj+1] -  div_ind[jj])]] +
-                                        [[False for i in range(div_ind[jj+1] -  div_ind[jj])]] +
-                                        [[index_cell for i in range(div_ind[jj+1] -  div_ind[jj])]] + 
+                                        [[False for i in range( div_ind[1] -  div_ind[0])]] +
+                                        [[False for i in range( div_ind[1] -  div_ind[0])]] +
+                                        [[index_cell for i in range( div_ind[jj+1] -  div_ind[jj])]] + 
                                         [(np.array(cells['time'][ii][div_ind[jj]: div_ind[jj+1]]) - 
                                           cells['time'][ii][div_ind[jj]]).tolist()] + 
                                         [cells['time'][ii][div_ind[jj]: div_ind[jj+1]]] + 
@@ -332,9 +243,9 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
                                       'Lifespan' : (cells['time'][ii][div_ind[0]] - cells['time'][ii][0])}
                         if return_all_prot:
                             cell_info_tmp = np.array(
-                                [[False for i in range(div_ind[0] -  0)]] +
-                                [[False for i in range(div_ind[0] -  0)]] +
-                                [[index_cell for i in range(div_ind[0] -  0)]] + 
+                                [[False for i in range( div_ind[0] -  0)]] +
+                                [[False for i in range( div_ind[0] -  0)]] +
+                                [[index_cell for i in range( div_ind[0] -  0)]] + 
                                 [(np.array(cells['time'][ii][0: div_ind[0]]) - 
                                   cells['time'][ii][0]).tolist()] + 
                                 [cells['time'][ii][0: div_ind[0]]] + 
@@ -366,7 +277,7 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
     IMT_eoe_counts = IMT_eoe_counts[IMT_eoe_counts['Lifespan']>0]
     
     if return_all_prot:
-        return IMT_eoe_counts, pd.DataFrame(all_prot, columns=['End of experiment', 'Apoptosis', 'index', 'relative time', 'experiment time'] + [obs.replace('obs','') for obs in cells['molecules'][0].keys()])
+        return IMT_eoe_counts, pd.DataFrame(all_prot, columns=['index', 'relative time', 'experiment time'] + [obs.replace('obs','') for obs in cells['molecules'][0].keys()])
     else :
         return IMT_eoe_counts
 

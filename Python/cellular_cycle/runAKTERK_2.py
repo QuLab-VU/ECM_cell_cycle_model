@@ -10,7 +10,6 @@ import sys
 sys.path.insert(0, __file__ + "/../cellular_cycle")
 from pysb import * 
 import numpy as np
-import pylab as pl
 
 from runStochCell import runStochcell
 from pysb.simulator import BngSimulator
@@ -47,6 +46,7 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     cells['living_cell']=[]; #living cell?
     cells['recording']=[];
     
+    #plt.plot(variable_range['obsCdc20'])
     
     for i in range(init) :
         cells['molecules']=cells['molecules']+[{}]
@@ -77,9 +77,8 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 #print('before')
                 #print(ii)
                 
-                T = 30 #80
-                
-                tmp_t = pl.linspace(0, T, int(T*10))
+                T = min(30, run_time+1-current_time[ii,0])  #80
+                tmp_t = np.linspace(0, T, max(3,int(T*10)))
                 
                 sim = BngSimulator(model_population, tspan=tmp_t, verbose=False);
                 
@@ -120,18 +119,8 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
 
 ###############################################################################
                 #Cell apoptosis
-                
-                
-                mitosis_after_apoptosis = False
-                no_new_mitosis = False
-                
-                if death.size>0 :
-                    no_new_mitosis = cells['division'][ii] == len(max_tmp_cdc)
-                    if not no_new_mitosis: mitosis_after_apoptosis = max_tmp_cdc[cells['division'][ii]] > np.min(death)
-                
-                
-                
-                if no_new_mitosis or mitosis_after_apoptosis:# or np.any(np.array(cells['molecules'][ii]['obsBH3'])>=200) :#dying cell   #baxm >25 then apoptosis for 20 time steps or BAXm>=40 (it means it has started with more than 40 molecules of BAXm) # or np.any(np.array(cells['molecules'][ii]['obsBAXm'])>=40)
+                        
+                if death.size>0 and np.min(death) < max_tmp_cdc[min([cells['division'][ii], len(max_tmp_cdc)-1])]:# or np.any(np.array(cells['molecules'][ii]['obsBH3'])>=200) :#dying cell   #baxm >25 then apoptosis for 20 time steps or BAXm>=40 (it means it has started with more than 40 molecules of BAXm) # or np.any(np.array(cells['molecules'][ii]['obsBAXm'])>=40)
                         
                         cells['living_cell'][ii]=False; #the cell dies
                         cells['recording'][ii]=False; #the record stops
@@ -244,17 +233,22 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 #print('stop cell recording')
                 cells['recording'][ii]=False; #Stop the recording
                 
+                ind_tmp = np.where(np.array(cells['time'][ii])<=run_time)[-1][-1]
+                cells['time'][ii] = cells['time'][ii][0:ind_tmp+1]
+                for obs in list(cells['molecules'][ii].keys()) : cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:ind_tmp+1]
+                current_time[ii,1]=cells['time'][ii][-1]; 
                 
-            #if the time is > to observed_cells_time, we don't take into account new cells, only the fate of the cells that are already born.
+###############################################################################
+###############################################################################
+###############################################################################
 
-###############################################################################
-###############################################################################
+#if the time is > to observed_cells_time, we don't take into account new cells, only the fate of the cells that are already born.
 
             if current_time[ii,0]<run_time and current_time[ii,0]>=observed_cells_time and cells['recording'][ii]:#if there's time left and the cell has not died/or no fate after observed_cells_time
                 #print('after')
                 T = 41 - (current_time[ii,0]>(run_time-40))*(40 - run_time + current_time[ii,0])
                 
-                tmp_t = pl.linspace(0, T, int(T*10))
+                tmp_t = np.linspace(0, T, max(2,int(T*10)))
                 
                 sim = BngSimulator(model_population, tspan=tmp_t, verbose=False);
                 if len(model_population.species)>0 :
@@ -463,5 +457,4 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
         except :
             print("Cell population simulation error")
 
-            
     return (cells, cell_count)
