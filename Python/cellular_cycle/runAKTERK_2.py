@@ -19,7 +19,7 @@ from peakfinder import peakfinder
 
 #######################################################################
 
-def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population,idx, condition):
+def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population, idx, condition):
     
     
     
@@ -234,8 +234,9 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 cells['recording'][ii]=False; #Stop the recording
                 
                 ind_tmp = np.where(np.array(cells['time'][ii])<=run_time)[-1][-1]
-                cells['time'][ii] = cells['time'][ii][0:ind_tmp+1]
-                for obs in list(cells['molecules'][ii].keys()) : cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:ind_tmp+1]
+                
+                cells['time'][ii] = cells['time'][ii][0:ind_tmp+2]
+                for obs in list(cells['molecules'][ii].keys()) : cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:ind_tmp+2]
                 current_time[ii,1]=cells['time'][ii][-1]; 
                 
 ###############################################################################
