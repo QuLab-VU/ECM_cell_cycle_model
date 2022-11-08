@@ -9,21 +9,7 @@ Title= peakfinder
 
 import numpy as np
 import sys
-#
-#x0 = cells['molecules'][7]['obsCycE']
-#x0 = cells['molecules'][8]['obsCdc20']
-#sel = 0.15*omega
-#thresh = 0.15*omega
-#extrema = 1
-#includeEndpoints=1
-#interpolate=0
-#
-#
-#peakfinder(cells['molecules'][7]['obsCycE'], sel, thresh, extrema=1, includeEndpoints=1,interpolate=0)
-#peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=1,interpolate=0)
-# 
-# 
- 
+
 
 
 def peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=0, interpolate=0): 
@@ -73,14 +59,14 @@ def peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=0, interpolate=0):
             signDx = np.sign(np.diff(x[0:3]));
             if signDx[0] <= 0 :#The first point is larger or equal to the second
                 if signDx[0] == signDx[1] :#Want alternating signs
-                    x[1] = [];
-                    ind[1] = [];
+                    del x[1]; #x[1] = [];
+                    del ind[1]; #ind[1] = [];
                     length = length-1;
                     
             else : #First point is smaller than the second
                 if signDx[0] == signDx[1] : #Want alternating signs
-                    x[0] = [];
-                    ind[0] = [];
+                    del x[0]; #x[0] = [];
+                    del ind[0]; #ind[0] = [];
                     length = length-1;
             
         
@@ -163,7 +149,7 @@ def peakfinder(x0, sel, thresh, extrema=1, includeEndpoints=0, interpolate=0):
         if includeEndpoints :
             if length>0:
                 [peakMags,xInd] = [[max(x)], np.argmax(x)];
-            print(x0)
+            #print(x0)
             if peakMags[0] > minMag + sel :
                 peakInds = [ind[xInd]];
             else :
