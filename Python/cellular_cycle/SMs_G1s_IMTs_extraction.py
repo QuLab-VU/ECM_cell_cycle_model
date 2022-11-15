@@ -11,15 +11,10 @@ import numpy as np
 import math
 import os
 os.environ["PYOPENCL_CTX"] ="0"
-
-#path="/home/jeremie"
-#path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
-#import sys
-#sys.path.insert(0, path+"/cellular_cycle") #add a pathway to the model
 from peakfinder import peakfinder
 
 
-def IMTs(cells) :
+def SMs_G1s_IMTs_extraction(cells) :
     #Import the model                
     omega = 200;
     
@@ -31,9 +26,9 @@ def IMTs(cells) :
         
         tmp_t = cells['time'][cell]
 
-        (a,max_tmp_cdc) = peakfinder(cells['molecules'][cell]['obsCdc20'], 0.15*omega, 0.3*omega, 1, includeEndpoints=1);
-        (a,max_tmp_cycE) = peakfinder(cells['molecules'][cell]['obsCycE'], 0.15*omega, 0.3*omega, 1, includeEndpoints=1); #those values are chosen (threshold)
-        
+        thr = 0.26
+        (a,max_tmp_cdc) = peakfinder(cells['molecules'][cell]['obsCdc20'], thr*omega, thr*omega, 1, includeEndpoints=1);
+        (a,max_tmp_cycE) = peakfinder(cells['molecules'][cell]['obsCycE'], thr*omega, thr*omega, 1, includeEndpoints=1); #those values are chosen (threshold)
         
         if len(max_tmp_cdc)>0 and len(max_tmp_cycE)>0 :          
             div_ind = max_tmp_cdc;
@@ -51,8 +46,5 @@ def IMTs(cells) :
                 tmp = [x for x in (max_tmp_cycE) if x > max_tmp_cdc[jj]];
                 if len(tmp)>0 :
                     g1_tmp.append(tmp_t[tmp[0]] - tmp_t[max_tmp_cdc[jj]]);
-                    
-                    #print(cell)
-                    #print(tmp_t[tmp[0]] - tmp_t[max_tmp_cdc[jj]])
-                    
+        
     return IMT_tmp, s_m_tmp, g1_tmp

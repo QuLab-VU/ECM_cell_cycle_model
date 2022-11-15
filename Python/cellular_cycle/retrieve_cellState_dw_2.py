@@ -19,10 +19,7 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
 #        divSum=divSum+cells['division'][ii];
     
     for ii in range(len(cells['living_cell'])):
-        print('cell' )
-        print(ii)
-        print('index ')
-        print(index_cell)
+
         #depends on when did we stop to record
         end_index=[]
         end_index = [i for i, x in enumerate(np.array(cells['time'][ii]) < run_time) if x] #time within the experiment
@@ -35,12 +32,10 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
 #                plt.plot(cells['molecules'][ii]['obsBAXm'][:end_index[-1]])
                 try:
                     # choose threshold values
-                    thr = 0.26
+                    thr = 0.4
                     (a,max_tmp_cdc) = peakfinder(cells['molecules'][ii]['obsCdc20'], thr*omega, thr*omega, 1, includeEndpoints=1); #peakfinder parameters, can be changed
                     (a,max_tmp_cycE) = peakfinder(cells['molecules'][ii]['obsCycE'], thr*omega, thr*omega, 1, includeEndpoints=1);
                     
-#                    (a,max_tmp_cdc) = peakfinder(cells['molecules'][ii]['obsCdc20'], 0.28*omega, 0.28*omega, 1, includeEndpoints=1); #peakfinder parameters, can be changed
-#                    (a,max_tmp_cycE) = peakfinder(cells['molecules'][ii]['obsCycE'], 0.28*omega, 0.28*omega, 1, includeEndpoints=1);
                     
                     max_tmp_cdc = [tmp for tmp in max_tmp_cdc if tmp<=end_index[-1]]
                     max_tmp_cycE = [tmp for tmp in max_tmp_cycE if tmp<=end_index[-1]]
@@ -58,15 +53,25 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
             
             if cells['time'][ii][-1]<run_time : # if we didn't record the time until the end of the experiment (so it ends with mitosis or death)
                 
-                if cells['time'][ii][0]==0 and div_ind[0]>0 and not cells_starting_at_mitosis : # doesn't start at a mitosis (cdc20 peak) and ends at next peak or death 
+                if cells['time'][ii][0]==0 and div_ind[0]>0: # start at a mitosis (cdc20 peak) and ends at next peak or death 
                     tmp_counts = {'Starting cell' : True, 'End_of_Expt' : False, 'Death' : False, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : (cells['time'][ii][div_ind[0]] - cells['time'][ii][0])} #add first event = from start of experiment to first mitosis
                     IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
-                    
+                    if return_all_prot:
+                        cell_info_tmp = np.array(
+   [[True for i in range(div_ind[0] -  0)]] +
+   [[False for i in range(div_ind[0] -  0)]] +
+   [[False for i in range(div_ind[0] -  0)]] +
+   [[index_cell for i in range(div_ind[0] -  0)]] + 
+   [(np.array(cells['time'][ii][0: div_ind[0]]) -                                          cells['time'][ii][0]).tolist()] + 
+   [cells['time'][ii][0: div_ind[0]]] + 
+   [cells['molecules'][ii][obs][0: div_ind[0]] for obs in cells['molecules'][0].keys()]).T
+                        all_prot = np.append(all_prot, cell_info_tmp , axis=0)
+                        index_cell+=1
                 
                 for jj in range(len(div_ind)-1) :
                     #print(jj)
                     tmp_counts = {
-                    'Starting cell' : True if jj==0 else False,
+                    'Starting cell' : False, #cells['time'][ii][div_ind[jj]]==0
                     'End_of_Expt' : False, 
                     'Death' : False, 
                     'Birthtime' : cells['time'][ii][div_ind[jj]], 
@@ -75,7 +80,7 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
                     
                     if return_all_prot:
                         cell_info_tmp = np.array(
-   [[True if jj==0 else False for i in range(div_ind[jj+1] -  div_ind[jj])]] +
+   [[True for i in range(div_ind[jj+1] -  div_ind[jj])]] +
    [[False for i in range(div_ind[jj+1] -  div_ind[jj])]] +
    [[False for i in range(div_ind[jj+1] -  div_ind[jj])]] +
    [[index_cell for i in range(div_ind[jj+1] -  div_ind[jj])]] + 
@@ -89,7 +94,7 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
                     start = 0 if len(div_ind)==0 else div_ind[-1]
                     tmp_counts = {'Starting cell' : False, 'End_of_Expt' : False, 'Death' : True, 'Birthtime' : cells['time'][ii][start], 'Lifespan' : (cells['time'][ii][-1] - cells['time'][ii][start])}
                     IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
-                        
+                    
                     if return_all_prot:
 #                            print(cells['time'][ii][0])
 #                            print(cells['time'][ii][div_ind[0]])
@@ -105,12 +110,12 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
                         index_cell+=1
 
             else: # record until the end of experiment
-                if cells['time'][ii][0]==0 and div_ind[0]==0 and not cells_starting_at_mitosis : # No mitosis at all during the whole experiment
+                if cells['time'][ii][0]==0 and (len(div_ind)==0 or (div_ind[0]==0 and len(div_ind)==1)): # No mitosis at all during the whole experiment
                     tmp_counts = {'Starting cell' : True, 'End_of_Expt' : True, 'Death' : False, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : run_time} #add first event = from start of experiment to first mitosis
                     IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
                     
                 else:
-                    if cells['time'][ii][0]==0 and div_ind[0]>0 and not cells_starting_at_mitosis : # doesn't start at a mitosis (cdc20 peak) and ends at next peak or death 
+                    if cells['time'][ii][0]==0 and div_ind[0]>0: # doesn't start at a mitosis (cdc20 peak) and ends at next peak or death 
                         tmp_counts = {'Starting cell' : True, 'End_of_Expt' : False, 'Death' : False, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : (cells['time'][ii][div_ind[0]] - cells['time'][ii][0])} #add first event = from start of experiment to first mitosis
                         IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
                         
@@ -118,7 +123,7 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
                     for jj in range(len(div_ind)-1) :
                         
                         tmp_counts = {
-                        'Starting cell' : True if jj==0 else False,
+                        'Starting cell' : False,
                         'End_of_Expt' : False, 
                         'Death' : False, 
                         'Birthtime' : cells['time'][ii][div_ind[jj]], 
