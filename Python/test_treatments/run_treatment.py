@@ -73,7 +73,7 @@ model_population.parameters['AKT'].value = 0.6 * omega
 t = np.linspace(0, 500, 50000)
 simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run()
 yout = simres.all;
-observables=['obsCycE', 'obsCdc20', 'obsp21']; #plot Cyclin E, Cdc20 and Cyclin A
+observables=['obsCycE', 'obsCdc20', 'obsBAXm']; #plot Cyclin E, Cdc20 and Cyclin A
 for obs in range(3) :
     plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
 plt.legend(loc=1)
@@ -87,6 +87,14 @@ model_population.parameters['AKT'].value = 0.6 * omega
 model_concentration.parameters['ERK'].value = 0.2 * 1
 model_concentration.parameters['FAK'].value = 1 * 1
 model_concentration.parameters['AKT'].value = 0.6 * 1
+
+model_concentration.parameters['ERK'].value = 0.2 * 1
+model_concentration.parameters['FAK'].value = 0.4 * 1
+model_concentration.parameters['AKT'].value = 0.251 * 1
+
+model_population.parameters['ERK'].value = 0.2 * omega
+model_population.parameters['FAK'].value = 0.4 * omega
+model_population.parameters['AKT'].value = 0.3 * omega
 
 
 omega = 200
@@ -190,7 +198,7 @@ plt.show()
 t = np.linspace(0, 500, 50000)
 simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run(); #deterministic simulation
 yout = simres.all;
-observables=['obsCycD','obsCdc20']; #plot Cyclin E, Cdc20 and Cyclin A
+observables=['obsCdc20', 'obsBAXm']; #plot Cyclin E, Cdc20 and Cyclin A
 
 for obs in range(2) :
     plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
