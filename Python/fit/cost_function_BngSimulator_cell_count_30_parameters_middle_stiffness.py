@@ -134,6 +134,7 @@ def cost_function_4kPa_30_parameters(parameter_vector, idx):
 ###############################################################################
     
     try:
+        
         (cells, cell_count) = runAKTERK(init, t[-1], t[-1], model_concentration, model_population, idx, condition);
         
         
@@ -192,7 +193,7 @@ def cost_function_4kPa_30_parameters(parameter_vector, idx):
 ###############################################################################
     #Setting 2nd condition
     
-    init = 8
+    init = 3
     condition = '4 kPa ERL'
     parameters_sim[condition] = {}
     

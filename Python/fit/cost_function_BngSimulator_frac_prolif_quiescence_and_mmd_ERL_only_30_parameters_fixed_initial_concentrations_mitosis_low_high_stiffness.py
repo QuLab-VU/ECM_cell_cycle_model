@@ -5,27 +5,22 @@ Created on Wed May 20 10:42:26 2020
 @author: Grim.M
 """
 
-path="/home/jeremie"
-path=r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model"
-path=r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model"
-path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
 
 
 import sys
-sys.path.insert(0, __file__ + "/../cellular_cycle")
+import os
 
-sys.path.insert(0, r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\cellular_cycle") #add a pathway to the model
-sys.path.insert(0, r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit") #add a pathway to the model
+sys.path.insert(0, os.path.dirname(__file__) + "/../cellular_cycle")
+sys.path.insert(0, os.path.dirname(__file__) + "/../fit")
+#sys.path.insert(0, os.getcwd() + "/cellular_cycle")
 
 
 from Austin_proliferation_model_concentration_5 import model
 model_concentration=model
 from Austin_proliferation_model_population_5 import model
 model_population=model
+#os.environ["PYOPENCL_CTX"] ="0"
 
-
-import os
-os.environ["PYOPENCL_CTX"] ="0"
 
 #from runAKTERK_2_starting_at_mitosis import runAKTERK
 from runAKTERK_2 import runAKTERK
@@ -59,12 +54,13 @@ pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","
 ###############################################################################
 import glob
 
-IMT_DATADIR = Path(r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Data\Exp_Intermitotic_Times")
+IMT_DATADIR = Path(os.path.dirname(__file__) + "/../../Data/Exp_Intermitotic_Times")
 
+print(IMT_DATADIR)
 file_location = os.path.join(IMT_DATADIR,'*imt_*.csv')
 filenames = glob.glob(file_location)
 filenames.sort()
-filenames
+#print(filenames)
 
 
 IMTs = []
@@ -129,7 +125,6 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
     observed_cells_time = 30
     sigma=5
     parameter_names = ['a','d','q']
-
     
     print("The parameters are ")
     print(parameter_vector)
@@ -148,14 +143,13 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
 ###############################################################################
 ###############################################################################
     #Setting 1st condition
-    print(path)
     parameters_sim={}
     cost_mmd_006_ERL=0
     cost_006_ERL=0    
     condition = '0.6 kPa ERL'
     init=16 #40
     parameters_sim[condition] = {}
-
+    
     model_population.parameters['ERK'].value = 0.2 * omega
     model_population.parameters['FAK'].value = 0.4 * omega
     model_population.parameters['AKT'].value = 0.3 * omega
@@ -174,7 +168,7 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
         all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
         mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
         censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
-
+        
         while len(mitotic_lifespans)<70: #while we have less than 100 timecourses with apoptosis, 
             init = init + 2
             (cells_tmp, cell_count) = runAKTERK(2, run_time, observed_cells_time, model_concentration, model_population, idx, condition);
@@ -189,24 +183,24 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
             mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
             censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
             
-            
 ###############################################################################
         #Extract useful inforation from the simulations:
-
+    
         simulated_IMT, simulated_sm, simulated_g1 = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
-
+    
         
-        all_events_simulated.to_pickle(path + "/fit_data/pso/high_and_low_stiffness_cost/Events_" + str(idx) + "_40_initial_cells_006kPa_ERL.pkl") #doesn't save all imts, only the cells that are born before 30 hours
-        np.save(path + "/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/g1_distribution_" + str(idx) + "_40_initial_cells_006kPa_ERL.npy",np.array(simulated_g1))
-        np.save(path + "/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/SM_distribution_" + str(idx) + "_40_initial_cells_006kPa_ERL.npy",np.array(simulated_sm))
+        all_events_simulated.to_pickle(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/Events_" + str(idx) + "_006kPa_ERL.pkl") #doesn't save all imts, only the cells that are born before 30 hours
+        np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/G1_distribution_" + str(idx) + "_006kPa_ERL.npy",np.array(simulated_g1))
+        np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/SM_distribution_" + str(idx) + "_006kPa_ERL.npy",np.array(simulated_sm))
         
+        #save density estimation
         x=np.linspace(0,120,360)
         y=[RBS(i, np.transpose([mitotic_lifespans.tolist()]), sigma) for i in x]
-        np.save(path + "/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/imt_distribution_" + str(idx) + "_40_initial_cells_006kPa_ERL_kde.npy",np.array(y))
-        
+        np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/IMT_distribution_" + str(idx) + "_006kPa_ERL_kde.npy",np.array(y))
+    
 ###############################################################################
         #compute frac prolif parameters of the simulation:
-
+    
         number_of_deaths = len(all_events_simulated) - (all_events_simulated['event']=='apoptosis').value_counts()[0]
         cell_time_total = sum(all_events_simulated['Lifespan'])
         m = fp.mle(mitotic_lifespans, censored_lifespans)
@@ -216,18 +210,16 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
         parameters_sim[condition]['sigma'] = m['x'][1]
         parameters_sim[condition]['lambda'] = m['x'][2]
         parameters_sim[condition].update(fp.q_rates(m))
-
 ###############################################################################         
-#Compare G1 and SM istribution with experimental
+    #Compare G1 and SM istribution with experimental
         
         number_of_imt_to_sample=70
         experimental_IMTs_picked = random.sample(list(all_IMTs[(all_IMTs['Drug']=='ERL') & (all_IMTs['Stiffness']==0.2)]['IMT_t']), number_of_imt_to_sample)
         simulated_IMTs = random.sample(list(mitotic_lifespans), number_of_imt_to_sample)
         
-        cost_mmd_006_ERL += nmmd2_rbf(np.array([simulated_IMTs]).transpose(), np.array([experimental_IMTs_picked]).transpose(), 1) #difference between IMT distribution
+        cost_mmd_006_ERL = nmmd2_rbf(np.array([simulated_IMTs]).transpose(), np.array([experimental_IMTs_picked]).transpose(), 1) #difference between IMT distribution
             
-        cost_006_ERL += cost_mmd_006_ERL
-        
+        cost_006_ERL = cost_mmd_006_ERL
     except :
         parameters_sim[condition]['a'] = np.nan
         parameters_sim[condition]['d'] = np.nan
@@ -262,6 +254,12 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
     
     try:
         (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population, idx, condition);
+        IMT_eoe_counts = retrieve_cellState(run_time, init, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
+        all_events_simulated = call_events(run_time, IMT_eoe_counts); 
+        all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
+        all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
+        mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
+        censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
 
         while len(mitotic_lifespans)<70: #while we have less than 100 timecourses with apoptosis, 
             init = init + 2
@@ -280,24 +278,22 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
             
 ###############################################################################
         #Extract useful inforation from the simulations:
-
+    
         simulated_IMT, simulated_sm, simulated_g1 = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
-        
+    
         #Save distribution
-        all_events_simulated.to_pickle(path + "/fit_data/pso/high_and_low_stiffness_cost/Events_" + str(idx) + "_40_initial_cells_55kPa_ERL.pkl") #doesn't save all imts, only the cells that are born before 30 hours
-        np.save(path + "/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/g1_distribution_" + str(idx) + "_15_initial_cells_55kPa_ERL.npy",np.array(simulated_g1))
-        np.save(path + "/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/SM_distribution_" + str(idx) + "_15_initial_cells_55kPa_ERL.npy",np.array(simulated_sm))
+        all_events_simulated.to_pickle(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/Events_" + str(idx) + "_55kPa_ERL.pkl") #doesn't save all imts, only the cells that are born before 30 hours
+        np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/G1_distribution_" + str(idx) + "_55kPa_ERL.npy",np.array(simulated_g1))
+        np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/SM_distribution_" + str(idx) + "_55kPa_ERL.npy",np.array(simulated_sm))
         
         #save density estimation
         x=np.linspace(0,120,360)
         y=[RBS(i, np.transpose([mitotic_lifespans.tolist()]), sigma) for i in x]
-        np.save(path + "/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/imt_distribution_" + str(idx) + "_15_initial_cells_55kPa_ERL_kde.npy",np.array(y))
-        
-        print(path)
+        np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/IMT_distribution_" + str(idx) + "_55kPa_ERL_kde.npy",np.array(y))
         
 ###############################################################################
         #compute frac prolif parameters of the simulation:
-
+    
         number_of_deaths = len(all_events_simulated) - (all_events_simulated['event']=='apoptosis').value_counts()[0]
         cell_time_total = sum(all_events_simulated['Lifespan'])
         m = fp.mle(mitotic_lifespans, censored_lifespans)
@@ -310,14 +306,14 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
         parameters_sim[condition].update(fp.q_rates(m))
             
 ###############################################################################         
-#Compare G1 and SM istribution with experimental
+    #Compare G1 and SM istribution with experimental
     
         number_of_imt_to_sample=70
         
-#        simulated_G1s = random.sample(simulated_g1, number_of_G1_to_sample)
-#        experimental_G1s_picked = random.sample(experimental_G1s['0.2 kPa ERL'], number_of_G1_to_sample)
-#        simulated_SMs = random.sample(simulated_sm, number_of_SM_to_sample)
-#        experimental_SMs_picked = random.sample(experimental_SMs['0.2 kPa ERL'], number_of_SM_to_sample)
+    #        simulated_G1s = random.sample(simulated_g1, number_of_G1_to_sample)
+    #        experimental_G1s_picked = random.sample(experimental_G1s['0.2 kPa ERL'], number_of_G1_to_sample)
+    #        simulated_SMs = random.sample(simulated_sm, number_of_SM_to_sample)
+    #        experimental_SMs_picked = random.sample(experimental_SMs['0.2 kPa ERL'], number_of_SM_to_sample)
         
         experimental_IMTs_picked = random.sample(list(all_IMTs[(all_IMTs['Drug']=='ERL') & (all_IMTs['Stiffness']==0.2)]['IMT_t']), number_of_imt_to_sample)
         simulated_IMTs = random.sample(list(mitotic_lifespans), number_of_imt_to_sample)
@@ -327,7 +323,7 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
         
 #            plt.hist(simulated_g1)
 #            plt.hist(experimental_G1s_picked)
-    
+
 #        for name in parameter_names:
 #            print(name)
 #            if parameters_exp[condition][name]<10**-5:
@@ -345,7 +341,7 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
         
         cost_mmd_55_ERL = np.inf
         cost_55_ERL = np.inf
-        
+#        
     #save frac prolif parameters and cost + parameter vector
     frac_prolif_parameters_temp = {"index":[idx], "a_006_ERL":[parameters_sim['0.6 kPa ERL']['a']], "d_006_ERL":[parameters_sim['0.6 kPa ERL']['d']], "q_006_ERL":[parameters_sim['0.6 kPa ERL']['q']], "cost_mmd_006_ERL":[cost_mmd_006_ERL], "a_55_ERL":[parameters_sim['55 kPa ERL']['a']], "d_55_ERL":[parameters_sim['55 kPa ERL']['d']], "q_55_ERL":[parameters_sim['55 kPa ERL']['q']], "cost_mmd_55_ERL":[cost_mmd_55_ERL], "cost_total_ERL":[cost_mmd_006_ERL + cost_mmd_55_ERL]}
     vect = pd.DataFrame(np.array([parameter_vector]), columns = pysb_sampled_parameter_names)
@@ -353,8 +349,8 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
         
     frac_prolif_parameters_temp = pd.concat([frac_prolif_parameters_temp, vect], axis=1)
         
-    frac_prolif_parameters_temp.to_pickle(path + "/fit_data/sobol_seq/cost_function_model_4/cost_and_IMT_distribution/parameters_" + str(idx) + "_high_and_low_stiffness.pkl")        
-    
+    frac_prolif_parameters_temp.to_pickle(os.path.dirname(__file__) + "/../fit_data/sobol_seq/cost/parameters_" + str(idx) + "_high_and_low_stiffness_ERL.pkl")        
+
     return cost_mmd_006_ERL + cost_mmd_55_ERL
 
 

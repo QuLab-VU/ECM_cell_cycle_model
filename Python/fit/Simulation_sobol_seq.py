@@ -5,13 +5,16 @@ Created on Sat Nov  5 18:06:49 2022
 @author: Grim.M
 """
 
+import re
 
 import os
 import sys
-path= r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python'
+path= r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model'
 
-sys.path.insert(0, path + "/cellular_cycle") #add a pathway to the model #not sure about how to use folder dependency, to change
-sys.path.insert(0, path + "/fit") #add a pathway to the fit functions #not sure about how to use folder dependency, to change
+path= os.getcwd()
+
+sys.path.insert(0, path + "/Python/cellular_cycle") #add a pathway to the model #not sure about how to use folder dependency, to change
+sys.path.insert(0, path + "/Python/fit") #add a pathway to the fit functions #not sure about how to use folder dependency, to change
 
 import numpy as np
 import pandas as pd
@@ -26,7 +29,9 @@ model_concentration=model
 from Austin_proliferation_model_population_5 import model
 model_population=model
 
-from cost_function_BngSimulator_frac_prolif_quiescence_and_mmd_ERL_only_30_parameters_fixed_initial_concentrations_mitosis_low_high_stiffness import cost_function_reduced_quiescence_ERL_only_30_parameters
+#from cost_function_BngSimulator_frac_prolif_quiescence_and_mmd_ERL_only_30_parameters_fixed_initial_concentrations_mitosis_low_high_stiffness import cost_function_reduced_quiescence_ERL_only_30_parameters
+
+from cost_function_BngSimulator_cell_count_30_parameters_middle_stiffness import cost_function_4kPa_30_parameters
 
 ##Import the simulator: for ODE and stochastic simulation :
 from pysb.simulator import BngSimulator
@@ -41,6 +46,7 @@ for parameter in pysb_sampled_parameter_names:
     #print((model.parameters[parameter].value))
     loc+=[np.log10(model.parameters[parameter].value)]
 
+
 print(model_population.parameters["k_M"].value)
 print(model.parameters["k_M"].value)
 key = "k_M" #0.11 to 0.27
@@ -49,13 +55,14 @@ key = "k_CDS" #from 0.11 to 0.25
 
 #change the model parameters of the model if needed
 omega = 200
-new_param = pd.read_csv(path + "/../umap_window/parameters.csv") 
+new_param = pd.read_csv(path + "/umap_window/parameters.csv")
 del new_param['Stress']
 for key in new_param.keys():
     if model_population.parameters[key].value != new_param[key][0]:
         model_population.parameters[key].value = new_param[key]
     if model_concentration.parameters[key].value != new_param[key][0]:
         model_concentration.parameters[key].value = new_param[key]
+
 model_concentration.parameters['omega'].value = 1
 
 
@@ -64,29 +71,225 @@ l2 = 4*l + (np.array(loc)-2)
 
 t = np.linspace(0, 500, 50000)
 simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run(); #deterministic simulation
+################
+#original parameters
+original_parameters = []
+for name in pysb_sampled_parameter_names:
+    original_parameters += [np.log10(model_concentration.parameters[name].value)]
 
+cost_function_reduced_quiescence_ERL_only_30_parameters(10**np.array(original_parameters), 'original_parameters')
 
-frac_prolif_parameters = pd.read_pickle(path + "/fit_data/sobol_seq/frac_prolif_parameters_all_parameters_006_55_kPa.pkl")
+parameter_vector = 10**np.array(original_parameters)
+idx='original_parameters'
+################
 
-
+frac_prolif_parameters = pd.read_pickle(path  + "/Python/fit_data/sobol_seq/frac_prolif_parameters_all_parameters_006_55_kPa.pkl")
 
 #indices in the sobol sequence for the 100 best parameters
-indices = [int(i)-1 for i in frac_prolif_parameters.sort_values(by=['cost_total'])["index"].tolist()[0:100]] 
+indices = [int(i)-1 for i in frac_prolif_parameters.sort_values(by=['cost_total'])["index"].tolist()[0:]] 
 parameters = [l2[i] for i in indices]
 
 #Change model parameter values to current location in parameter space
-parameter_vector = 10**parameters[0]
-idx = 'test'
+#parameter_vector = 10**parameters[0]
+#idx = 'test'
+
+indices[0]
+indices[1456]
+indices[1455]
+indices[:1456][-1]
+
+cost=[]
+for parameter_vector, idx in zip(parameters[:1456], indices[:1456]):
+    cost+=[cost_function_reduced_quiescence_ERL_only_30_parameters(10**parameter_vector, idx)]
 
 
 
-cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, idx)
+i=1456
+cost = cost_function_reduced_quiescence_ERL_only_30_parameters(10**parameters[i], indices[i])
+
+i=1456
+parameter_vector = 10**parameters[i]
+idx = indices[i]
+
+
+from os import listdir
+from os.path import isfile, join
+#mypath = r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\sobol_seq\version 6\cost"
+mypath = path + "/Python/fit_data/sobol_seq/cost"
+
+onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f)) if 'high_and_low_stiffness_ERL' in f]
+
+
+frac_prolif_parameters_2 = pd.DataFrame(columns = ["index", "a_006_ERL", "d_006_ERL", "q_006_ERL", "cost_mmd_006_ERL", "a_55_ERL", "d_55_ERL", "q_55_ERL", "cost_mmd_55_ERL", "cost_total_ERL"])
+
+
+for file_temp in onlyfiles:
+    frac_prolif_parameters_tmp = pd.read_pickle(mypath + "/"  + file_temp)
+    frac_prolif_parameters_2 = pd.concat([frac_prolif_parameters_2, frac_prolif_parameters_tmp])
+
+frac_prolif_parameters_2 = frac_prolif_parameters_2[frac_prolif_parameters_2['cost_total_ERL']!=np.inf]
+
+frac_prolif_parameters_2to_csv(r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\all_parameters_006kPa.csv')
+
+frac_prolif_parameters_2['index']
+
+onlyfiles = [int(f.split("_")[1]) for f in listdir(mypath) if isfile(join(mypath, f)) if '4kPa' in f]
+
+for index_tmp in frac_prolif_parameters_2['index']:
+    if index_tmp not in onlyfiles:
+        try:
+            parameter_vector = parameters[np.where(np.array(indices) == index_tmp)[0][0]]
+            cost_function_4kPa_30_parameters(10**parameter_vector, index_tmp)       
+        
+        except:
+            print(index_tmp)
+            
+
+
+for file_temp in onlyfiles:
+    try:
+        frac_prolif_parameters_tmp = pd.read_pickle(mypath + "/"  + file_temp)
+        index_tmp = int(file_temp.split("_")[1])
+        parameter_vector = parameters[np.where(np.array(indices) == index_tmp)[0][0]]
+        cost_function_4kPa_30_parameters(10**parameter_vector, index_tmp)
+    
+    except: print(file_temp)
+    
+
+
+
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+#data processing
+
+DATADIR = path + "/Data/Exp_Cell_Counts"
+
+
+filepaths = os.listdir(DATADIR)
+filenames = [f for f in filepaths if re.match(r'^DIP_DS8', f)]
+filepaths = [Path(DATADIR, f) for f in filenames]
+filepaths.sort()
+filepaths
+
+all_response = []
+for f in filepaths:
+    all_response.append(np.loadtxt(f,delimiter=','))
+
+means=[]
+for vals in range(len(all_response)):
+    means.append(np.mean(all_response[vals],axis=1))
+    
+stdevs=[]
+for vals in range(len(all_response)):
+    stdevs.append(np.std(all_response[vals],axis=1))
+  
+t = np.arange(0,420/3,1/3)
+
+#all_response.keys()
 
 
 
 
+##############################################################################
+##############################################################################
+##############################################################################
+##############################################################################
+##############################################################################
 
 
+###############################################################################
+
+from os import listdir
+from os.path import isfile, join
+mypath_cc = r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\sobol_seq\version 6\cell_count"
+mypath_p = r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\sobol_seq\version 6\cost"
+
+onlyfiles = [f for f in listdir(mypath_cc) if isfile(join(mypath_cc, f))]
+
+all_parameters = []
+
+
+file_temp = 'cell_count_3955_4kPa_DMSO.npy'
+file_temp = 'cell_count_41712_4kPa_DMSO.npy'
+file_temp = 'cell_count_77981_4kPa_DMSO.npy'
+
+file_temp = 'cell_count_37614_4kPa_ERL.npy'
+
+for file_temp in onlyfiles:
+    if 'DMSO' in file_temp:
+        try:
+            cell_count_tmp = np.load(mypath_cc + '/' + file_temp)
+            file_name = file_temp.split('_')
+            paramters_tmp = pd.read_pickle(mypath_p + '/parameters_' + file_name[2] + '_4kPa_DMSO_ERL.pkl')
+            
+            try :
+                pd.read_pickle(mypath_p + '/parameters_' + file_name[2] + '_4kPa_ERL.pkl')
+                print(file_temp)
+                print('corr')
+            except: pass
+            
+            cell_count_tmp[:, 0]
+            cell_count_t = np.zeros(len(t))
+            time_tmp_m = 0
+            
+            for time_tmp_p, cell_count_time_tmp in cell_count_tmp:
+                cell_count_t[(time_tmp_m <= t) & (t < time_tmp_p)] = cell_count_time_tmp
+                time_tmp_m = time_tmp_p
+            
+    #        plt.plot(t, cell_count_t)
+    #        plt.plot(cell_count_tmp[:, 0], cell_count_tmp[:, 1])
+    #        plt.show()
+            DIP_sim = np.log(cell_count_t/cell_count_t[0])
+            cost_DMSO = np.sqrt(np.sum((DIP_sim - means[2])[1:]**2 / stdevs[2][1:]**2))/len(t)
+#            plt.plot(DIP_sim)
+#            plt.plot(means[2])
+#            plt.show()
+    
+            
+            
+            file_name[-1] = 'ERL.npy'
+            cell_count_tmp = np.load(mypath_cc + '/' + '_'.join(file_name))
+            
+            t_ERL = t[t<cell_count_tmp[-1,0]]
+            cell_count_tmp[:, 0]
+            cell_count_t = np.zeros(len(t))
+            time_tmp_m = 0
+            
+            for time_tmp_p, cell_count_time_tmp in cell_count_tmp:
+                cell_count_t[(time_tmp_m <= t) & (t < time_tmp_p)] = cell_count_time_tmp
+                time_tmp_m = time_tmp_p
+            
+    #        plt.plot(t_ERL, cell_count_t)
+    #        plt.plot(cell_count_tmp[:, 0], cell_count_tmp[:, 1])
+    #        plt.show()
+            
+            DIP_sim = np.log(cell_count_t/cell_count_t[0])
+            cost_ERL = np.sqrt(np.sum((DIP_sim - means[3][:])[1:len(t)]**2 / stdevs[3][1:len(t)]**2))/len(t)
+            
+#            plt.plot(DIP_sim)
+#            plt.plot(means[3])
+#            plt.show()
+            
+            paramters_tmp['cost 4kPa DMSO'] = cost_DMSO
+            paramters_tmp['cost 4kPa ERL'] = cost_ERL
+            paramters_tmp['cost 4kPa'] = cost_ERL + cost_DMSO
+            
+            all_parameters += [paramters_tmp]
+        except:
+            print(file_temp)
+            print('err')
+    
+all_parameters_4kPa = pd.concat(all_parameters)
+
+plt.scatter(all_parameters_4kPa['cost 4kPa ERL'], all_parameters_4kPa['cost 4kPa DMSO'])
+plt.show()
+
+all_parameters_4kPa.to_csv(r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\all_parameters_4kPa.csv')
+
+###############################################################################
 
 
 

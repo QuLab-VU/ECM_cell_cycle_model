@@ -33,7 +33,7 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     
     variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx, condition);
     
-    if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.1: #the model doesn't oscillate o the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
+    if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.1: #the model doesn't oscillate or the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
         #print("check didn't pass");
         return (0,0)
     
@@ -118,7 +118,8 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 
                 death = np.array([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 20]) if len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])>20 else np.array([])
                 
-
+#                plt.plot(cells['molecules'][ii]['obsCycE'])
+#                plt.plot(cells['molecules'][ii]['obsCdc20'])
 ###############################################################################
                 #Cell apoptosis
                 death_before_division = len(max_tmp_cdc)==0 or np.min(death) < max_tmp_cdc[min([cells['division'][ii], len(max_tmp_cdc)-1])] if len(death)>0 else False
@@ -206,7 +207,10 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                                     else : #mitosis happens right on the end time (almost impossible)
                                         cells['recording']=cells['recording']+[True];
                                         
-                                    current_time=np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); #changed to the real time of the division
+                                    current_time = np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); #changed to the real time of the division
+                            else: 
+                                current_time[ii,0]=cells['time'][ii][-1]; #no change because this is the time and cell_count_tmp for the cell
+                                
                     if death.size != 0: #apoptosis right after mitosis
                     
                         cells['living_cell'][ii]=False; #the cell dies
@@ -369,6 +373,8 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                                     cells['recording']=cells['recording']+[False];
                                         
                                     current_time=np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); #changed to the real time of the division
+                            else: 
+                                current_time[ii,0]=cells['time'][ii][-1]; #no change because this is the time and cell_count_tmp for the cell
                     if death.size != 0: #apoptosis right after mitosis
                         #print('apoptosis after DIVISION 2')
                         cells['living_cell'][ii]=False; #the cell dies

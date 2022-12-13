@@ -92,6 +92,7 @@ def runStochcell(model_population, model_concentration, index, condition) :
     #print(len(max_tmp_cdc))
     #print(len(max_tmp_cdc))
     
+    print(max_tmp_cdc)
     if len(max_tmp_cdc)>2 and len(max_tmp_cyce)>2 :
         ranks = ss.rankdata(np.concatenate([max_tmp_cdc, max_tmp_cyce]))
         max_tmp = np.concatenate([['obsCdc20' for i in range(len(max_tmp_cdc))],['obsCycE' for i in range(len(max_tmp_cyce))]])
@@ -111,7 +112,7 @@ def runStochcell(model_population, model_concentration, index, condition) :
         
         if len(a)>=2 and len(b)>=2:
             for k in range(len(model_concentration.observables)) :
-                variable_range[model_concentration.observables[k].name]=[yout[model_concentration.observables[k].name][i] for i in range(max_tmp_cdc[4],max_tmp_cdc[5])]
+                variable_range[model_concentration.observables[k].name]=[yout[model_concentration.observables[k].name][i] for i in range(max_tmp_cdc[-2], max_tmp_cdc[-1])]
         
         
     #variable_range = np.transpose(np.array(variable_range))
