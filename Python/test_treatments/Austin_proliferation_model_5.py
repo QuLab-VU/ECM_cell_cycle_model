@@ -29,6 +29,14 @@ Monomer('BAX', ['b','m'], {'m':['yes','no']})
 Monomer('BCL2', ['b'])
 Monomer('BH3', ['b'])
 
+# Inhibitors:
+Monomer('CycDi', ['cycd'])
+# #Initial(CycDi(cycd=None), Parameter('CycDi_0', 0))
+
+#Monomer('Cdc20i')
+
+#Rule('Cdc20_inhib', Cdc20()+Cdc20i()>>Cdc20i(), k_cdc20_deg)
+
 '''
 Monomer('YAP', )
 Monomer('AKT', )
@@ -37,6 +45,10 @@ Monomer('ERK', )
 
 ###Parameter
 
+Parameter('kf_cycD_cycDi', 0.1)
+Parameter('kr_cycD_cycDi', 0.1)
+
+Parameter('CycDi_0', 0)
 Parameter('AKT',200)
 Parameter('ERK',200)
 Parameter('FAK',200)
@@ -195,6 +207,9 @@ Parameter('K_ib', 0.5) #0.5
 
 
 ###Observables
+Observable('obsCycDi', CycDi(cycd=None))
+Observable('obsCycDCycDi', CycDi(cycd=1)%CycD(b=1))
+
 Observable('obsSkp2', Skp2())
 Observable('obsp21', p21(b=None, S='u'))
 Observable('obsp21p', p21(b=None, S='p'))
@@ -314,6 +329,9 @@ Expression('kdiss_BH3BCL2', m * kdsbh3bcl2)
 
 
 ###Rules
+
+Rule('CycD_inhibition', CycD(b=None)+CycDi(cycd=None) | CycD(b=1)%CycDi(cycd=1), kf_cycD_cycDi, kr_cycD_cycDi)
+
 
 
 ##Skp2

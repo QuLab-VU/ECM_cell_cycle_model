@@ -18,9 +18,9 @@ import random
 import sobol_seq
 
 ##Importing the model, models differ on their initial conditions, one being a concentration and the other a protein count
-from Austin_proliferation_model_concentration_6 import model
+from Austin_proliferation_model_concentration_5 import model
 model_concentration=model
-from Austin_proliferation_model_population_6 import model
+from Austin_proliferation_model_population_5 import model
 model_population=model
 
 ##Import the simulator: for ODE and stochastic simulation :
@@ -38,17 +38,14 @@ plt.rcParams.update(params)
 
 #change the model parameters of the model if needed
 omega = 200
-new_param = pd.read_csv("parameters_drugB.csv") 
+new_param = pd.read_csv("parameters.csv") 
 del new_param['Stress']
 for key in new_param.keys():
     if model_population.parameters[key].value != new_param[key][0]:
-        model_population.parameters[key].value = new_param[key]
+        model_population.parameters[key].value = int(round(new_param[key]* 200))
     if model_concentration.parameters[key].value != new_param[key][0]:
         model_concentration.parameters[key].value = new_param[key]
 model_concentration.parameters['omega'].value = 1
-
-t = np.linspace(0, 500, 50000)
-simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run()
 
 model_population.parameters['ERK'].value = 0.2 * omega
 model_population.parameters['FAK'].value = 1.0 * omega
@@ -57,6 +54,53 @@ model_population.parameters['AKT'].value = 0.6 * omega
 model_concentration.parameters['ERK'].value = 0.2 * 1
 model_concentration.parameters['FAK'].value = 1 * 1
 model_concentration.parameters['AKT'].value = 0.6 * 1
+t = np.linspace(0, 500, 50000)
+simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run()
+yout = simres.all;
+observables=['obsCycE', 'obsCdc20']; #plot Cyclin E, Cdc20 and Cyclin A
+for obs in range(2) :
+    plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
+plt.legend(loc=1)
+plt.ylim(0, 1)
+plt.show()
+
+
+
+
+params = {'axes.titley': 1,
+         'axes.titlepad': -14,
+         'axes.labelsize': 14,
+         'axes.titlesize': 14,
+         'xtick.labelsize': 12,
+         'ytick.labelsize': 12}
+plt.rcParams.update(params)
+
+#change the model parameters of the model if needed
+omega = 200
+new_param = pd.read_csv("parameters_cycdi.csv") 
+del new_param['Stress']
+for key in new_param.keys():
+    if model_population.parameters[key].value != new_param[key][0]:
+        model_population.parameters[key].value = new_param[key]
+    if model_concentration.parameters[key].value != new_param[key][0]:
+        model_concentration.parameters[key].value = new_param[key]
+model_concentration.parameters['omega'].value = 1
+model_population.parameters['ERK'].value = 0.2 * omega
+model_population.parameters['FAK'].value = 1.0 * omega
+model_population.parameters['AKT'].value = 0.6 * omega
+
+model_concentration.parameters['ERK'].value = 0.2 * 1
+model_concentration.parameters['FAK'].value = 1 * 1
+model_concentration.parameters['AKT'].value = 0.6 * 1
+t = np.linspace(0, 500, 50000)
+simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run()
+yout = simres.all;
+observables=['obsCycE', 'obsCdc20']; #plot Cyclin E, Cdc20 and Cyclin A
+for obs in range(2) :
+    plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
+plt.legend(loc=1)
+plt.ylim(0, 1)
+plt.show()
 
 
 omega = 200

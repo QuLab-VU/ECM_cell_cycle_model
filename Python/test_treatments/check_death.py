@@ -7,11 +7,11 @@ Created on Tue Nov 22 00:35:20 2022
 
 model_population.parameters['ERK'].value = 0.2 * omega
 model_population.parameters['FAK'].value = 0.4 * omega
-model_population.parameters['AKT'].value = 0.4 * omega
+model_population.parameters['AKT'].value = 0.45 * omega
 
 model_concentration.parameters['ERK'].value = 0.2 * 1
 model_concentration.parameters['FAK'].value = 0.4 * 1
-model_concentration.parameters['AKT'].value = 0.4 * 1
+model_concentration.parameters['AKT'].value = 0.45 * 1
 
 t = np.linspace(0, 500, 50001)
 simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run()
@@ -50,7 +50,13 @@ for n in range(50):
         ax.plot(t[:],yout['obsBAXm'][:], label=observables[obs], lw=0.5, c='grey', alpha=0.5)
 
         
+
 if death_time:
     plt.hist(death_time, bins=bins, density=True)
 frac_dead = len(death_time)/50
+
+t = np.linspace(0, 120, 12001)
+
+
+
 
