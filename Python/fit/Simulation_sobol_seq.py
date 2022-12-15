@@ -71,6 +71,22 @@ l2 = 4*l + (np.array(loc)-2)
 
 t = np.linspace(0, 500, 50000)
 simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run(); #deterministic simulation
+
+
+
+frac_prolif_parameters = pd.read_pickle(path  + "/Python/fit_data/sobol_seq/frac_prolif_parameters_all_parameters_006_55_kPa.pkl")
+
+#indices in the sobol sequence for the 100 best parameters
+indices = [int(i)-1 for i in frac_prolif_parameters.sort_values(by=['cost_total'])["index"].tolist()[0:]] 
+parameters = [l2[i] for i in indices]
+
+
+
+
+
+
+
+
 ################
 #original parameters
 original_parameters = []
@@ -82,21 +98,20 @@ cost_function_reduced_quiescence_ERL_only_30_parameters(10**np.array(original_pa
 parameter_vector = 10**np.array(original_parameters)
 idx='original_parameters'
 ################
-
-frac_prolif_parameters = pd.read_pickle(path  + "/Python/fit_data/sobol_seq/frac_prolif_parameters_all_parameters_006_55_kPa.pkl")
-
-#indices in the sobol sequence for the 100 best parameters
-indices = [int(i)-1 for i in frac_prolif_parameters.sort_values(by=['cost_total'])["index"].tolist()[0:]] 
-parameters = [l2[i] for i in indices]
-
 #Change model parameter values to current location in parameter space
 #parameter_vector = 10**parameters[0]
 #idx = 'test'
 
-indices[0]
-indices[1456]
-indices[1455]
-indices[:1456][-1]
+
+
+
+
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+#Low stiff simulation
 
 cost=[]
 for parameter_vector, idx in zip(parameters[:1456], indices[:1456]):
@@ -129,7 +144,7 @@ for file_temp in onlyfiles:
 
 frac_prolif_parameters_2 = frac_prolif_parameters_2[frac_prolif_parameters_2['cost_total_ERL']!=np.inf]
 
-frac_prolif_parameters_2to_csv(r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\all_parameters_006kPa.csv')
+frac_prolif_parameters_2.to_csv(r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\all_parameters_006kPa.csv')
 
 frac_prolif_parameters_2['index']
 
@@ -216,7 +231,7 @@ file_temp = 'cell_count_3955_4kPa_DMSO.npy'
 file_temp = 'cell_count_41712_4kPa_DMSO.npy'
 file_temp = 'cell_count_77981_4kPa_DMSO.npy'
 
-file_temp = 'cell_count_37614_4kPa_ERL.npy'
+file_temp = 'cell_count_43176_4kPa_DMSO.npy'
 
 for file_temp in onlyfiles:
     if 'DMSO' in file_temp:
@@ -227,8 +242,8 @@ for file_temp in onlyfiles:
             
             try :
                 pd.read_pickle(mypath_p + '/parameters_' + file_name[2] + '_4kPa_ERL.pkl')
-                print(file_temp)
-                print('corr')
+                #print(file_temp)
+                #print('corr')
             except: pass
             
             cell_count_tmp[:, 0]
@@ -280,8 +295,7 @@ for file_temp in onlyfiles:
             all_parameters += [paramters_tmp]
         except:
             print(file_temp)
-            print('err')
-    
+            print('error')
 all_parameters_4kPa = pd.concat(all_parameters)
 
 plt.scatter(all_parameters_4kPa['cost 4kPa ERL'], all_parameters_4kPa['cost 4kPa DMSO'])
