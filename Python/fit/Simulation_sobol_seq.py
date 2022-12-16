@@ -14,6 +14,7 @@ path= r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model'
 path= os.getcwd()
 
 sys.path.insert(0, path + "/Python/cellular_cycle") #add a pathway to the model #not sure about how to use folder dependency, to change
+sys.path.insert(0, path + "/Python/test_treatments") #add a pathway to the model #not sure about how to use folder dependency, to change
 sys.path.insert(0, path + "/Python/fit") #add a pathway to the fit functions #not sure about how to use folder dependency, to change
 
 import numpy as np
@@ -82,11 +83,6 @@ parameters = [l2[i] for i in indices]
 
 
 
-
-
-
-
-
 ################
 #original parameters
 original_parameters = []
@@ -101,8 +97,6 @@ idx='original_parameters'
 #Change model parameter values to current location in parameter space
 #parameter_vector = 10**parameters[0]
 #idx = 'test'
-
-
 
 
 
@@ -135,6 +129,7 @@ mypath = path + "/Python/fit_data/sobol_seq/cost"
 onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f)) if 'high_and_low_stiffness_ERL' in f]
 
 
+
 frac_prolif_parameters_2 = pd.DataFrame(columns = ["index", "a_006_ERL", "d_006_ERL", "q_006_ERL", "cost_mmd_006_ERL", "a_55_ERL", "d_55_ERL", "q_55_ERL", "cost_mmd_55_ERL", "cost_total_ERL"])
 
 
@@ -144,7 +139,7 @@ for file_temp in onlyfiles:
 
 frac_prolif_parameters_2 = frac_prolif_parameters_2[frac_prolif_parameters_2['cost_total_ERL']!=np.inf]
 
-frac_prolif_parameters_2.to_csv(r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\all_parameters_006kPa.csv')
+frac_prolif_parameters_2.to_csv(r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\sobol_seq\all_parameters_high_and_low_stiffness_ERL.csv')
 
 frac_prolif_parameters_2['index']
 
@@ -158,7 +153,6 @@ for index_tmp in frac_prolif_parameters_2['index']:
         
         except:
             print(index_tmp)
-            
 
 
 for file_temp in onlyfiles:
@@ -206,6 +200,17 @@ t = np.arange(0,420/3,1/3)
 #all_response.keys()
 
 
+slope_4kPa_DMSO, _, _, _ = np.linalg.lstsq(t[:,np.newaxis], means[2])
+
+plt.plot(t, means[2], 'bo')
+plt.plot(t, slope_4kPa_DMSO*t, 'r-')
+plt.show()
+
+slope_4kPa_ERL, _, _, _ = np.linalg.lstsq(t[:,np.newaxis], means[3])
+
+plt.plot(t, means[3], 'bo')
+plt.plot(t, slope_4kPa_ERL*t, 'r-')
+plt.show()
 
 
 ##############################################################################
@@ -229,23 +234,37 @@ all_parameters = []
 
 file_temp = 'cell_count_3955_4kPa_DMSO.npy'
 file_temp = 'cell_count_41712_4kPa_DMSO.npy'
-file_temp = 'cell_count_77981_4kPa_DMSO.npy'
+file_temp = 'cell_count_9606_4kPa_DMSO.npy'
 
-file_temp = 'cell_count_43176_4kPa_DMSO.npy'
+file_temp = 'cell_count_637_4kPa_DMSO.npy'
+file_temp = 'cell_count_33711_4kPa_DMSO.npy'
 
-for file_temp in onlyfiles:
-    if 'DMSO' in file_temp:
-        try:
-            cell_count_tmp = np.load(mypath_cc + '/' + file_temp)
-            file_name = file_temp.split('_')
-            paramters_tmp = pd.read_pickle(mypath_p + '/parameters_' + file_name[2] + '_4kPa_DMSO_ERL.pkl')
+index = 637
+
+index = 104571
+
+
+
+for index in frac_prolif_parameters_2['index']:
+    try:
+        cost_ERL = cost_DMSO = cost_slope_ERL = cost_slope_DMSO = np.inf
+        #file_name = file_temp.split('_')
+        parameters_tmp = pd.read_pickle(mypath_p + '/parameters_' + str(index) + '_4kPa_DMSO_ERL.pkl')
+        
+        try :
+            parameters_tmp = pd.read_pickle(mypath_p + '/parameters_' + str(index) + '_4kPa_ERL.pkl')
             
-            try :
-                pd.read_pickle(mypath_p + '/parameters_' + file_name[2] + '_4kPa_ERL.pkl')
-                #print(file_temp)
-                #print('corr')
-            except: pass
+            parameters_tmp[['a_4_DMSO', 'q_4_DMSO', 'd_4_DMSO']] = pd.read_pickle(mypath_p + '/parameters_' + str(index) + '_4kPa_DMSO_ERL.pkl')[['a_4_DMSO', 'q_4_DMSO', 'd_4_DMSO']]
             
+            #print(file_temp)
+            #print('corr')
+        except: pass
+        
+        
+        if np.isnan(parameters_tmp['a_4_DMSO']).values[0]:
+            print('no oscillations DMSO')
+        else:
+            cell_count_tmp = np.load(mypath_cc + '/' + '/cell_count_' + str(index) + '_4kPa_DMSO.npy')
             cell_count_tmp[:, 0]
             cell_count_t = np.zeros(len(t))
             time_tmp_m = 0
@@ -254,20 +273,32 @@ for file_temp in onlyfiles:
                 cell_count_t[(time_tmp_m <= t) & (t < time_tmp_p)] = cell_count_time_tmp
                 time_tmp_m = time_tmp_p
             
+
+
     #        plt.plot(t, cell_count_t)
     #        plt.plot(cell_count_tmp[:, 0], cell_count_tmp[:, 1])
     #        plt.show()
             DIP_sim = np.log(cell_count_t/cell_count_t[0])
             cost_DMSO = np.sqrt(np.sum((DIP_sim - means[2])[1:]**2 / stdevs[2][1:]**2))/len(t)
-#            plt.plot(DIP_sim)
-#            plt.plot(means[2])
+            parameters_tmp['slope_4kPa_DMSO'], _, _, _ = np.linalg.lstsq(t[:,np.newaxis], DIP_sim)
+            cost_slope_DMSO = (parameters_tmp['slope_4kPa_DMSO'] - slope_4kPa_DMSO)[0]**2
+
+#            plt.scatter(t, DIP_sim, color = 'blue', s=1)
+#            plt.plot(t, parameters_tmp['slope_4kPa_DMSO'][0]*t, color = 'blue')
+#            plt.scatter(t, means[2], color = 'red', s=1)
+#            plt.plot(t, slope_4kPa_DMSO*t, color = 'red')
 #            plt.show()
-    
-            
-            
-            file_name[-1] = 'ERL.npy'
-            cell_count_tmp = np.load(mypath_cc + '/' + '_'.join(file_name))
-            
+
+        
+        
+        #file_name[-1] = 'ERL.npy'
+        #cell_count_tmp = np.load(mypath_cc + '/' + '_'.join(file_name))
+        
+        if np.isnan(parameters_tmp['a_4_ERL']).values[0]:
+            print('no oscillations ERL')
+
+        else:
+            cell_count_tmp = np.load(mypath_cc + '/' + '/cell_count_' + str(index) + '_4kPa_ERL.npy')
             t_ERL = t[t<cell_count_tmp[-1,0]]
             cell_count_tmp[:, 0]
             cell_count_t = np.zeros(len(t))
@@ -283,22 +314,39 @@ for file_temp in onlyfiles:
             
             DIP_sim = np.log(cell_count_t/cell_count_t[0])
             cost_ERL = np.sqrt(np.sum((DIP_sim - means[3][:])[1:len(t)]**2 / stdevs[3][1:len(t)]**2))/len(t)
-            
-#            plt.plot(DIP_sim)
-#            plt.plot(means[3])
+            parameters_tmp['slope_4kPa_ERL'], _, _, _ = np.linalg.lstsq(t[:,np.newaxis], DIP_sim)
+
+            cost_slope_ERL = (parameters_tmp['slope_4kPa_ERL'] - slope_4kPa_ERL)[0]**2
+
+
+#            plt.scatter(t, DIP_sim, color = 'blue', s=1)
+#            plt.plot(t, parameters_tmp['slope_4kPa_ERL'][0]*t, color = 'blue')
+#            plt.scatter(t, means[3], color = 'red', s=1)
+#            plt.plot(t, slope_4kPa_ERL*t, color = 'red')
 #            plt.show()
-            
-            paramters_tmp['cost 4kPa DMSO'] = cost_DMSO
-            paramters_tmp['cost 4kPa ERL'] = cost_ERL
-            paramters_tmp['cost 4kPa'] = cost_ERL + cost_DMSO
-            
-            all_parameters += [paramters_tmp]
-        except:
-            print(file_temp)
-            print('error')
+    
+        parameters_tmp['cost 4kPa DMSO'] = cost_DMSO
+        parameters_tmp['cost 4kPa ERL'] = cost_ERL
+        parameters_tmp['cost 4kPa'] = cost_ERL + cost_DMSO
+        
+        parameters_tmp['cost slope difference 4kPa'] = cost_slope_ERL + cost_slope_DMSO
+        parameters_tmp['cost slope difference 4kPa ERL'] = cost_slope_ERL
+        parameters_tmp['cost slope difference 4kPa DMSO'] = cost_slope_DMSO
+        
+        all_parameters += [parameters_tmp]
+    except:
+        print(index)
+        print('error')
+
 all_parameters_4kPa = pd.concat(all_parameters)
 
 plt.scatter(all_parameters_4kPa['cost 4kPa ERL'], all_parameters_4kPa['cost 4kPa DMSO'])
+plt.show()
+
+plt.scatter(all_parameters_4kPa['cost slope difference 4kPa ERL'], all_parameters_4kPa['cost slope difference 4kPa DMSO'])
+plt.show()
+
+plt.scatter(all_parameters_4kPa['cost slope difference 4kPa'], all_parameters_4kPa['cost 4kPa'])
 plt.show()
 
 all_parameters_4kPa.to_csv(r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\all_parameters_4kPa.csv')

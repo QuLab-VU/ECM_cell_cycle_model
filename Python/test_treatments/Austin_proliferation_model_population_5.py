@@ -6,12 +6,12 @@ Created on Mon Feb 3 14:57:38 2020
 Title: Austin_proliferation_model
 """
 #path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle"
-path="/home/jeremie"
+#path="/home/jeremie"
 
 from pysb import * 
 
-import sys
-sys.path.insert(0, path) #add a pathway to the model
+#import sys
+#sys.path.insert(0, path) #add a pathway to the model
 
 from Austin_proliferation_model_5 import model
 
@@ -43,12 +43,12 @@ Parameter('BH3_0', int(round(0.000428591174323906* 200)))
 Parameter('BH3BCL2_0', int(round(0.199169986463653* 200)))
 Parameter('BAXm_0', int(round((1 - 0.992676117362238 - 0.00730440429784349)* 200))) #BAXt - BAX - BAXmBCL2
 Parameter('BCL2_0', int(round((0.95 - 0.199169986463653 -0.00730440429784349) * 200))) #BCL2t - BH3BCL2 -BAXmBCL2
-
 Parameter('CycDiCycD_0', int(round(0* 200)))
 Parameter('CycDi_0', int(round(0* 200)))
+
+
 Initial(model.monomers['CycDi'](cycd=None), model.parameters['CycDi_0'])
 Initial(model.monomers['CycDi'](cycd=1)%model.monomers['CycD'](b=1), model.parameters['CycDiCycD_0'])
-
 Initial(model.monomers['Skp2'], model.parameters['Skp2_0'])
 Initial(model.monomers['p21'](b=None, S='u'), model.parameters['p21_0'])
 Initial(model.monomers['p21'](b=None, S='p'), model.parameters['p21p_0'])

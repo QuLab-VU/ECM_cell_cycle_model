@@ -6,7 +6,7 @@ Created on Mon Feb 3 14:57:38 2020
 Title: Austin_proliferation_model
 """
 
-path="/home/jeremie"
+#path="/home/jeremie"
 #path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle"
 
 
