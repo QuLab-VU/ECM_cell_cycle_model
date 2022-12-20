@@ -40,7 +40,6 @@ from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
 tmp_t=np.linspace(0, 10, 100)
 sim = BngSimulator(model_population, tspan=tmp_t, verbose=True)
 traj = sim.run()
-
 sim = ScipyOdeSimulator(model_concentration, tspan=tmp_t, verbose=True)
 traj = sim.run()
 
@@ -160,76 +159,83 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
     
 ###############################################################################
     
-    try:
-        (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population, idx, condition);
+    #try:
+    (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population, idx, condition);
+    
+    IMT_eoe_counts = retrieve_cellState(run_time, init, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
+    all_events_simulated = call_events(run_time, IMT_eoe_counts); 
+    all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
+    all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
+    mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
+    censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
+    
+    print('ok')
+    while len(mitotic_lifespans)<70: #while we have less than 100 timecourses with apoptosis, 
+        init = init + 2
+        (cells_tmp, cell_count) = runAKTERK(2, run_time, observed_cells_time, model_concentration, model_population, idx, condition);
+        
+        #merge simulations
+        cells = {key: cells[key] + cells_tmp[key] for key in cells.keys()}
+    
         IMT_eoe_counts = retrieve_cellState(run_time, init, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
         all_events_simulated = call_events(run_time, IMT_eoe_counts); 
         all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
         all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
         mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
         censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
+        print('ok2')
         
-        while len(mitotic_lifespans)<70: #while we have less than 100 timecourses with apoptosis, 
-            init = init + 2
-            (cells_tmp, cell_count) = runAKTERK(2, run_time, observed_cells_time, model_concentration, model_population, idx, condition);
-            
-            #merge simulations
-            cells = {key: cells[key] + cells_tmp[key] for key in cells.keys()}
-        
-            IMT_eoe_counts = retrieve_cellState(run_time, init, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
-            all_events_simulated = call_events(run_time, IMT_eoe_counts); 
-            all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
-            all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
-            mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
-            censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
-            
 ###############################################################################
-        #Extract useful inforation from the simulations:
+    #Extract useful inforation from the simulations:
+
+    simulated_IMT, simulated_sm, simulated_g1 = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
+
+    print('o3')
+    all_events_simulated.to_pickle(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/Events_" + str(idx) + "_006kPa_ERL.pkl") #doesn't save all imts, only the cells that are born before 30 hours
+    np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/G1_distribution_" + str(idx) + "_006kPa_ERL.npy",np.array(simulated_g1))
+    np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/SM_distribution_" + str(idx) + "_006kPa_ERL.npy",np.array(simulated_sm))
     
-        simulated_IMT, simulated_sm, simulated_g1 = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
-    
-        
-        all_events_simulated.to_pickle(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/Events_" + str(idx) + "_006kPa_ERL.pkl") #doesn't save all imts, only the cells that are born before 30 hours
-        np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/G1_distribution_" + str(idx) + "_006kPa_ERL.npy",np.array(simulated_g1))
-        np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/SM_distribution_" + str(idx) + "_006kPa_ERL.npy",np.array(simulated_sm))
-        
-        #save density estimation
-        x=np.linspace(0,120,360)
-        y=[RBS(i, np.transpose([mitotic_lifespans.tolist()]), sigma) for i in x]
-        np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/IMT_distribution_" + str(idx) + "_006kPa_ERL_kde.npy",np.array(y))
-    
+    #save density estimation
+    x=np.linspace(0,120,360)
+    y=[RBS(i, np.transpose([mitotic_lifespans.tolist()]), sigma) for i in x]
+    np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/IMT_distribution_" + str(idx) + "_006kPa_ERL_kde.npy",np.array(y))
+    print('o4')
 ###############################################################################
-        #compute frac prolif parameters of the simulation:
+    #compute frac prolif parameters of the simulation:
+
+    number_of_deaths = len(all_events_simulated) - (all_events_simulated['event']=='apoptosis').value_counts()[0]
+    cell_time_total = sum(all_events_simulated['Lifespan'])
+    m = fp.mle(mitotic_lifespans, censored_lifespans)
+    parameters_sim[condition]['a'] = number_of_deaths/cell_time_total
     
-        number_of_deaths = len(all_events_simulated) - (all_events_simulated['event']=='apoptosis').value_counts()[0]
-        cell_time_total = sum(all_events_simulated['Lifespan'])
-        m = fp.mle(mitotic_lifespans, censored_lifespans)
-        parameters_sim[condition]['a'] = number_of_deaths/cell_time_total
-        
-        parameters_sim[condition]['mu'] = m['x'][0]
-        parameters_sim[condition]['sigma'] = m['x'][1]
-        parameters_sim[condition]['lambda'] = m['x'][2]
-        parameters_sim[condition].update(fp.q_rates(m))
+    parameters_sim[condition]['mu'] = m['x'][0]
+    parameters_sim[condition]['sigma'] = m['x'][1]
+    parameters_sim[condition]['lambda'] = m['x'][2]
+    parameters_sim[condition].update(fp.q_rates(m))
+    
+    print('o6')
 ###############################################################################         
-    #Compare G1 and SM istribution with experimental
+#Compare G1 and SM istribution with experimental
+    
+    number_of_imt_to_sample=70
+    experimental_IMTs_picked = random.sample(list(all_IMTs[(all_IMTs['Drug']=='ERL') & (all_IMTs['Stiffness']==0.2)]['IMT_t']), number_of_imt_to_sample)
+    simulated_IMTs = random.sample(list(mitotic_lifespans), number_of_imt_to_sample)
+    
+    cost_mmd_006_ERL = nmmd2_rbf(np.array([simulated_IMTs]).transpose(), np.array([experimental_IMTs_picked]).transpose(), 1) #difference between IMT distribution
         
-        number_of_imt_to_sample=70
-        experimental_IMTs_picked = random.sample(list(all_IMTs[(all_IMTs['Drug']=='ERL') & (all_IMTs['Stiffness']==0.2)]['IMT_t']), number_of_imt_to_sample)
-        simulated_IMTs = random.sample(list(mitotic_lifespans), number_of_imt_to_sample)
-        
-        cost_mmd_006_ERL = nmmd2_rbf(np.array([simulated_IMTs]).transpose(), np.array([experimental_IMTs_picked]).transpose(), 1) #difference between IMT distribution
-            
-        cost_006_ERL = cost_mmd_006_ERL
-    except :
-        parameters_sim[condition]['a'] = np.nan
-        parameters_sim[condition]['d'] = np.nan
-        parameters_sim[condition]['q'] = np.nan
-        parameters_sim[condition]['mu'] = np.nan
-        parameters_sim[condition]['sigma'] = np.nan
-        parameters_sim[condition]['lambda'] = np.nan
-        
-        cost_mmd_006_ERL = np.inf
-        cost_006_ERL = np.inf
+    cost_006_ERL = cost_mmd_006_ERL
+    
+    print('o7')
+#    except :
+#        parameters_sim[condition]['a'] = np.nan
+#        parameters_sim[condition]['d'] = np.nan
+#        parameters_sim[condition]['q'] = np.nan
+#        parameters_sim[condition]['mu'] = np.nan
+#        parameters_sim[condition]['sigma'] = np.nan
+#        parameters_sim[condition]['lambda'] = np.nan
+#        
+#        cost_mmd_006_ERL = np.inf
+#        cost_006_ERL = np.inf
 
 ###############################################################################
 ###############################################################################
@@ -252,75 +258,76 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
 
 ###############################################################################
     
-    try:
-        (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population, idx, condition);
+    #try:
+    print('erl1')
+    (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population, idx, condition);
+    IMT_eoe_counts = retrieve_cellState(run_time, init, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
+    all_events_simulated = call_events(run_time, IMT_eoe_counts); 
+    all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
+    all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
+    mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
+    censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
+
+    while len(mitotic_lifespans)<70: #while we have less than 100 timecourses with apoptosis, 
+        init = init + 2
+        (cells_tmp, cell_count) = runAKTERK(2, run_time, observed_cells_time, model_concentration, model_population, idx, condition);
+        
+        #merge simulations
+        cells = {key: cells[key] + cells_tmp[key] for key in cells.keys()}
+    
         IMT_eoe_counts = retrieve_cellState(run_time, init, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
         all_events_simulated = call_events(run_time, IMT_eoe_counts); 
         all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
         all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
         mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
         censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
+        print('erl2')
+        
+###############################################################################
+    #Extract useful inforation from the simulations:
 
-        while len(mitotic_lifespans)<70: #while we have less than 100 timecourses with apoptosis, 
-            init = init + 2
-            (cells_tmp, cell_count) = runAKTERK(2, run_time, observed_cells_time, model_concentration, model_population, idx, condition);
-            
-            #merge simulations
-            cells = {key: cells[key] + cells_tmp[key] for key in cells.keys()}
-        
-            IMT_eoe_counts = retrieve_cellState(run_time, init, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
-            all_events_simulated = call_events(run_time, IMT_eoe_counts); 
-            all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
-            all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
-            mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
-            censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
-            
-            
+    simulated_IMT, simulated_sm, simulated_g1 = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
+    print('erl3')
+    #Save distribution
+    all_events_simulated.to_pickle(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/Events_" + str(idx) + "_55kPa_ERL.pkl") #doesn't save all imts, only the cells that are born before 30 hours
+    np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/G1_distribution_" + str(idx) + "_55kPa_ERL.npy",np.array(simulated_g1))
+    np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/SM_distribution_" + str(idx) + "_55kPa_ERL.npy",np.array(simulated_sm))
+    
+    #save density estimation
+    x=np.linspace(0,120,360)
+    y=[RBS(i, np.transpose([mitotic_lifespans.tolist()]), sigma) for i in x]
+    np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/IMT_distribution_" + str(idx) + "_55kPa_ERL_kde.npy",np.array(y))
+    print('erl4')
 ###############################################################################
-        #Extract useful inforation from the simulations:
-    
-        simulated_IMT, simulated_sm, simulated_g1 = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
-    
-        #Save distribution
-        all_events_simulated.to_pickle(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/Events_" + str(idx) + "_55kPa_ERL.pkl") #doesn't save all imts, only the cells that are born before 30 hours
-        np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/G1_distribution_" + str(idx) + "_55kPa_ERL.npy",np.array(simulated_g1))
-        np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/SM_distribution_" + str(idx) + "_55kPa_ERL.npy",np.array(simulated_sm))
-        
-        #save density estimation
-        x=np.linspace(0,120,360)
-        y=[RBS(i, np.transpose([mitotic_lifespans.tolist()]), sigma) for i in x]
-        np.save(os.path.dirname(__file__) + "/../fit_data/sobol_seq/distribution/IMT_distribution_" + str(idx) + "_55kPa_ERL_kde.npy",np.array(y))
-        
-###############################################################################
-        #compute frac prolif parameters of the simulation:
-    
-        number_of_deaths = len(all_events_simulated) - (all_events_simulated['event']=='apoptosis').value_counts()[0]
-        cell_time_total = sum(all_events_simulated['Lifespan'])
-        m = fp.mle(mitotic_lifespans, censored_lifespans)
-        parameters_sim[condition]['a'] = number_of_deaths/cell_time_total
-        
-    
-        parameters_sim[condition]['mu'] = m['x'][0]
-        parameters_sim[condition]['sigma'] = m['x'][1]
-        parameters_sim[condition]['lambda'] = m['x'][2]
-        parameters_sim[condition].update(fp.q_rates(m))
-            
+    #compute frac prolif parameters of the simulation:
+
+    number_of_deaths = len(all_events_simulated) - (all_events_simulated['event']=='apoptosis').value_counts()[0]
+    cell_time_total = sum(all_events_simulated['Lifespan'])
+    m = fp.mle(mitotic_lifespans, censored_lifespans)
+    parameters_sim[condition]['a'] = number_of_deaths/cell_time_total
+    print('erl5')
+
+    parameters_sim[condition]['mu'] = m['x'][0]
+    parameters_sim[condition]['sigma'] = m['x'][1]
+    parameters_sim[condition]['lambda'] = m['x'][2]
+    parameters_sim[condition].update(fp.q_rates(m))
+    print('erl6')
 ###############################################################################         
-    #Compare G1 and SM istribution with experimental
+#Compare G1 and SM istribution with experimental
+
+    number_of_imt_to_sample=70
     
-        number_of_imt_to_sample=70
-        
-    #        simulated_G1s = random.sample(simulated_g1, number_of_G1_to_sample)
-    #        experimental_G1s_picked = random.sample(experimental_G1s['0.2 kPa ERL'], number_of_G1_to_sample)
-    #        simulated_SMs = random.sample(simulated_sm, number_of_SM_to_sample)
-    #        experimental_SMs_picked = random.sample(experimental_SMs['0.2 kPa ERL'], number_of_SM_to_sample)
-        
-        experimental_IMTs_picked = random.sample(list(all_IMTs[(all_IMTs['Drug']=='ERL') & (all_IMTs['Stiffness']==0.2)]['IMT_t']), number_of_imt_to_sample)
-        simulated_IMTs = random.sample(list(mitotic_lifespans), number_of_imt_to_sample)
-        
-        cost_mmd_55_ERL = nmmd2_rbf(np.array([simulated_IMTs]).transpose(), np.array([experimental_IMTs_picked]).transpose(), 1) #difference between IMT distribution
-        cost_55_ERL = cost_mmd_55_ERL
-        
+#        simulated_G1s = random.sample(simulated_g1, number_of_G1_to_sample)
+#        experimental_G1s_picked = random.sample(experimental_G1s['0.2 kPa ERL'], number_of_G1_to_sample)
+#        simulated_SMs = random.sample(simulated_sm, number_of_SM_to_sample)
+#        experimental_SMs_picked = random.sample(experimental_SMs['0.2 kPa ERL'], number_of_SM_to_sample)
+    print('erl65')
+    experimental_IMTs_picked = random.sample(list(all_IMTs[(all_IMTs['Drug']=='ERL') & (all_IMTs['Stiffness']==0.2)]['IMT_t']), number_of_imt_to_sample)
+    simulated_IMTs = random.sample(list(mitotic_lifespans), number_of_imt_to_sample)
+    
+    cost_mmd_55_ERL = nmmd2_rbf(np.array([simulated_IMTs]).transpose(), np.array([experimental_IMTs_picked]).transpose(), 1) #difference between IMT distribution
+    cost_55_ERL = cost_mmd_55_ERL
+    print('erl7')
 #            plt.hist(simulated_g1)
 #            plt.hist(experimental_G1s_picked)
 
@@ -331,16 +338,16 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
 #            if parameters_sim[condition][name]<10**-5:
 #                parameters_sim[condition][name] = 1e-5
 #            cost_frac_prolif_model_006 += abs(np.log(parameters_sim[condition][name]) - np.log(parameters_exp[condition][name]))
-    except :
-        parameters_sim[condition]['a'] = np.nan
-        parameters_sim[condition]['d'] = np.nan
-        parameters_sim[condition]['q'] = np.nan
-        parameters_sim[condition]['mu'] = np.nan
-        parameters_sim[condition]['sigma'] = np.nan
-        parameters_sim[condition]['lambda'] = np.nan
-        
-        cost_mmd_55_ERL = np.inf
-        cost_55_ERL = np.inf
+#    except :
+#        parameters_sim[condition]['a'] = np.nan
+#        parameters_sim[condition]['d'] = np.nan
+#        parameters_sim[condition]['q'] = np.nan
+#        parameters_sim[condition]['mu'] = np.nan
+#        parameters_sim[condition]['sigma'] = np.nan
+#        parameters_sim[condition]['lambda'] = np.nan
+#        
+#        cost_mmd_55_ERL = np.inf
+#        cost_55_ERL = np.inf
 #        
     #save frac prolif parameters and cost + parameter vector
     frac_prolif_parameters_temp = {"index":[idx], "a_006_ERL":[parameters_sim['0.6 kPa ERL']['a']], "d_006_ERL":[parameters_sim['0.6 kPa ERL']['d']], "q_006_ERL":[parameters_sim['0.6 kPa ERL']['q']], "cost_mmd_006_ERL":[cost_mmd_006_ERL], "a_55_ERL":[parameters_sim['55 kPa ERL']['a']], "d_55_ERL":[parameters_sim['55 kPa ERL']['d']], "q_55_ERL":[parameters_sim['55 kPa ERL']['q']], "cost_mmd_55_ERL":[cost_mmd_55_ERL], "cost_total_ERL":[cost_mmd_006_ERL + cost_mmd_55_ERL]}

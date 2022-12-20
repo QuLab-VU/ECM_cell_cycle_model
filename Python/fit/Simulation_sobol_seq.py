@@ -14,7 +14,7 @@ path= r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model'
 path= os.getcwd()
 
 sys.path.insert(0, path + "/Python/cellular_cycle") #add a pathway to the model #not sure about how to use folder dependency, to change
-sys.path.insert(0, path + "/Python/test_treatments") #add a pathway to the model #not sure about how to use folder dependency, to change
+#sys.path.insert(0, path + "/Python/test_treatments") #add a pathway to the model #not sure about how to use folder dependency, to change
 sys.path.insert(0, path + "/Python/fit") #add a pathway to the fit functions #not sure about how to use folder dependency, to change
 
 import numpy as np
@@ -30,7 +30,7 @@ model_concentration=model
 from Austin_proliferation_model_population_5 import model
 model_population=model
 
-#from cost_function_BngSimulator_frac_prolif_quiescence_and_mmd_ERL_only_30_parameters_fixed_initial_concentrations_mitosis_low_high_stiffness import cost_function_reduced_quiescence_ERL_only_30_parameters
+from cost_function_BngSimulator_frac_prolif_quiescence_and_mmd_ERL_only_30_parameters_fixed_initial_concentrations_mitosis_low_high_stiffness import cost_function_reduced_quiescence_ERL_only_30_parameters
 
 from cost_function_BngSimulator_cell_count_30_parameters_middle_stiffness import cost_function_4kPa_30_parameters
 
@@ -53,6 +53,7 @@ print(model.parameters["k_M"].value)
 key = "k_M" #0.11 to 0.27
 key = "k_EMY" #from 0.18 to 0.37
 key = "k_CDS" #from 0.11 to 0.25
+print(model_population.parameters[key].value)
 
 #change the model parameters of the model if needed
 omega = 200
@@ -71,7 +72,9 @@ l=sobol_seq.i4_sobol_generate(30, 110000, skip=0)
 l2 = 4*l + (np.array(loc)-2)
 
 t = np.linspace(0, 500, 50000)
-simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run(); #deterministic simulation
+simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run();
+sim = BngSimulator(model_population, tspan=t, verbose=True)
+traj = sim.run()
 
 
 
@@ -80,6 +83,78 @@ frac_prolif_parameters = pd.read_pickle(path  + "/Python/fit_data/sobol_seq/frac
 #indices in the sobol sequence for the 100 best parameters
 indices = [int(i)-1 for i in frac_prolif_parameters.sort_values(by=['cost_total'])["index"].tolist()[0:]] 
 parameters = [l2[i] for i in indices]
+
+
+################
+
+
+
+
+
+
+run_time=102.3
+omega=200
+observed_cells_time = 30
+sigma=5
+parameter_names = ['a','d','q']
+
+print("The parameters are ")
+print(parameter_vector)
+#np.save(path + "/fit_data/sobol_seq/cost_function_model_4/particle_position/parameter_vector_" + str(idx) + ".npy", parameter_vector)
+
+global model_concentration, model_population
+
+param_dict = {pname: pvalue for pname, pvalue in zip(pysb_sampled_parameter_names, parameter_vector)}   
+for pname, pvalue in param_dict.items():
+    #Change model parameter values to current location in parameter space
+    model_population.parameters[pname].value = (pvalue)
+    model_concentration.parameters[pname].value = (pvalue)
+
+
+"""
+###############################################################################
+###############################################################################
+#Setting 1st condition
+parameters_sim={}
+thr=0.26
+cost_mmd_006_ERL=0
+idx = 'r'
+cost_006_ERL=0    
+condition = '0.6 kPa ERL'
+init=1 #40
+parameters_sim[condition] = {}
+
+model_population.parameters['ERK'].value = 0.2 * omega
+model_population.parameters['FAK'].value = 0.4 * omega
+model_population.parameters['AKT'].value = 0.3 * omega
+
+model_concentration.parameters['ERK'].value = 1.0 * 1 ###
+model_concentration.parameters['FAK'].value = 0.4 * 1 ###
+model_concentration.parameters['AKT'].value = 0.6 * 1 ###
+
+
+model_population.parameters['ERK'].value = 0.2 * omega
+model_population.parameters['FAK'].value = 1.0 * omega
+model_population.parameters['AKT'].value = 0.6 * omega
+
+model_concentration.parameters['ERK'].value = 1 * 1
+model_concentration.parameters['FAK'].value = 1 * 1
+model_concentration.parameters['AKT'].value = 1 * 1
+###############################################################################
+from runStochCell import runStochcell
+
+variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx, condition, thr);
+ 
+#try:
+from runAKTERK_2 import runAKTERK
+
+(cells, cell_count) = runAKTERK(init, 100, 20, model_concentration, model_population, idx, condition);
+
+
+"""
+
+
+
 
 
 
@@ -91,8 +166,18 @@ for name in pysb_sampled_parameter_names:
 
 cost_function_reduced_quiescence_ERL_only_30_parameters(10**np.array(original_parameters), 'original_parameters')
 
+cost_function_4kPa_30_parameters(10**np.array(original_parameters), 'original_parameters')
+
 parameter_vector = 10**np.array(original_parameters)
 idx='original_parameters'
+
+from runAKTERK_2 import runAKTERK
+
+
+parameters_original_ERL = pd.read_pickle(r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\sobol_seq\version 6\cost\parameters_original_parameters_high_and_low_stiffness_ERL.pkl")
+
+parameters_original_4kpa = pd.read_pickle(r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\sobol_seq\version 6\cost\parameters_original_parameters_4kPa_DMSO_ERL.pkl")
+
 ################
 #Change model parameter values to current location in parameter space
 #parameter_vector = 10**parameters[0]
@@ -120,7 +205,7 @@ i=1456
 parameter_vector = 10**parameters[i]
 idx = indices[i]
 
-
+###############################################################################
 from os import listdir
 from os.path import isfile, join
 #mypath = r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\sobol_seq\version 6\cost"
@@ -139,7 +224,9 @@ for file_temp in onlyfiles:
 
 frac_prolif_parameters_2 = frac_prolif_parameters_2[frac_prolif_parameters_2['cost_total_ERL']!=np.inf]
 
-frac_prolif_parameters_2.to_csv(r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\sobol_seq\all_parameters_high_and_low_stiffness_ERL.csv')
+
+
+frac_prolif_parameters_2.to_csv(r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\sobol_seq\all_parameters_high_and_low_stiffness_ERL.csv', index=False)
 
 frac_prolif_parameters_2['index']
 
@@ -240,10 +327,12 @@ file_temp = 'cell_count_637_4kPa_DMSO.npy'
 file_temp = 'cell_count_33711_4kPa_DMSO.npy'
 
 index = 637
+index = 37007
 
-index = 104571
+index = 637
+index = 33711
 
-
+index=22346
 
 for index in frac_prolif_parameters_2['index']:
     try:
@@ -340,16 +429,20 @@ for index in frac_prolif_parameters_2['index']:
 
 all_parameters_4kPa = pd.concat(all_parameters)
 
+
 plt.scatter(all_parameters_4kPa['cost 4kPa ERL'], all_parameters_4kPa['cost 4kPa DMSO'])
+plt.scatter(all_parameters_4kPa['cost 4kPa ERL'][all_parameters_4kPa['index']=='original_parameters'], all_parameters_4kPa['cost 4kPa DMSO'][all_parameters_4kPa['index']=='original_parameters'], c='red')
 plt.show()
 
 plt.scatter(all_parameters_4kPa['cost slope difference 4kPa ERL'], all_parameters_4kPa['cost slope difference 4kPa DMSO'])
+plt.scatter(all_parameters_4kPa[all_parameters_4kPa['index']=='original_parameters']['cost slope difference 4kPa ERL'], all_parameters_4kPa[all_parameters_4kPa['index']=='original_parameters']['cost slope difference 4kPa DMSO'], c='red')
 plt.show()
 
 plt.scatter(all_parameters_4kPa['cost slope difference 4kPa'], all_parameters_4kPa['cost 4kPa'])
+plt.scatter(all_parameters_4kPa[all_parameters_4kPa['index']=='original_parameters']['cost slope difference 4kPa'], all_parameters_4kPa[all_parameters_4kPa['index']=='original_parameters']['cost 4kPa'], c='red')
 plt.show()
 
-all_parameters_4kPa.to_csv(r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\all_parameters_4kPa.csv')
+all_parameters_4kPa.to_csv(r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\Sobol_seq\all_parameters_4kPa.csv', index=False)
 
 ###############################################################################
 

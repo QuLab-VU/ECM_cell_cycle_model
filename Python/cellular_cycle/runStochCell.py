@@ -14,7 +14,6 @@ from peakfinder import peakfinder
 from pysb.simulator import ScipyOdeSimulator
 from pysb.simulator import BngSimulator
 import numpy as np
-import pylab as pl
 import random
 import scipy.stats as ss
 
@@ -22,26 +21,27 @@ import scipy.stats as ss
 
 #model=model_concentration
 
-def runStochcell(model_population, model_concentration, index, condition) :
+def runStochcell(model_population, model_concentration, index, condition, thr):
     
-    v = 0.05;     
+    v = 0.05;
     sys_size=200;
-    run_time=500;    
     CI=0;
-    t = np.linspace(0, 800, 800)
+    t_ode = np.linspace(0, 1000, 1000)
     
     #print("ode simulation starting")
-    simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run();
+    simres = ScipyOdeSimulator(model_concentration, t_ode, verbose=False).run();
     yout = simres.all;
     
+    t = np.linspace(0, 1000, 1000)
     simres_2 = BngSimulator(model_population, t, verbose=False).run();
     
-    for obs in model_concentration.observables : 
-        #pl.plot(yout[obs.name])
+    for obs in model_concentration.observables: 
+        #plt.plot(simres_2.all[obs.name])
+        #plt.plot(yout[obs.name])
         #print(obs.name)
-        #print(np.any(yout[obs.name]>15)) #concentration too high
+        print(np.any(yout[obs.name]>15)) #concentration too high
         
-        if np.any(yout[obs.name]>15) :
+        if np.any(yout[obs.name]>15):
             return {}, False, 1
     
     """
@@ -56,7 +56,7 @@ def runStochcell(model_population, model_concentration, index, condition) :
     """
    #Are they oscillating 
     
-    T = t[1] - t[0]  # sampling interval 
+    T = t_ode[1] - t_ode[0]  # sampling interval 
     N = yout['obsCycD'][600:].size
     # 1/T = frequency
     f = np.linspace(0, 1 / T, N)
@@ -82,10 +82,10 @@ def runStochcell(model_population, model_concentration, index, condition) :
         check=True
         #print("Check=")
         #print(check)
-
         
-    (a,max_tmp_cdc) = peakfinder(simres_2.observables['obsCdc20'], 0.15*sys_size, 0.15*sys_size, 1, includeEndpoints=1);
-    (b,max_tmp_cyce) = peakfinder(simres_2.observables['obsCycE'], 0.15*sys_size, 0.15*sys_size, 1, includeEndpoints=1);
+        
+    (a,max_tmp_cdc) = peakfinder(simres_2.observables['obsCdc20'], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);
+    (b,max_tmp_cyce) = peakfinder(simres_2.observables['obsCycE'], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);
     
     tmp_score=1
     #print(tmp_score)

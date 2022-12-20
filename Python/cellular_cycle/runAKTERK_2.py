@@ -30,8 +30,9 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     
     v = 0.05;     
     sys_size=200; #cell size
+    thr = 0.26
     
-    variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx, condition);
+    variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx, condition, thr);
     
     if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.1: #the model doesn't oscillate or the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
         #print("check didn't pass");
@@ -110,7 +111,6 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 cells['time'][ii] = cells['time'][ii] + [x+cells['time'][ii][-1] for x in tmp_t[1:].tolist()]; #time step
                 current_ind_length=len(cells['molecules'][ii]['obsCdc20']);
                 
-                thr = 0.26
                 
                 a, max_tmp_cdc = peakfinder(cells['molecules'][ii]['obsCdc20'], thr*model_population.parameters['omega'].value, thr*model_population.parameters['omega'].value, 1, includeEndpoints=1);      #cdc20
                 
