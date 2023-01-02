@@ -372,11 +372,11 @@ for index in frac_prolif_parameters_2['index']:
             parameters_tmp['slope_4kPa_DMSO'], _, _, _ = np.linalg.lstsq(t[:,np.newaxis], DIP_sim)
             cost_slope_DMSO = (parameters_tmp['slope_4kPa_DMSO'] - slope_4kPa_DMSO)[0]**2
 
-#            plt.scatter(t, DIP_sim, color = 'blue', s=1)
-#            plt.plot(t, parameters_tmp['slope_4kPa_DMSO'][0]*t, color = 'blue')
-#            plt.scatter(t, means[2], color = 'red', s=1)
-#            plt.plot(t, slope_4kPa_DMSO*t, color = 'red')
-#            plt.show()
+            plt.scatter(t, DIP_sim, color = 'blue', s=1)
+            plt.plot(t, parameters_tmp['slope_4kPa_DMSO'][0]*t, color = 'blue')
+            plt.scatter(t, means[2], color = 'red', s=1)
+            plt.plot(t, slope_4kPa_DMSO*t, color = 'red')
+            plt.show()
 
         
         
@@ -408,11 +408,11 @@ for index in frac_prolif_parameters_2['index']:
             cost_slope_ERL = (parameters_tmp['slope_4kPa_ERL'] - slope_4kPa_ERL)[0]**2
 
 
-#            plt.scatter(t, DIP_sim, color = 'blue', s=1)
-#            plt.plot(t, parameters_tmp['slope_4kPa_ERL'][0]*t, color = 'blue')
-#            plt.scatter(t, means[3], color = 'red', s=1)
-#            plt.plot(t, slope_4kPa_ERL*t, color = 'red')
-#            plt.show()
+            plt.scatter(t, DIP_sim, color = 'blue', s=1)
+            plt.plot(t, parameters_tmp['slope_4kPa_ERL'][0]*t, color = 'blue')
+            plt.scatter(t, means[3], color = 'red', s=1)
+            plt.plot(t, slope_4kPa_ERL*t, color = 'red')
+            plt.show()
     
         parameters_tmp['cost 4kPa DMSO'] = cost_DMSO
         parameters_tmp['cost 4kPa ERL'] = cost_ERL
@@ -431,15 +431,15 @@ all_parameters_4kPa = pd.concat(all_parameters)
 
 
 plt.scatter(all_parameters_4kPa['cost 4kPa ERL'], all_parameters_4kPa['cost 4kPa DMSO'])
-plt.scatter(all_parameters_4kPa['cost 4kPa ERL'][all_parameters_4kPa['index']=='original_parameters'], all_parameters_4kPa['cost 4kPa DMSO'][all_parameters_4kPa['index']=='original_parameters'], c='red')
+plt.scatter(all_parameters_4kPa['cost 4kPa ERL'][all_parameters_4kPa.index=='original_parameters'], all_parameters_4kPa['cost 4kPa DMSO'][all_parameters_4kPa.index=='original_parameters'], c='red')
 plt.show()
 
 plt.scatter(all_parameters_4kPa['cost slope difference 4kPa ERL'], all_parameters_4kPa['cost slope difference 4kPa DMSO'])
-plt.scatter(all_parameters_4kPa[all_parameters_4kPa['index']=='original_parameters']['cost slope difference 4kPa ERL'], all_parameters_4kPa[all_parameters_4kPa['index']=='original_parameters']['cost slope difference 4kPa DMSO'], c='red')
+plt.scatter(all_parameters_4kPa[all_parameters_4kPa.index=='original_parameters']['cost slope difference 4kPa ERL'], all_parameters_4kPa[all_parameters_4kPa.index=='original_parameters']['cost slope difference 4kPa DMSO'], c='red')
 plt.show()
 
 plt.scatter(all_parameters_4kPa['cost slope difference 4kPa'], all_parameters_4kPa['cost 4kPa'])
-plt.scatter(all_parameters_4kPa[all_parameters_4kPa['index']=='original_parameters']['cost slope difference 4kPa'], all_parameters_4kPa[all_parameters_4kPa['index']=='original_parameters']['cost 4kPa'], c='red')
+plt.scatter(all_parameters_4kPa[all_parameters_4kPa.index=='original_parameters']['cost slope difference 4kPa'], all_parameters_4kPa[all_parameters_4kPa.index=='original_parameters']['cost 4kPa'], c='red')
 plt.show()
 
 all_parameters_4kPa.to_csv(r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\Sobol_seq\all_parameters_4kPa.csv', index=False)

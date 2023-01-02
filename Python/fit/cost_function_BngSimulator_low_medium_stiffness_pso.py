@@ -117,53 +117,59 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
         model_concentration.parameters[pname].value = (pvalue)
         
     
-    conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL']
+    conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
     inputs = {}
-    inputs['FAK'] = {'4 kPa DMSO': 0.6, '4 kPa ERL': 0.6, '0.6 kPa DMSO': 0.4, '0.6 kPa ERL': 0.4}
-    inputs['ERK'] = {'4 kPa DMSO': 1.0, '4 kPa ERL': 0.2, '0.6 kPa DMSO': 1.0, '0.6 kPa ERL': 0.2}
-    inputs['AKT'] = {'4 kPa DMSO': 1.0, '4 kPa ERL': 0.6, '0.6 kPa DMSO': 0.6, '0.6 kPa ERL': 0.3}
+    inputs['FAK'] = {'4 kPa DMSO': 0.6, '4 kPa ERL': 0.6, '0.6 kPa DMSO': 0.4, '0.6 kPa ERL': 0.4, '55 kPa DMSO': 1.0, '55 kPa ERL': 1.0}
+    inputs['ERK'] = {'4 kPa DMSO': 1.0, '4 kPa ERL': 0.2, '0.6 kPa DMSO': 1.0, '0.6 kPa ERL': 0.2, '55 kPa DMSO': 1.0, '55 kPa ERL': 0.2}
+    inputs['AKT'] = {'4 kPa DMSO': 1.0, '4 kPa ERL': 0.6, '0.6 kPa DMSO': 0.6, '0.6 kPa ERL': 0.3, '55 kPa DMSO': 1.0, '55 kPa ERL': 0.6}
     
-    condition = '0.6 kPa DMSO'
-    condition = '0.6 kPa ERL'
-    num_condition=1
+
     parameters_sim={} 
     cost = {}
     
     t_sim = np.arange(0,120,1/3)
     
-    run_time = observed_cells_time = t_sim[-1]
-    omega=200
-    sigma=5
+    run_times = [120, 120, 120, 120, 60, 60] 
+    omega = 200
+    sigma = 5
     parameter_names = ['a','d','q']
-    init=1 #40
+    init = 1 #40
+    
+    condition = '55 kPa DMSO'
+    condition = '0.6 kPa ERL'
+    run_time = 120
+    run_time=60
 ###############################################################################
 ###############################################################################
     
-    for condition, num_condition in zip(conditions, range(4)):
-        try:
-            cond_split = condition.split(' ')
-            cond_split_DMSO = condition.split(' ')
-            cond_split_DMSO[-1] = 'DMSO'
-            parameters_sim[condition] = {}
-            
-            model_population.parameters['ERK'].value = inputs['ERK'][condition] * omega
-            model_population.parameters['FAK'].value = inputs['FAK'][condition] * omega
-            model_population.parameters['AKT'].value = inputs['AKT'][condition] * omega
-            
-            model_concentration.parameters['ERK'].value = inputs['ERK'][' '.join(cond_split_DMSO)] * 1
-            model_concentration.parameters['FAK'].value = inputs['FAK'][' '.join(cond_split_DMSO)] * 1
-            model_concentration.parameters['AKT'].value = inputs['AKT'][' '.join(cond_split_DMSO)] * 1
-            
+    for run_time, condition, num_condition in zip(run_times, conditions, range(6)):
+        
+        t_sim = np.arange(0,run_time,1/3)
+        observed_cells_time = run_time
+        cond_split = condition.split(' ')
+        cond_split_DMSO = condition.split(' ')
+        cond_split_DMSO[-1] = 'DMSO'
+        parameters_sim[condition] = {}
+        
+        model_population.parameters['ERK'].value = inputs['ERK'][condition] * omega
+        model_population.parameters['FAK'].value = inputs['FAK'][condition] * omega
+        model_population.parameters['AKT'].value = inputs['AKT'][condition] * omega
+        
+        model_concentration.parameters['ERK'].value = inputs['ERK'][' '.join(cond_split_DMSO)] * 1
+        model_concentration.parameters['FAK'].value = inputs['FAK'][' '.join(cond_split_DMSO)] * 1
+        model_concentration.parameters['AKT'].value = inputs['AKT'][' '.join(cond_split_DMSO)] * 1
+        
 ###############################################################################
             
-            #try:
+        try:
             
-            (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population, idx, condition);
+            (cells, cell_count) = runAKTERK(init, run_time, run_time, model_concentration, model_population, idx, condition);
             
             print('Cell count')
             print(cell_count)
             
-            np.save(os.path.dirname(__file__) + "/../fit_data/pso/cell_count/cell_count_" + str(idx) + "_" + '_'.join(cond_split) + ".npy", cell_count)
+            np.save(os.path.dirname(__file__) + "/../fit_data/pso/cell_count/cell_count_" + str(idx) + "_" + str(randomnumber)  + "_" + '_'.join(cond_split) + ".npy", cell_count)
+            
             IMT_eoe_counts = retrieve_cellState(run_time, init, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
             all_events_simulated = call_events(run_time, IMT_eoe_counts); 
             all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
@@ -181,7 +187,7 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
             np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/SM_distribution_" + str(idx) + "_" + str(randomnumber) + "_" + '_'.join(cond_split) + ".npy",np.array(simulated_sm))
             
             #save density estimation
-            x=np.linspace(0,120,360)
+            x=np.linspace(0, run_time, 360)
             y=[RBS(i, np.transpose([mitotic_lifespans.tolist()]), sigma) for i in x]
             np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distribution_" + str(idx) + "_" + str(randomnumber) + "_" + '_'.join(cond_split) + "_kde.npy",np.array(y))
             
@@ -206,11 +212,11 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
             for time_tmp_p, cell_count_time_tmp in cell_count:
                 cell_count_t[(time_tmp_m <= t_sim) & (t_sim < time_tmp_p)] = cell_count_time_tmp
                 time_tmp_m = time_tmp_p
-                
+            
             
             DIP_sim = np.log(cell_count_t/cell_count_t[0])            
-            cost['Cost ' + condition] = np.sqrt(np.sum((DIP_sim[1:] - means[num_condition][1:len(t_sim)])**2 / stdevs[num_condition][1:len(t_sim)]**2))/len(t_sim)
-            
+            cost['Cost ' + condition] = np.sqrt(np.sum((DIP_sim[1:len(t_sim)] - means[num_condition][1:len(t_sim)])**2 / stdevs[num_condition][1:len(t_sim)]**2))/len(t_sim)
+        
 ###############################################################################         
         
         except :
@@ -228,7 +234,6 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
     
     
     frac_prolif_parameters_temp = {"index":[idx], **parameters_sim, **cost}
-    
     
     vect = pd.DataFrame(np.array([parameter_vector]), columns = pysb_sampled_parameter_names)
     
