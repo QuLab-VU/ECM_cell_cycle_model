@@ -45,10 +45,14 @@ Parameter('BH3BCL2_0', (0.199169986463653* 1))
 Parameter('BAXm_0', ((1 - 0.992676117362238 - 0.00730440429784349)* 1)) #BAXt - BAX - BAXmBCL2
 Parameter('BCL2_0', ((0.95 - 0.199169986463653 -0.00730440429784349) * 1)) #BCL2t - BH3BCL2 -BAXmBCL2
 
-Parameter('CycDiCycD_0', 0)
+#Parameter('CycDiCycD_0', 0)
 Parameter('CycDi_0', 0)
-Initial(model.monomers['CycDi'](cycd=None), model.parameters['CycDi_0'])
-Initial(model.monomers['CycDi'](cycd=1)%model.monomers['CycD'](b=1), model.parameters['CycDiCycD_0'])
+Parameter('E2Fi_0', 0)
+Parameter('Cdc20i_0', 0)
+Initial(model.monomers['CycDi'](), model.parameters['CycDi_0'])
+Initial(model.monomers['E2Fi'](), model.parameters['E2Fi_0'])
+Initial(model.monomers['Cdc20i'](), model.parameters['Cdc20i_0'])
+#Initial(model.monomers['CycDi'](cycd=1)%model.monomers['CycD'](b=1), model.parameters['CycDiCycD_0'])
 
 
 

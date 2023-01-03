@@ -43,12 +43,31 @@ Parameter('BH3_0', int(round(0.000428591174323906* 200)))
 Parameter('BH3BCL2_0', int(round(0.199169986463653* 200)))
 Parameter('BAXm_0', int(round((1 - 0.992676117362238 - 0.00730440429784349)* 200))) #BAXt - BAX - BAXmBCL2
 Parameter('BCL2_0', int(round((0.95 - 0.199169986463653 -0.00730440429784349) * 200))) #BCL2t - BH3BCL2 -BAXmBCL2
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+
+#Parameter('CycDiCycD_0', int(round(0* 200)))
+Parameter('CycDi_0', int(round(0* 200)))
+Parameter('E2Fi_0', int(round(0* 200)))
+Parameter('Cdc20i_0', int(round(0* 200)))
+Initial(model.monomers['CycDi'](), model.parameters['CycDi_0'])
+Initial(model.monomers['E2Fi'](), model.parameters['E2Fi_0'])
+Initial(model.monomers['Cdc20i'](), model.parameters['Cdc20i_0'])
+#Initial(model.monomers['CycDi'](cycd=1)%model.monomers['CycD'](b=1), model.parameters['CycDiCycD_0'])
+
+=======
+>>>>>>> Stashed changes
 Parameter('CycDiCycD_0', int(round(0* 200)))
 Parameter('CycDi_0', int(round(0* 200)))
 
 
 Initial(model.monomers['CycDi'](cycd=None), model.parameters['CycDi_0'])
 Initial(model.monomers['CycDi'](cycd=1)%model.monomers['CycD'](b=1), model.parameters['CycDiCycD_0'])
+<<<<<<< Updated upstream
+=======
+>>>>>>> a73cd50033b1df432cbfd2afc8918019a65d4c76
+>>>>>>> Stashed changes
 Initial(model.monomers['Skp2'], model.parameters['Skp2_0'])
 Initial(model.monomers['p21'](b=None, S='u'), model.parameters['p21_0'])
 Initial(model.monomers['p21'](b=None, S='p'), model.parameters['p21p_0'])

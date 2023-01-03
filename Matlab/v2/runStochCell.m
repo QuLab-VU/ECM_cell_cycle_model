@@ -48,7 +48,7 @@ variable_range=y(maxima(6):maxima(7),:);
 p.AKT=AKT;
 p.ERK=ERK;
 
-runAKTERK
+runAKTERK_death
 
 [cell_table] = restructure_for_UMAP(cells,dt,p);
 csvwrite(strcat(SAVEDIR, '\cells_count_',num2str(AKT*100),'_',num2str(ERK*100),...

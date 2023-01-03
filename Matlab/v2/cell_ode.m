@@ -67,7 +67,7 @@ dydt(5) = p.s*((p.k_M*AKT)/((p.K_S+AKT))...%myc synthesis from AKT
     +(p.k_EMY*ERK)/(p.K_MY+ERK) ...%myc synthesis from ERK
     -p.d_M*Myc);%myc degradation
  
-%CycD 
+%CycD-Cdk4/6
 dydt(6) = p.s*(p.k_CDS*AKT/(p.K_S+AKT)...%cyclin D synthesis from AKT
     -(p.k_c1*CycD*p21)...%p21 cycD association
     +(p.k_c2*CycDp21)...%p21 cycD dis

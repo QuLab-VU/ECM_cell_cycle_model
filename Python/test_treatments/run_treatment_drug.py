@@ -57,23 +57,14 @@ model_concentration.parameters['AKT'].value = 0.6 * 1
 t = np.linspace(0, 500, 50000)
 simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run()
 yout = simres.all;
-observables=['obsCycE', 'obsCdc20']; #plot Cyclin E, Cdc20 and Cyclin A
-for obs in range(2) :
+observables=['obsCycE', 'obsCdc20', 'obsCycD', 'obsCdc20i']; #plot Cyclin E, Cdc20 and Cyclin A
+for obs in range(4) :
     plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
 plt.legend(loc=1)
 plt.ylim(0, 1)
 plt.show()
 
 
-
-
-params = {'axes.titley': 1,
-         'axes.titlepad': -14,
-         'axes.labelsize': 14,
-         'axes.titlesize': 14,
-         'xtick.labelsize': 12,
-         'ytick.labelsize': 12}
-plt.rcParams.update(params)
 
 #change the model parameters of the model if needed
 omega = 200
@@ -95,12 +86,123 @@ model_concentration.parameters['AKT'].value = 0.6 * 1
 t = np.linspace(0, 500, 50000)
 simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run()
 yout = simres.all;
-observables=['obsCycE', 'obsCdc20']; #plot Cyclin E, Cdc20 and Cyclin A
-for obs in range(2) :
+observables=['obsCycE', 'obsCdc20', 'obsCycD', 'obsCycDi']; #plot Cyclin E, Cdc20 and Cyclin A
+for obs in range(4) :
     plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
 plt.legend(loc=1)
 plt.ylim(0, 1)
 plt.show()
+
+
+#change the model parameters of the model if needed
+omega = 200
+new_param = pd.read_csv("parameters_e2fi.csv") 
+del new_param['Stress']
+for key in new_param.keys():
+    if model_population.parameters[key].value != new_param[key][0]:
+        model_population.parameters[key].value = new_param[key]
+    if model_concentration.parameters[key].value != new_param[key][0]:
+        model_concentration.parameters[key].value = new_param[key]
+model_concentration.parameters['omega'].value = 1
+model_population.parameters['ERK'].value = 0.2 * omega
+model_population.parameters['FAK'].value = 1.0 * omega
+model_population.parameters['AKT'].value = 0.6 * omega
+
+model_concentration.parameters['ERK'].value = 0.2 * 1
+model_concentration.parameters['FAK'].value = 1 * 1
+model_concentration.parameters['AKT'].value = 0.6 * 1
+t = np.linspace(0, 1000, 100000)
+simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run()
+yout = simres.all;
+observables=['obsCycE', 'obsCdc20', 'obsE2F', 'obsE2Fi']; #plot Cyclin E, Cdc20 and Cyclin A
+for obs in range(4) :
+    plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
+plt.legend(loc=1)
+plt.ylim(0, 1)
+plt.show()
+
+
+#change the model parameters of the model if needed
+omega = 200
+new_param = pd.read_csv("parameters_RbD.csv") 
+del new_param['Stress']
+for key in new_param.keys():
+    if model_population.parameters[key].value != new_param[key][0]:
+        model_population.parameters[key].value = new_param[key]
+    if model_concentration.parameters[key].value != new_param[key][0]:
+        model_concentration.parameters[key].value = new_param[key]
+model_concentration.parameters['omega'].value = 1
+model_population.parameters['ERK'].value = 0.2 * omega
+model_population.parameters['FAK'].value = 1.0 * omega
+model_population.parameters['AKT'].value = 0.6 * omega
+
+model_concentration.parameters['ERK'].value = 0.2 * 1
+model_concentration.parameters['FAK'].value = 1 * 1
+model_concentration.parameters['AKT'].value = 0.6 * 1
+t = np.linspace(0, 500, 50000)
+simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run()
+yout = simres.all;
+observables=['obsCycE', 'obsCdc20', 'obsE2F', 'obspRb']; #plot Cyclin E, Cdc20 and Cyclin A
+for obs in range(4) :
+    plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
+plt.legend(loc=1)
+plt.ylim(0, 1)
+plt.show()
+
+#change the model parameters of the model if needed
+omega = 200
+new_param = pd.read_csv("parameters_RbE.csv") 
+del new_param['Stress']
+for key in new_param.keys():
+    if model_population.parameters[key].value != new_param[key][0]:
+        model_population.parameters[key].value = new_param[key]
+    if model_concentration.parameters[key].value != new_param[key][0]:
+        model_concentration.parameters[key].value = new_param[key]
+model_concentration.parameters['omega'].value = 1
+model_population.parameters['ERK'].value = 0.2 * omega
+model_population.parameters['FAK'].value = 1.0 * omega
+model_population.parameters['AKT'].value = 0.6 * omega
+
+model_concentration.parameters['ERK'].value = 0.2 * 1
+model_concentration.parameters['FAK'].value = 1 * 1
+model_concentration.parameters['AKT'].value = 0.6 * 1
+t = np.linspace(0, 1000, 100000)
+simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run()
+yout = simres.all;
+observables=['obsCycE', 'obsCdc20', 'obsE2F', 'obspRb']; #plot Cyclin E, Cdc20 and Cyclin A
+for obs in range(4) :
+    plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
+plt.legend(loc=1)
+plt.ylim(0, 1)
+plt.show()
+
+#change the model parameters of the model if needed
+omega = 200
+new_param = pd.read_csv("parameters_cdc20i.csv") 
+del new_param['Stress']
+for key in new_param.keys():
+    if model_population.parameters[key].value != new_param[key][0]:
+        model_population.parameters[key].value = new_param[key]
+    if model_concentration.parameters[key].value != new_param[key][0]:
+        model_concentration.parameters[key].value = new_param[key]
+model_concentration.parameters['omega'].value = 1
+model_population.parameters['ERK'].value = 0.2 * omega
+model_population.parameters['FAK'].value = 1.0 * omega
+model_population.parameters['AKT'].value = 0.6 * omega
+
+model_concentration.parameters['ERK'].value = 0.2 * 1
+model_concentration.parameters['FAK'].value = 1 * 1
+model_concentration.parameters['AKT'].value = 0.6 * 1
+t = np.linspace(0, 500, 50000)
+simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run()
+yout = simres.all;
+observables=['obsCycE', 'obsCdc20', 'obsCycD', 'obsCdc20i']; #plot Cyclin E, Cdc20 and Cyclin A
+for obs in range(4) :
+    plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
+plt.legend(loc=1)
+plt.ylim(0, 1)
+plt.show()
+
 
 
 omega = 200

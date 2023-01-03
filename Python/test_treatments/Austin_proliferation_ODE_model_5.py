@@ -29,15 +29,17 @@ Monomer('BAX', ['b','m'], {'m':['yes','no']})
 Monomer('BCL2', ['b'])
 Monomer('BH3', ['b'])
 
-
+Monomer('CycDi')
+Monomer('E2Fi')
+Monomer('Cdc20i')
 # Inhibitors:
-Monomer('CycDi', ['cycd'])
-# #Initial(CycDi(cycd=None), Parameter('CycDi_0', 0))
-Parameter('kf_cycD_cycDi', 0.1)
-Parameter('kr_cycD_cycDi', 0.1)
-Observable('obsCycDi', CycDi(cycd=None))
-Observable('obsCycDCycDi', CycDi(cycd=1)%CycD(b=1))
-Rule('CycD_inhibition', CycD(b=None)+CycDi(cycd=None) | CycD(b=1)%CycDi(cycd=1), kf_cycD_cycDi, kr_cycD_cycDi)
+# Monomer('CycDi', ['cycd'])
+# # #Initial(CycDi(cycd=None), Parameter('CycDi_0', 0))
+# Parameter('kf_cycD_cycDi', 0.1)
+# Parameter('kr_cycD_cycDi', 0.1)
+# Observable('obsCycDi', CycDi(cycd=None))
+# Observable('obsCycDCycDi', CycDi(cycd=1)%CycD(b=1))
+# Rule('CycD_inhibition', CycD(b=None)+CycDi(cycd=None) | CycD(b=1)%CycDi(cycd=1), kf_cycD_cycDi, kr_cycD_cycDi)
 
 '''
 Monomer('YAP', )
@@ -46,6 +48,9 @@ Monomer('ERK', )
 '''
 
 ###Parameter
+
+# Parameter('kf_cycD_cycDi', 0.1)
+# Parameter('kr_cycD_cycDi', 0.1)
 
 Parameter('AKT',1)
 Parameter('ERK',1)
@@ -201,10 +206,20 @@ Parameter('b1', 1) #term representing the self-activation of cyclinE/Cdk2 throug
 Parameter('b2', 1) #term representing the self-activation of cyclinB/Cdk1 through mutual activation between cyclin B/cdk1 and its phosphatase cdk25(PF loop in the G2/M transition)) without=0 with=1
 Parameter('K_ib', 0.5) #0.5
 
-
+## Inhibitor params
+Parameter('V_Di', 0.6)
+Parameter('K_Di', 0.2)
+Parameter('V_E2Fi', 0.6)
+Parameter('K_E2Fi', 0.2)
+Parameter('V_cdc20i', 0.6)
+Parameter('K_cdc20i', 0.2)
 
 
 ###Observables
+Observable('obsCycDi', CycDi())
+Observable('obsE2Fi', E2Fi())
+Observable('obsCdc20i', Cdc20i())
+
 Observable('obsSkp2', Skp2())
 Observable('obsp21', p21(b=None, S='u'))
 Observable('obsp21p', p21(b=None, S='p'))
@@ -272,6 +287,7 @@ Expression('ks_CycD_AKT', s * ((k_CDS * AKT * omega) / ((K_S * omega) + AKT)))
 Expression('ks_CycD_ERK', s * ((k_ED * ERK * omega) / ((K_MY * omega) + ERK)))
 Expression('ks_CycD_Myc', s * ((k_CD * omega) / ((K_M * omega) + obsMyc)))
 Expression('kd_CycD', s * d_CD)
+Expression('kd_CycD_i', s * (V_Di * (1 / (K_Di * omega + obsCycDi))))
 
 ##pRb and pRbp
 Expression('ks_pRb', s * (k_R * omega))
@@ -290,6 +306,8 @@ Expression('ks_E2F_E2FMyc', s * (k_E * omega * (1 /((K_M * omega) + obsMyc)) * (
 Expression('ks_E2F_Myc', s * ((k_b * omega) / ((K_M * omega) + obsMyc)))
 Expression('kd_E2F', s * d_E)
 Expression('kd_E2F_CycA', s * (((V_2E2F) / ((K_2E2F * omega) + obsE2F))))
+
+Expression('kd_E2F_i', s * (V_E2Fi * (1 / (K_E2Fi * omega + obsE2Fi))))
 
 ##CycE
 Expression('kact_CycE_E2F', s * ((V_1Me / omega) * (a * omega + b1 * obsCycE) * ((CycE_tot * omega) - obsCycE - obsCycEp21) / (K_1Me * omega + ((CycE_tot * omega) - obsCycE - obsCycEp21))))
@@ -310,6 +328,7 @@ Expression('kinact_CycB_Cdc20', s * (V_2Mb * (K_ib * omega / (K_ib * omega + obs
 Expression('kact_Cdc20_CycB', s * (V_1cdc20 * ((Cdc20_tot * omega - obsCdc20) / (K_1cdc20 * omega + (Cdc20_tot * omega - obsCdc20)))))
 Expression('kinact_Cdc20', s * ((V_2cdc20 * omega) * (1 / (K_2cdc20 * omega + obsCdc20))))
 
+Expression('kd_Cdc20_i', s * (V_cdc20i * (1 / (K_cdc20i * omega + obsCdc20i))))
 
 ##Switch apoptosis
 Expression('kact_BAXm', m * (kf1  + (kf2 / omega) * obsBH3))
@@ -324,6 +343,10 @@ Expression('kdiss_BH3BCL2', m * kdsbh3bcl2)
 
 
 ###Rules
+Rule('CycD_inhibition', CycD(b=None) + CycDi() >> CycDi(), kd_CycD_i)
+Rule('E2F_inhibition', E2F(b=None) + E2Fi() >> E2Fi(), kd_E2F_i)
+Rule('Cdc20_inhibition', Cdc20() + Cdc20i() >> Cdc20i(), kd_Cdc20_i)
+#Rule('CycD_inhibition', CycD(b=None)+CycDi(cycd=None) | CycD(b=1)%CycDi(cycd=1), kf_cycD_cycDi, kr_cycD_cycDi)
 
 
 ##Skp2

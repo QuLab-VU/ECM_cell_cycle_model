@@ -46,7 +46,7 @@ title('Low Input')
 for ii = 1:10
     rng(ii)
     
-    [t,x] = cell_stoch(sys_size,p,initial_divided);
+    [t,x] = cell_stoch(sys_size,p,Initial_s);
     plot(t,x(:,23))
         
 end
@@ -93,4 +93,66 @@ legend()
 
 [cells, cell_count, cell_table] = runStochCell(0.3,0.2,0.4,15,0.01,false)
 
+
+
+[cells, cell_count, cell_table] = runStochCell_death(0.3,0.2,0.4,10,0.01,0.56,true)
+[cells, cell_count, cell_table] = runStochCell_death(0.3,0.2,0.4,10,0.01,0.6,true)
+[cells, cell_count, cell_table] = runStochCell_death(0.3,0.2,0.4,10,0.01,0.7,true)
+
+[cells, cell_count, cell_table] = runStochCell_death(0.6,0.2,0.6,10,0.01,0.56,true)
+[cells, cell_count, cell_table] = runStochCell_death(0.6,0.2,0.6,10,0.01,0.6,true)
+[cells, cell_count, cell_table] = runStochCell_death(0.6,0.2,0.6,10,0.01,0.7,true)
+
+figure; hold on
+set(gcf,'color','w')
+[cells, cell_count, cell_table] = runStochCell_death(0.6,1,0.4,10,0.01,0.62,true) %low dmso
+plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)))
+[cells, cell_count, cell_table] = runStochCell_death(0.3,0.2,0.4,10,0.01,0.62,true) %low erl
+plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)))
+axis([0 120 0 5])
+
+figure; hold on
+set(gcf,'color','w')
+[cells, cell_count, cell_table] = runStochCell_death(1,1,0.6,10,0.01,0.59,true) %int dmso
+plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)))
+[cells, cell_count, cell_table] = runStochCell_death(0.6,0.2,0.6,10,0.01,0.62,true) %int erl
+plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)))
+axis([0 120 0 5])
+
+figure; hold on
+set(gcf,'color','w')
+[cells, cell_count, cell_table] = runStochCell_death(1,1,1,10,0.01,0.55,true) %hi dmso
+plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)))
+[cells, cell_count, cell_table] = runStochCell_death(0.6,0.2,1,10,0.01,0.55,true) %hi erl
+plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)))
+axis([0 120 0 5])
+
 figure;plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)))
+
+sys_size=200;
+p.run_time=120;
+p.AKT = 0.3;
+p.ERK = 0.2;
+p.FAK = 0.4;
+Stress = [0.55:0.01:0.75];
+all_dead = [];
+num = 10;
+
+for ii = 1:length(Stress)
+    p.Stress = Stress(ii);
+    dead_cells = 0;
+    figure; hold on;
+    for n = 1:num
+        [t,x] = cell_stoch_death_test(sys_size,p,Initial_s);
+        dead = find((x(:,23)>25));
+        if length(dead) > 0
+            dead_cells = dead_cells + 1;
+        end
+        plot(t,x(:,23),"Color",[.7 .7 .7 .5])
+    end
+    all_dead(ii) = dead_cells/num;
+    dead_cells
+end
+
+figure;plot(Stress,all_dead)
+   
