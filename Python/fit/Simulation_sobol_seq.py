@@ -236,7 +236,7 @@ for index_tmp in frac_prolif_parameters_2['index']:
     if index_tmp not in onlyfiles:
         try:
             parameter_vector = parameters[np.where(np.array(indices) == index_tmp)[0][0]]
-            cost_function_4kPa_30_parameters(10**parameter_vector, index_tmp)       
+            cost_function_4kPa_30_parameters(10**parameter_vector, index_tmp)
         
         except:
             print(index_tmp)
@@ -332,7 +332,7 @@ index = 37007
 index = 637
 index = 33711
 
-index=22346
+index=68336
 
 for index in frac_prolif_parameters_2['index']:
     try:
@@ -367,7 +367,7 @@ for index in frac_prolif_parameters_2['index']:
     #        plt.plot(t, cell_count_t)
     #        plt.plot(cell_count_tmp[:, 0], cell_count_tmp[:, 1])
     #        plt.show()
-            DIP_sim = np.log(cell_count_t/cell_count_t[0])
+            DIP_sim = np.log2(cell_count_t/cell_count_t[0])
             cost_DMSO = np.sqrt(np.sum((DIP_sim - means[2])[1:]**2 / stdevs[2][1:]**2))/len(t)
             parameters_tmp['slope_4kPa_DMSO'], _, _, _ = np.linalg.lstsq(t[:,np.newaxis], DIP_sim)
             cost_slope_DMSO = (parameters_tmp['slope_4kPa_DMSO'] - slope_4kPa_DMSO)[0]**2

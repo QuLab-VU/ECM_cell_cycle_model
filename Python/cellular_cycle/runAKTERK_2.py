@@ -32,9 +32,12 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     sys_size=200; #cell size
     thr = 0.26
     
-    variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx, condition, thr);
+    try:
+        variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx, condition, thr);
+    except :
+        return (0, 0)
     
-    if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.1: #the model doesn't oscillate or the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
+    if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.2: #the model doesn't oscillate or the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
         #print("check didn't pass");
         return (0,0)
     

@@ -81,17 +81,22 @@ def runStochcell(model_population, model_concentration, index, condition, thr):
         #Not necessary here
         check=True
         #print("Check=")
-        #print(check)
+        print(check)
         
         
     (a,max_tmp_cdc) = peakfinder(simres_2.observables['obsCdc20'], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);
     (b,max_tmp_cyce) = peakfinder(simres_2.observables['obsCycE'], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);
     
+    #plt.plot(simres_2.observables['obsCdc20'])
+#    plt.plot(simres_2.observables['obsCycE'])
+#    plt.scatter(max_tmp_cdc, [0 for i in max_tmp_cdc])
+#    plt.scatter(max_tmp_cyce, [0 for i in max_tmp_cyce])
+    
     tmp_score=1
     #print(tmp_score)
     #print(len(max_tmp_cdc))
     #print(len(max_tmp_cdc))
-    
+    variable_range={}
     print(max_tmp_cdc)
     if len(max_tmp_cdc)>2 and len(max_tmp_cyce)>2 :
         ranks = ss.rankdata(np.concatenate([max_tmp_cdc, max_tmp_cyce]))
@@ -106,8 +111,6 @@ def runStochcell(model_population, model_concentration, index, condition, thr):
                 tmp_score+=1
         tmp_score = tmp_score/len(Z)
         
-        
-        variable_range={}
         
         
         if len(a)>=2 and len(b)>=2:

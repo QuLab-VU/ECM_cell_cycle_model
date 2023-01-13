@@ -139,6 +139,7 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
     condition = '0.6 kPa ERL'
     run_time = 120
     run_time=60
+    condition = '55 kPa ERL'
 ###############################################################################
 ###############################################################################
     
@@ -161,28 +162,34 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
         
 ###############################################################################
             
-        try:
-            
-            (cells, cell_count) = runAKTERK(init, run_time, run_time, model_concentration, model_population, idx, condition);
-            
-            print('Cell count')
-            print(cell_count)
-            
+        #try:
+        
+        (cells, cell_count) = runAKTERK(init, run_time, run_time, model_concentration, model_population, idx, condition);
+        
+        print('Cell count')
+        print(cell_count)
+        
+        if type(cell_count)==np.ndarray:
             np.save(os.path.dirname(__file__) + "/../fit_data/pso/cell_count/cell_count_" + str(idx) + "_" + str(randomnumber)  + "_" + '_'.join(cond_split) + ".npy", cell_count)
-            
+        
+        try:
             IMT_eoe_counts = retrieve_cellState(run_time, init, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
             all_events_simulated = call_events(run_time, IMT_eoe_counts); 
             all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
             all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
             mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
             censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
-            
+            all_events_simulated.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/distribution/Events_" + str(idx) + "_" + str(randomnumber)  + "_" + '_'.join(cond_split) + ".pkl") #doesn't save all imts, only the cells that are born before 30 hours
+        except:
+            pass
+
+        
 ###############################################################################
-            #Extract useful inforation from the simulations:
-            
+        #Extract useful inforation from the simulations:
+        
+        try:
             simulated_IMT, simulated_sm, simulated_g1 = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
             
-            all_events_simulated.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/distribution/Events_" + str(idx) + "_" + str(randomnumber)  + "_" + '_'.join(cond_split) + ".pkl") #doesn't save all imts, only the cells that are born before 30 hours
             np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/G1_distribution_" + str(idx) + "_" + str(randomnumber) + "_" + '_'.join(cond_split) + ".npy",np.array(simulated_g1))
             np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/SM_distribution_" + str(idx) + "_" + str(randomnumber) + "_" + '_'.join(cond_split) + ".npy",np.array(simulated_sm))
             
@@ -190,22 +197,36 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
             x=np.linspace(0, run_time, 360)
             y=[RBS(i, np.transpose([mitotic_lifespans.tolist()]), sigma) for i in x]
             np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distribution_" + str(idx) + "_" + str(randomnumber) + "_" + '_'.join(cond_split) + "_kde.npy",np.array(y))
-            
+        
+        except:
+            pass
+        
 ###############################################################################
-            #compute frac prolif parameters of the simulation:
-            
+        #compute frac prolif parameters of the simulation:
+        try:
             number_of_deaths = len(all_events_simulated) - (all_events_simulated['event']=='apoptosis').value_counts()[0]
-            cell_time_total = sum(all_events_simulated['Lifespan'])
-            m = fp.mle(mitotic_lifespans, censored_lifespans)
+            cell_time_total = sum(all_events_simulated['Lifespan'])        
             parameters_sim[condition]['a'] = number_of_deaths/cell_time_total
-            
+        except:
+            parameters_sim[condition]['a'] = np.nan
+        
+        try:
+            m = fp.mle(mitotic_lifespans, censored_lifespans)            
             parameters_sim[condition]['mu'] = m['x'][0]
             parameters_sim[condition]['sigma'] = m['x'][1]
             parameters_sim[condition]['lambda'] = m['x'][2]
             parameters_sim[condition].update(fp.q_rates(m))
+        
+        except:
+            parameters_sim[condition]['d'] = np.nan
+            parameters_sim[condition]['q'] = np.nan
+            parameters_sim[condition]['mu'] = np.nan
+            parameters_sim[condition]['sigma'] = np.nan
+            parameters_sim[condition]['lambda'] = np.nan
 ###############################################################################         
-            #cost computation: rmse dip rates
-            
+        #cost computation: rmse dip rates
+        
+        try:
             cell_count_t = np.zeros(len(t_sim))
             time_tmp_m = 0
             
@@ -214,19 +235,16 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
                 time_tmp_m = time_tmp_p
             
             
-            DIP_sim = np.log(cell_count_t/cell_count_t[0])            
+            DIP_sim = np.log2(cell_count_t/cell_count_t[0])
             cost['Cost ' + condition] = np.sqrt(np.sum((DIP_sim[1:len(t_sim)] - means[num_condition][1:len(t_sim)])**2 / stdevs[num_condition][1:len(t_sim)]**2))/len(t_sim)
+        
+        except:
+            cost['Cost ' + condition] = np.inf
         
 ###############################################################################         
         
-        except :
-            parameters_sim[condition]['a'] = np.nan
-            parameters_sim[condition]['d'] = np.nan
-            parameters_sim[condition]['q'] = np.nan
-            parameters_sim[condition]['mu'] = np.nan
-            parameters_sim[condition]['sigma'] = np.nan
-            parameters_sim[condition]['lambda'] = np.nan
-            cost['Cost ' + condition] = np.inf
+        #except :
+            #cost['Cost ' + condition] = np.inf
 
 
 
