@@ -31,8 +31,9 @@ model_concentration=model
 from Austin_proliferation_model_population_5 import model
 model_population=model
 
-from cost_function_BngSimulator_low_medium_stiffness_pso import cost_function_30_parameters_pso
+#from cost_function_BngSimulator_low_medium_stiffness_pso import cost_function_30_parameters_pso
 #from cost_function_BngSimulator_low_medium_stiffness_pso_2 import cost_function_30_parameters_pso_2
+from cost_function_BngSimulator_low_medium_stiffness_pso_longer_simulation import cost_function_30_parameters_pso
 
 ##Import the simulator: for ODE and stochastic simulation :
 from pysb.simulator import BngSimulator
@@ -333,18 +334,39 @@ np.save(path + "/Python/fit_data/pso/history/cost_history.npy", optimizer.cost_h
 
 
 
+###############################################################################
+#Longer simulations
+
+frac_prolif_parameters_pso = pd.read_pickle(path + "/Python/fit_data/pso/all_parameters_pso.pkl")
+frac_prolif_parameters_original_parameters = pd.read_pickle(path + "/Python/fit_data/pso/parameters_original_parameters_pso.pkl")
+
+
+parameters_longer_sim = frac_prolif_parameters_pso[frac_prolif_parameters_pso['Cost']<   frac_prolif_parameters_original_parameters['Cost'][0]]
+
+parameters_longer_sim = parameters_longer_sim.sort_values(by=['Cost'])
+
+
+for parameter_vector, idx in zip(parameters_longer_sim[pysb_sampled_parameter_names].to_numpy(), parameters_longer_sim.index):
+    print(parameter_vector)
+    print('0.' + idx)
+    cost_function_30_parameters_pso(parameter_vector, '0.' + idx)
+
+
+
+
+
 
 ###############################################################################
 ###############################################################################
 ###############################################################################
 #Data processing
 
-pos_history = np.load(r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\cost_3_bis\history\position_history.npy")
-cost_history = np.load(r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\cost_3_bis\history\cost_history.npy")
+pos_history = np.load(r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\cost_3_bis_bis_bis\history\position_history.npy")
+cost_history = np.load(r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\cost_3_bis_bis_bis\history\cost_history.npy")
 
 
 
-path_cost = r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\cost_3_bis_bis\cost"
+path_cost = r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\cost_3_bis_bis_bis\cost"
 frames=[]
 import os
 os.chdir(path_cost)
@@ -355,7 +377,7 @@ for filename in os.listdir(os.getcwd()):
         frac_prolif_parameters_temp['index'] = re.findall('\d+', filename)[-1] 
         frac_prolif_parameters_temp['particle'] = int(re.search('parameters_(.*)_0.', filename).group(1))
         
-        #frac_prolif_parameters_temp['step'] = np.where(pos_history[:, int(re.search('parameters_(.*)_0.', filename).group(1)), 0] == np.log10(frac_prolif_parameters_temp[pysb_sampled_parameter_names].to_numpy()[0][0]))[0][0]
+        frac_prolif_parameters_temp['step'] = np.where(pos_history[:, int(re.search('parameters_(.*)_0.', filename).group(1)), 0] == np.log10(frac_prolif_parameters_temp[pysb_sampled_parameter_names].to_numpy()[0][0]))[0][0]
         frames += [frac_prolif_parameters_temp]
 
 
@@ -388,8 +410,9 @@ particle_positions = pd.DataFrame.from_dict(particle_positions)
 particle_positions.to_pickle(r"")
 """
 #original parameter
-frac_prolif_parameters_original_parameters = pd.read_pickle(r'C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\cost_3_bis\original_parameters\parameters_original_parameters_0.042455250917388776_pso.pkl')
+frac_prolif_parameters_original_parameters = pd.read_pickle(r'C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\cost_3_bis_bis_bis\original_parameters\parameters_original_parameters_0.43973113833887045_pso.pkl')
 frac_prolif_parameters_original_parameters['Cost'] = frac_prolif_parameters_original_parameters['Cost 0.6 kPa DMSO'] + frac_prolif_parameters_original_parameters['Cost 0.6 kPa ERL'] + frac_prolif_parameters_original_parameters['Cost 4 kPa DMSO'] + frac_prolif_parameters_original_parameters['Cost 4 kPa ERL'] + frac_prolif_parameters_original_parameters['Cost 55 kPa DMSO'] + frac_prolif_parameters_original_parameters['Cost 55 kPa ERL']
+
 
 #dim reduction
 from sklearn import decomposition
@@ -429,6 +452,8 @@ frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(by=['step'])
 
 frac_prolif_parameters_pso.to_pickle(r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\pso\all_parameters_pso.pkl") 
 
+frac_prolif_parameters_original_parameters.to_pickle(r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\pso\parameters_original_parameters_pso.pkl")
+
 ############################################################
 #fig 1
 dim_reduction = 'umap'
@@ -450,7 +475,7 @@ x_tmp = frac_prolif_parameters_original_parameters[[dim_reduction + ' 1', dim_re
 ax.scatter(x_tmp[0,0], x_tmp[0,1],c='black', marker="*", s=400)
 
 
-plt.savefig(path + "/../report/figures/pso/all_particles_running_pca_version_3_hyperparamters_1.pdf")
+plt.savefig(path + "/../report/figures/pso/all_particles_running_pca_version_3_hyperparameters_1.pdf")
 
 
 
@@ -551,8 +576,7 @@ for run_time, condition, num_condition in zip(run_times, conditions, range(6)):
 
 
 
-mypath_cc = r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\cost_3_bis\cell_count"
-
+mypath_cc = r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\cost_3_bis_bis_bis\cell_count"
 
 slope_sim = {}
 
@@ -606,20 +630,3 @@ plt.tight_layout()
 
 
 
-
-
-
-
-            #cost computation: rmse dip rates
-            
-            cell_count_t = np.zeros(len(t_sim))
-            time_tmp_m = 0
-            
-            for time_tmp_p, cell_count_time_tmp in cell_count:
-                cell_count_t[(time_tmp_m <= t_sim) & (t_sim < time_tmp_p)] = cell_count_time_tmp
-                time_tmp_m = time_tmp_p
-            
-            
-            DIP_sim = np.log2(cell_count_t/cell_count_t[0])
-            cost['Cost ' + condition] = np.sqrt(np.sum((DIP_sim[1:len(t_sim)] - means[num_condition][1:len(t_sim)])**2 / stdevs[num_condition][1:len(t_sim)]**2))/len(t_sim)
-        
