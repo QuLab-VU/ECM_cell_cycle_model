@@ -135,15 +135,19 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
     parameter_names = ['a','d','q']
     init_cell_number = [8, 12, 4, 4, 4, 4]
     
-    condition = '55 kPa DMSO'
-    condition = '0.6 kPa ERL'
-    run_time = 120
-    run_time=60
-    condition = '55 kPa ERL'
+#    run_times = [120] 
+#    init_cell_number = [4]
+#    conditions = ['0.6 kPa ERL']
+    
+#    condition = '55 kPa DMSO'
+#    condition = '0.6 kPa ERL'
+#    run_time = 120
+#    run_time=60
+#    condition = '55 kPa ERL'
 ###############################################################################
 ###############################################################################
     
-    for run_time, condition, num_condition in zip(run_times, conditions, range(6)):
+    for init, run_time, condition, num_condition in zip(init_cell_number, run_times, conditions, range(len(conditions))):
         
         t_sim = np.arange(0,run_time,1/3)
         observed_cells_time = run_time
@@ -164,7 +168,7 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
             
         #try:
         
-        (cells, cell_count) = runAKTERK(init_cell_number[num_condition], run_time, run_time, model_concentration, model_population, idx, condition);
+        (cells, cell_count) = runAKTERK(init, run_time, run_time, model_concentration, model_population, idx, condition);
         
         print('Cell count')
         print(cell_count)
@@ -179,6 +183,7 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
             all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
             mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
             censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
+            
             all_events_simulated.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/longer_sim/distribution/Events_" + str(idx) + "_" + '_'.join(cond_split) + ".pkl") #doesn't save all imts, only the cells that are born before 30 hours
         except:
             pass
@@ -190,13 +195,13 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
         try:
             simulated_IMT, simulated_sm, simulated_g1 = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
             
-            np.save(os.path.dirname(__file__) + "/../fit_data/pso/longer_sim/distribution/G1_distribution_" + str(idx) + "_" + '_'.join(cond_split) + ".npy",np.array(simulated_g1))
-            np.save(os.path.dirname(__file__) + "/../fit_data/pso/longer_sim/distribution/SM_distribution_" + str(idx) + "_" + '_'.join(cond_split) + ".npy",np.array(simulated_sm))
+            np.save(os.path.dirname(__file__) + "/../fit_data/pso/longer_sim/distribution/G1_distribution_" + str(idx) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_g1))
+            np.save(os.path.dirname(__file__) + "/../fit_data/pso/longer_sim/distribution/SM_distribution_" + str(idx) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_sm))
             
             #save density estimation
             x=np.linspace(0, run_time, 360)
             y=[RBS(i, np.transpose([mitotic_lifespans.tolist()]), sigma) for i in x]
-            np.save(os.path.dirname(__file__) + "/../fit_data/pso/longer_sim/distribution/IMT_distribution_" + str(idx) + "_" + '_'.join(cond_split) + "_kde.npy",np.array(y))
+            np.save(os.path.dirname(__file__) + "/../fit_data/pso/longer_sim/distribution/IMT_distribution_" + str(idx) + "_" + '_'.join(cond_split) + "_kde.npy", np.array(y))
         
         except:
             pass

@@ -6,7 +6,6 @@ Created on Mon Dec 19 11:59:15 2022
 """
 
 import time
-
 import re
 import os
 import sys
@@ -24,6 +23,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import random
 import sobol_seq
+
+from matplotlib.axes._axes import _log as matplotlib_axes_logger
+matplotlib_axes_logger.setLevel('ERROR')
+ 
+import matplotlib.colors as mcolors
+import matplotlib.cm as cm
 
 ##Importing the model, models differ on their initial conditions, one being a concentration and the other a protein count
 from Austin_proliferation_model_concentration_5 import model
@@ -335,10 +340,13 @@ np.save(path + "/Python/fit_data/pso/history/cost_history.npy", optimizer.cost_h
 
 
 ###############################################################################
+###############################################################################
+###############################################################################
 #Longer simulations
 
 frac_prolif_parameters_pso = pd.read_pickle(path + "/Python/fit_data/pso/all_parameters_pso.pkl")
 frac_prolif_parameters_original_parameters = pd.read_pickle(path + "/Python/fit_data/pso/parameters_original_parameters_pso.pkl")
+
 
 
 parameters_longer_sim = frac_prolif_parameters_pso[frac_prolif_parameters_pso['Cost']<   frac_prolif_parameters_original_parameters['Cost'][0]]
@@ -346,7 +354,11 @@ parameters_longer_sim = frac_prolif_parameters_pso[frac_prolif_parameters_pso['C
 parameters_longer_sim = parameters_longer_sim.sort_values(by=['Cost'])
 
 
-for parameter_vector, idx in zip(parameters_longer_sim[pysb_sampled_parameter_names].to_numpy(), parameters_longer_sim.index):
+parameter_vector = parameters_longer_sim[pysb_sampled_parameter_names].to_numpy()[0]
+idx = parameters_longer_sim.index[0]
+cost_function_30_parameters_pso(parameter_vector, '0.' + idx)
+
+for parameter_vector, idx in zip(parameters_longer_sim[pysb_sampled_parameter_names].to_numpy()[1:], parameters_longer_sim.index[1:]):
     print(parameter_vector)
     print('0.' + idx)
     cost_function_30_parameters_pso(parameter_vector, '0.' + idx)
@@ -354,7 +366,44 @@ for parameter_vector, idx in zip(parameters_longer_sim[pysb_sampled_parameter_na
 
 
 
+frac_prolif_parameters_pso = pd.read_pickle(path + "/Python/fit_data/pso/all_parameters_pso.pkl")
+frac_prolif_parameters_original_parameters = pd.read_pickle(path + "/Python/fit_data/pso/parameters_original_parameters_pso.pkl")
 
+parameters_longer_sim = frac_prolif_parameters_pso[frac_prolif_parameters_pso['Cost']<   np.inf]
+parameters_longer_sim = parameters_longer_sim.sort_values(by=['Cost'], ascending=False)
+
+
+for parameter_vector, idx in zip(parameters_longer_sim[pysb_sampled_parameter_names].to_numpy()[0:60], parameters_longer_sim.index[0:60]):
+    print(parameter_vector)
+    print('0.' + idx)
+    cost_function_30_parameters_pso(parameter_vector, '0.' + idx)
+
+
+
+###############################################################################
+###############################################################################
+#Data procesing
+
+
+path_cost = r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso/cost_3_bis_bis_bis/longer_sim/cost"
+frames=[]
+import os
+os.chdir(path_cost)
+for filename in os.listdir(os.getcwd()):
+    if 'parameters_' in filename:
+        print(filename)
+        frac_prolif_parameters_temp = pd.read_pickle(path_cost + "\\" + filename)
+        frac_prolif_parameters_temp['index'] = re.findall('\d+', filename)[-1] 
+#        frac_prolif_parameters_temp['particle'] = int(re.search('parameters_(.*)_0.', filename).group(1))
+        
+#        frac_prolif_parameters_temp['step'] = np.where(pos_history[:, int(re.search('parameters_(.*)_0.', filename).group(1)), 0] == np.log10(frac_prolif_parameters_temp[pysb_sampled_parameter_names].to_numpy()[0][0]))[0][0]
+        frames += [frac_prolif_parameters_temp]
+
+frac_prolif_parameters_pso_longer_sim = pd.concat(frames, sort=False)
+frac_prolif_parameters_pso_longer_sim.set_index('index', inplace=True)
+frac_prolif_parameters_pso_longer_sim['index'] = frac_prolif_parameters_pso_longer_sim.index
+
+frac_prolif_parameters_pso_longer_sim['Cost'] = frac_prolif_parameters_pso_longer_sim['Cost 0.6 kPa DMSO'] + frac_prolif_parameters_pso_longer_sim['Cost 0.6 kPa ERL'] + frac_prolif_parameters_pso_longer_sim['Cost 4 kPa DMSO'] + frac_prolif_parameters_pso_longer_sim['Cost 4 kPa ERL'] + frac_prolif_parameters_pso_longer_sim['Cost 55 kPa DMSO'] + frac_prolif_parameters_pso_longer_sim['Cost 55 kPa ERL']
 
 ###############################################################################
 ###############################################################################
@@ -390,25 +439,7 @@ frac_prolif_parameters_pso.to_pickle(r"")
 frac_prolif_parameters_pso['Cost'] = frac_prolif_parameters_pso['Cost 0.6 kPa DMSO'] + frac_prolif_parameters_pso['Cost 0.6 kPa ERL'] + frac_prolif_parameters_pso['Cost 4 kPa DMSO'] + frac_prolif_parameters_pso['Cost 4 kPa ERL'] + frac_prolif_parameters_pso['Cost 55 kPa DMSO'] + frac_prolif_parameters_pso['Cost 55 kPa ERL']
 
 
-"""
-pos_history = np.load(r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\cost_3\history\position_history.npy")
 
-
-path_particle_position=r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\cost_3\particle_position"
-
-particle_positions = {'particle': [], 'identification': [], 'parameter_vector' : []}
-os.chdir(path_particle_position)
-for filename in os.listdir(os.getcwd()) :
-    print(filename)
-    if 'parameter_vector_particle' in filename:
-        parameter_vector_temp = np.load(path_particle_position + "\\" + filename)
-        particle_positions['particle']+=[int(re.findall('\d+', filename)[-3])]
-        particle_positions['identification']+=[re.findall('\d+', filename)[-1]]
-        particle_positions['parameter_vector']+=[np.log10(parameter_vector_temp)]
-
-particle_positions = pd.DataFrame.from_dict(particle_positions)
-particle_positions.to_pickle(r"")
-"""
 #original parameter
 frac_prolif_parameters_original_parameters = pd.read_pickle(r'C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\cost_3_bis_bis_bis\original_parameters\parameters_original_parameters_0.43973113833887045_pso.pkl')
 frac_prolif_parameters_original_parameters['Cost'] = frac_prolif_parameters_original_parameters['Cost 0.6 kPa DMSO'] + frac_prolif_parameters_original_parameters['Cost 0.6 kPa ERL'] + frac_prolif_parameters_original_parameters['Cost 4 kPa DMSO'] + frac_prolif_parameters_original_parameters['Cost 4 kPa ERL'] + frac_prolif_parameters_original_parameters['Cost 55 kPa DMSO'] + frac_prolif_parameters_original_parameters['Cost 55 kPa ERL']
@@ -416,12 +447,7 @@ frac_prolif_parameters_original_parameters['Cost'] = frac_prolif_parameters_orig
 
 #dim reduction
 from sklearn import decomposition
-
 import umap as umap
-
-import matplotlib.colors as mcolors
-import matplotlib.cm as cm
-
 
 pca_1 = decomposition.PCA(n_components=2)
 pca_1.fit(np.log10(frac_prolif_parameters_pso[pysb_sampled_parameter_names].to_numpy()))
@@ -449,12 +475,34 @@ frac_prolif_parameters_original_parameters['umap 2'] = umap_original_param[:,1]
 frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(by=['step'])
 
 
+###############################################################################
+###############################################################################
+###############################################################################
+#Saving
 
 frac_prolif_parameters_pso.to_pickle(r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\pso\all_parameters_pso.pkl") 
 
 frac_prolif_parameters_original_parameters.to_pickle(r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\pso\parameters_original_parameters_pso.pkl")
 
-############################################################
+frac_prolif_parameters_pso_longer_sim.to_pickle(r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\pso\all_parameters_pso_long_sim.pkl") 
+
+
+###############################################################################
+###############################################################################
+###############################################################################
+#Loading
+
+
+frac_prolif_parameters_pso = pd.read_pickle(path + "/Python/fit_data/pso/all_parameters_pso.pkl")
+frac_prolif_parameters_original_parameters = pd.read_pickle(path + "/Python/fit_data/pso/parameters_original_parameters_pso.pkl")
+pos_history = np.load(r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\cost_3_bis_bis_bis\history\position_history.npy")
+
+
+frac_prolif_parameters_pso_longer_sim = pd.read_pickle(r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data\pso\all_parameters_pso_long_sim.pkl") 
+
+###############################################################################
+###############################################################################
+###############################################################################
 #fig 1
 dim_reduction = 'umap'
 dim_reduction = 'pca'
@@ -470,22 +518,15 @@ for chain in range(np.shape(pos_history)[1]) :
     ax.plot(x_tmp[0,0], x_tmp[0,1],c=colors[chain], marker='+')
     ax.plot(x_tmp[-1,0], x_tmp[-1,1],c=colors[chain], marker='o')
 
-
 x_tmp = frac_prolif_parameters_original_parameters[[dim_reduction + ' 1', dim_reduction + ' 2']].to_numpy()
 ax.scatter(x_tmp[0,0], x_tmp[0,1],c='black', marker="*", s=400)
-
 
 plt.savefig(path + "/../report/figures/pso/all_particles_running_pca_version_3_hyperparameters_1.pdf")
 
 
-
 ############################################################
-from matplotlib.axes._axes import _log as matplotlib_axes_logger
-matplotlib_axes_logger.setLevel('ERROR')
- 
 #fig 2
 
- 
 colormap = cm.rainbow
 normalize = mcolors.Normalize(vmin = min(frac_prolif_parameters_pso["Cost"]), vmax = max(frac_prolif_parameters_pso["Cost"][frac_prolif_parameters_pso["Cost"]<np.inf]))
 
@@ -513,6 +554,9 @@ cb = fig.colorbar(scalarmappaple, shrink=0.8)
 cb.set_label(label='Cost', fontsize=10)
 cb.ax.tick_params(labelsize=6)
 
+x_tmp = frac_prolif_parameters_original_parameters[[dim_reduction + ' 1', dim_reduction + ' 2']].to_numpy()
+ax.scatter(x_tmp[0,0], x_tmp[0,1],c='black', marker="*", s=400)
+
 
 pl.savefig(path + "/../report/figures/pso/all_particles_running_pca_hyperparameters_cost.pdf", bbox_inches='tight')
 
@@ -533,6 +577,39 @@ ax.plot([frac_prolif_parameters_original_parameters['Cost'][0] for n in range(le
 
 ax.set_xlabel('Sets of parameters', fontsize = 16)
 ax.set_ylabel('Cost', fontsize = 16)
+
+
+############################################################
+#fig 4
+
+conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
+
+frac_prolif_parameters_pso_longer_sim = frac_prolif_parameters_pso_longer_sim[frac_prolif_parameters_pso_longer_sim['Cost']<np.inf]
+
+
+frac_prolif_parameters_pso_longer_sim['Cost longer sim'] = frac_prolif_parameters_pso_longer_sim['Cost']
+for condition in conditions:
+    frac_prolif_parameters_pso_longer_sim['Cost ' + condition + ' longer sim'] = frac_prolif_parameters_pso_longer_sim['Cost ' + condition]
+
+
+frac_prolif_parameters_pso[frac_prolif_parameters_pso['index'].isin(frac_prolif_parameters_pso_longer_sim.index)]['Cost']
+
+
+frac_prolif_parameters_pso_full = pd.merge(frac_prolif_parameters_pso_longer_sim[['Cost longer sim']], frac_prolif_parameters_pso[frac_prolif_parameters_pso['index'].isin(frac_prolif_parameters_pso_longer_sim.index)], right_index=True, left_index=True)
+
+
+
+plt.scatter(frac_prolif_parameters_pso_full['Cost'],frac_prolif_parameters_pso_full['Cost longer sim'])
+plt.scatter(frac_prolif_parameters_pso_full['Cost longer sim'],frac_prolif_parameters_pso_full['Cost'])
+
+
+
+fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(10,14))
+for ax, condition in zip(axs.flatten(), conditions):
+    ax
+
+
+
 
 ###############################################################################
 ###############################################################################
@@ -629,4 +706,24 @@ plt.tight_layout()
 
 
 
+###############################################################################
+###############################################################################
+
+
+
+
+
+
+df = frac_prolif_parameters_pso[frac_prolif_parameters_pso['Cost']<np.inf][['index', 'Cost', 'particle', 'step']]
+df = df.sort_values(by=['Cost'])
+
+fig = plt.figure(figsize=(3,3),dpi=200)
+ax = fig.add_subplot(111)
+ax.bar(x='index', height='Cost', data=df, color=colormap(normalize(df.Cost.values)))
+ax.set_xticklabels([]) 
+ax.set_xticks([]) 
+ax.plot([frac_prolif_parameters_original_parameters['Cost'][0] for n in range(len(frac_prolif_parameters_pso))], '--', color = 'black', linewidth=1) #original parameters
+
+ax.set_xlabel('Sets of parameters', fontsize = 16)
+ax.set_ylabel('Cost', fontsize = 16)
 
