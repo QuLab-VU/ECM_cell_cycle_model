@@ -47,6 +47,7 @@ def mle(mitotic_lifespans, censored_lifespans):
         mu, sigma, lambd, Q = x0   
         #global mitotic_lifespans, censored_lifespans
         return - sum([np.log(1-Q) + np.log(demg(i, mu = mu, sigma = sigma, lambd = lambd)) for i in  mitotic_lifespans]) - sum([np.log(Q+(1-Q)*pemg(i,  mu = mu, sigma = sigma, lambd = lambd, lower_tail = False)) for i in censored_lifespans])
+        return - sum([np.log(1-Q) + np.log(demg(i, mu = mu, sigma = sigma, lambd = lambd)) for i in  mitotic_lifespans])
     
     bounds = [(1, 100), (0.01, (max(mitotic_lifespans) - min(mitotic_lifespans))), (0.001, 100), (1e-41, 0.999999999999)]
     #
@@ -65,10 +66,11 @@ def mle(mitotic_lifespans, censored_lifespans):
         m = minimize(qsurvival_nllik, x0, method="SLSQP", bounds=bounds)
         return m
     except:
-        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/mitotic_lifespans.npy", mitotic_lifespans)
-        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/censored_lifespans.npy", censored_lifespans)
-        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/x0.npy", x0)
-        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/bounds.npy", bounds)
+        pass
+#        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/mitotic_lifespans.npy", mitotic_lifespans)
+#        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/censored_lifespans.npy", censored_lifespans)
+#        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/x0.npy", x0)
+#        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/bounds.npy", bounds)
     #m = minimize(qsurvival_nllik, x0, method="trust-constr", bounds=bounds)        
 
 
