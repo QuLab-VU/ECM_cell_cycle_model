@@ -1,0 +1,76 @@
+death rates from ECM_cell_cycle_model/Python/Death rate estimation.ipynb
+Death rate full
+{'0.2 kPa DMSO': 0.016562438648654226,
+ '0.2 kPa ERL': 0.01360167232755763,
+ '4 kPa DMSO': 0.005338031075517072,
+ '4 kPa ERL': 0.00899148372110457,
+ '55 kPa DMSO': 0.00487951168278751,
+ '55 kPa ERL': 0.0012601740085498234
+ 
+ Death rate end
+ {'0.2 kPa DMSO': 0.029990129944909235,
+ '0.2 kPa ERL': 0.024638143593302284,
+ '4 kPa DMSO': 0.029887069730172425,
+ '4 kPa ERL': 0.023121311165940635,
+ '55 kPa DMSO': 0.031275291072394455,
+ '55 kPa ERL': 0.027927934942196773}
+ 
+ AKT, ERK, FAK
+protein activity levels from ECM_cell_cycle_model/Python/A molecular model of substrate stiffness-regulated stochastic transitions from slow to fast cycling cells reveals a mechanism of tolerance to EGFR inhibition.ipynb
+if 'DMSO' in condition_exp:  
+    print('DMSO')
+    if '0.2 kPa' in condition_exp :
+        #print('0.6 kPa')
+        model_population.parameters['ERK'].value = 1.0 * omega ###
+        model_population.parameters['FAK'].value = 0.4 * omega
+        model_population.parameters['AKT'].value = 0.6 * omega ###
+        
+        model_concentration.parameters['ERK'].value = 1.0 * 1 ###
+        model_concentration.parameters['FAK'].value = 0.4 * 1
+        model_concentration.parameters['AKT'].value = 0.6 * 1 ###
+    elif '4 kPa' in condition_exp :
+        model_population.parameters['ERK'].value = 1.0 * omega
+        model_population.parameters['FAK'].value = 0.6 * omega
+        model_population.parameters['AKT'].value = 1.0 * omega
+        
+        model_concentration.parameters['ERK'].value = 1.0 * 1
+        model_concentration.parameters['FAK'].value = 0.6 * 1
+        model_concentration.parameters['AKT'].value = 1.0 * 1
+    else : #55 kPa
+        #print('55 kPa')
+        model_population.parameters['ERK'].value = 1 * omega
+        model_population.parameters['FAK'].value = 1 * omega
+        model_population.parameters['AKT'].value = 1 * omega
+
+        model_concentration.parameters['ERK'].value = 1 * 1
+        model_concentration.parameters['FAK'].value = 1 * 1
+        model_concentration.parameters['AKT'].value = 1 * 1
+else : #ERL treated
+    print('ERL')
+    if '0.2 kPa' in condition_exp :
+        #print('0.6 kPa')
+        model_population.parameters['ERK'].value = 0.2 * omega
+        model_population.parameters['FAK'].value = 0.4 * omega
+        model_population.parameters['AKT'].value = 0.3 * omega
+        
+        model_concentration.parameters['ERK'].value = 1.0 * 1 ###
+        model_concentration.parameters['FAK'].value = 0.4 * 1
+        model_concentration.parameters['AKT'].value = 0.6 * 1 ###
+    elif '4 kPa' in condition_exp :
+        #print('4 kPa')
+        model_population.parameters['ERK'].value = 0.2 * omega
+        model_population.parameters['FAK'].value = 0.6 * omega
+        model_population.parameters['AKT'].value = 0.6 * omega
+        
+        model_concentration.parameters['ERK'].value = 1.0 * 1
+        model_concentration.parameters['FAK'].value = 0.6 * 1
+        model_concentration.parameters['AKT'].value = 1.0 * 1
+    else : #55 kPa
+        #print('55 kPa')
+        model_population.parameters['ERK'].value = 0.2 * omega
+        model_population.parameters['FAK'].value = 1.0 * omega
+        model_population.parameters['AKT'].value = 0.6 * omega
+
+        model_concentration.parameters['ERK'].value = 1 * 1
+        model_concentration.parameters['FAK'].value = 1 * 1
+        model_concentration.parameters['AKT'].value = 1 * 1
