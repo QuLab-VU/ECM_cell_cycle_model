@@ -36,9 +36,9 @@ model_concentration=model
 from Austin_proliferation_model_population_5 import model
 model_population=model
 
-#from cost_function_BngSimulator_low_medium_stiffness_pso import cost_function_30_parameters_pso
+from cost_function_BngSimulator_low_medium_stiffness_pso import cost_function_30_parameters_pso
 #from cost_function_BngSimulator_low_medium_stiffness_pso_2 import cost_function_30_parameters_pso_2
-from cost_function_BngSimulator_low_medium_stiffness_pso_longer_simulation import cost_function_30_parameters_pso
+#from cost_function_BngSimulator_low_medium_stiffness_pso_longer_simulation import cost_function_30_parameters_pso
 
 ##Import the simulator: for ODE and stochastic simulation :
 from pysb.simulator import BngSimulator
@@ -344,6 +344,7 @@ np.save(path + "/Python/fit_data/pso/history/cost_history.npy", optimizer.cost_h
 ###############################################################################
 #Longer simulations
 
+#loading different parameters
 frac_prolif_parameters_pso = pd.read_pickle(path + "/Python/fit_data/pso/all_parameters_pso.pkl")
 frac_prolif_parameters_original_parameters = pd.read_pickle(path + "/Python/fit_data/pso/parameters_original_parameters_pso.pkl")
 
@@ -354,6 +355,7 @@ parameters_longer_sim = frac_prolif_parameters_pso[frac_prolif_parameters_pso['C
 parameters_longer_sim = parameters_longer_sim.sort_values(by=['Cost'])
 
 
+#trying best and worst para,eter
 parameter_vector = parameters_longer_sim[pysb_sampled_parameter_names].to_numpy()[0]
 idx = parameters_longer_sim.index[0]
 cost_function_30_parameters_pso(parameter_vector, '0.' + idx)
@@ -363,26 +365,136 @@ for parameter_vector, idx in zip(parameters_longer_sim[pysb_sampled_parameter_na
     print('0.' + idx)
     cost_function_30_parameters_pso(parameter_vector, '0.' + idx)
 
-
-
-
+#Worst parameters
 frac_prolif_parameters_pso = pd.read_pickle(path + "/Python/fit_data/pso/all_parameters_pso.pkl")
 frac_prolif_parameters_original_parameters = pd.read_pickle(path + "/Python/fit_data/pso/parameters_original_parameters_pso.pkl")
 
 parameters_longer_sim = frac_prolif_parameters_pso[frac_prolif_parameters_pso['Cost']<   np.inf]
 parameters_longer_sim = parameters_longer_sim.sort_values(by=['Cost'], ascending=False)
 
-
 for parameter_vector, idx in zip(parameters_longer_sim[pysb_sampled_parameter_names].to_numpy()[0:60], parameters_longer_sim.index[0:60]):
     print(parameter_vector)
     print('0.' + idx)
     cost_function_30_parameters_pso(parameter_vector, '0.' + idx)
 
+###############################################################################
+#long and short simulations with original parameters
 
+init_cell_number_test = [[8, 12, 4, 4, 4, 4], [6, 10, 3, 3, 3, 3], [4, 8, 2, 2, 2, 2], [2, 4, 2, 2, 2, 2], [2, 2, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1]]
+
+init_cell_number_test = [[8, 12, 4, 4, 4, 4], [6, 10, 3, 3, 3, 3], [4, 8, 2, 2, 2, 2], [2, 4, 2, 2, 2, 2], [2, 2, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1]]
+
+trials = [5, 5, 5, 5, 5, 5]
+
+for init in range(10):
+    for i in range(10):
+        init_cell_number = [init for i in range(6)]
+        idx = 'original_parameters_' + '_'.join([str(i) for i in init_cell_number]) + '_starting_cells_' + str(i)
+        cost_function_30_parameters_pso(parameter_vector,idx, init_cell_number = init)
+
+
+#Data processing
+
+conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
+frames=[]
+path_cost = r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso/cost_3_bis_bis_bis/comparing_starting_cells/cost"
+path_cell_count = r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso/cost_3_bis_bis_bis/comparing_starting_cells/cell_count"
+
+cell_count_dict = {condition:{init:[] for init in range(10)} for condition in conditions}
+
+
+for init_cell_number in range(10):
+    for i in range(10):
+        init = [init_cell_number for i in range(6)]
+        filename = 'parameters_original_parameters_' + '_'.join([str(i) for i in init]) + '_starting_cells_' + str(i) + '_pso.pkl'
+        frac_prolif_parameters_temp = pd.read_pickle(path_cost + "\\" + filename)
+        
+        
+        filename ='cell_count_original_parameters_' + '_'.join([str(i) for i in init]) + '_starting_cells_' + str(i) 
+        
+        
+        for condition, cell_init in zip(conditions, init):
+            frac_prolif_parameters_temp['initial cell numbers ' + condition] = cell_init
+            try:
+                cell_count_dict[condition][init_cell_number] += [np.load(path_cell_count + '/cell_count_original_parameters_' + '_'.join([str(i) for i in init]) + '_starting_cells_' + str(i) + '_' + condition.replace(" ", "_" )+ '.npy')] 
+            except: pass
+        
+        frames += [frac_prolif_parameters_temp]
+
+frac_prolif_parameters_pso_initial_cell = pd.concat(frames, sort=False)
+
+
+
+
+
+fig, axs = plt.subplots(nrows=3, ncols=2, sharey=True, figsize=(10,14))
+    
+for ax, condition in zip(axs.flatten(), conditions):
+    initial_cell_nber = frac_prolif_parameters_pso_initial_cell['initial cell numbers '+condition]
+    cost = frac_prolif_parameters_pso_initial_cell['Cost '+condition]
+    ax.scatter(initial_cell_nber, cost)
+    ax.set_title(condition)
+
+    df = pd.concat([initial_cell_nber,cost], axis=1)
+    result = df.groupby(['initial cell numbers ' + condition], as_index=False).agg({'Cost '+condition:['mean','std']})
+    ax.plot(result['initial cell numbers '+condition], result['Cost '+condition,'mean'], c='red')
+    ax.plot(result['initial cell numbers '+condition], result['Cost '+condition,'std'], c='orange')
+
+
+fig, axs = plt.subplots(nrows=3, ncols=2, sharey=False, figsize=(10,14))
+    
+for ax, condition in zip(axs.flatten(), conditions):
+    initial_cell_nber = frac_prolif_parameters_pso_initial_cell['initial cell numbers '+condition]
+    cost = frac_prolif_parameters_pso_initial_cell['Cost '+condition]
+    ax.scatter(initial_cell_nber, cost)
+    ax.set_title(condition)
+    df = pd.concat([initial_cell_nber,cost], axis=1)
+    result = df.groupby(['initial cell numbers ' + condition], as_index=False).agg({'Cost '+condition:['mean','std']})
+    ax.plot(result['initial cell numbers '+condition], result['Cost '+condition,'mean'], c='red')
+    ax.plot(result['initial cell numbers '+condition], result['Cost '+condition,'std'], c='orange')
+
+
+
+colormap = cm.RdYlBu
+normalize = mcolors.Normalize(vmin = 0, vmax = 10)
+run_times = [120, 120, 120, 120, 60, 60] 
+
+fig, axs = plt.subplots(nrows=3, ncols=2, sharey=False, figsize=(10,14))
+
+for ax,run_time, condition, num_condition in zip(axs.flatten(), run_times, conditions, range(len(conditions))):
+    for init_cell_number in range(1,10):
+        for i in range(10):  
+            
+            t_sim = np.arange(0,run_time,1/3)
+            
+            cell_count_t = np.zeros(len(t_sim))
+            time_tmp_m = 0        
+            
+            for time_tmp_p, cell_count_time_tmp in cell_count_dict['4 kPa DMSO'][init_cell_number][i]:
+                cell_count_t[(time_tmp_m <= t_sim) & (t_sim < time_tmp_p)] = cell_count_time_tmp
+                time_tmp_m = time_tmp_p
+                
+            
+            DIP_sim = np.log2(cell_count_t/cell_count_t[0])
+            
+            ax.scatter(t_sim, DIP_sim, color = colormap(normalize(init_cell_number)), s=1)
+    ax.plot(t_sim, means[num_condition][:len(t_sim)], color = 'black')
+    ax.fill_between(t_sim,means[num_condition][:len(t_sim)] -stdevs[num_condition][:len(t_sim)], means[num_condition][:len(t_sim)] +stdevs[num_condition][:len(t_sim)], color='black', alpha = 0.1)
+
+scalarmappaple = cm.ScalarMappable(norm=normalize, cmap=colormap)
+#scalarmappaple.set_array([])
+
+cb = fig.colorbar(scalarmappaple, shrink=0.8)
+cb.set_label(label='Cost', fontsize=10)
+cb.ax.tick_params(labelsize=6)
 
 ###############################################################################
 ###############################################################################
-#Data procesing
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+#Data procesing longer sim
 
 
 path_cost = r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso/cost_3_bis_bis_bis/longer_sim/cost"

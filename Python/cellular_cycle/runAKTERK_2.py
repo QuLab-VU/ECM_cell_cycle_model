@@ -64,6 +64,8 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     cell_count=np.array([[0., len(cells['molecules'])]]);   #start the cell counter at time zero and with number of initial cells
     current_time=np.transpose(np.concatenate([np.zeros((1,len(cells['molecules']))), np.ones((1,len(cells['molecules'])))])); #keeps track of the current time of each cell and whether it's dead or not 
     
+    sim = BngSimulator(model_population, verbose=False);
+    
     while any(cells['recording']) : #run the code only if there are cells that are recorded
         #print('while loop is starting')
         
@@ -83,13 +85,13 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 T = min(30, run_time+1-current_time[ii,0])  #80
                 tmp_t = np.linspace(0, T, max(3,int(T*10)))
                 
-                sim = BngSimulator(model_population, tspan=tmp_t, verbose=False);
+                
                 
                 if len(model_population.species)>0 :
                     Initial=[]
                     for j in cells['molecules'][ii] :
                         Initial=Initial+[cells['molecules'][ii][j][-1]]
-                    simres = sim.run(initials=Initial);
+                    simres = sim.run(initials=Initial, tspan = tmp_t);
                     #print(parameter_vector_original)
                     #print("simulation done")
                     
@@ -261,12 +263,11 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
                 tmp_t = np.linspace(0, T, max(3,int(T*10)))
                 
                 
-                sim = BngSimulator(model_population, tspan=tmp_t, verbose=False);
                 if len(model_population.species)>0 :
                     Initial=[]
                     for j in cells['molecules'][ii] :
                         Initial=Initial+[cells['molecules'][ii][j][-1]]
-                    simres = sim.run(initials=Initial); # stop_if = 'obsBH3>200'
+                    simres = sim.run(initials=Initial, tspan=tmp_t); # stop_if = 'obsBH3>200'
                     #print(parameter_vector_original)
                     
                 else :
