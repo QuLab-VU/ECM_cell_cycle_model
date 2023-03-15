@@ -723,17 +723,19 @@ ax.set_ylabel('Cost', fontsize = 16)
 ############################################################
 from sklearn.cluster import KMeans
 
-n_clusters=8
-kmeans = KMeans(n_clusters, random_state=0).fit(np.log10(frac_prolif_parameters_pso[pysb_sampled_parameter_names].to_numpy()))
+n_clusters=5
+kmeans = KMeans(n_clusters, random_state=0).fit(np.log10(frac_prolif_parameters_pso[frac_prolif_parameters_pso['step']==59][pysb_sampled_parameter_names].to_numpy()))
 kmeans.labels_
 kmeans.cluster_centers_
 
 
-frac_prolif_parameters_pso['cluster'] = kmeans.labels_
+frac_prolif_parameters_pso['cluster'] = np.nan
+frac_prolif_parameters_pso.loc[frac_prolif_parameters_pso['step']==59, 'cluster'] = kmeans.labels_
 colors = [plt.cm.Spectral(each) for each in np.linspace(0, 1, n_clusters)]
 
 
-frac_prolif_parameters_pso['color cluster'] = [colors[cluster] for cluster in kmeans.labels_]
+frac_prolif_parameters_pso['color cluster'] = 'grey'
+frac_prolif_parameters_pso.loc[frac_prolif_parameters_pso['step']==59, 'color cluster'] = [[colors[cluster]] for cluster in kmeans.labels_]
 
 
 
@@ -747,8 +749,9 @@ for chain in range(np.shape(pos_history)[1]) :
     
     
     ax.plot(x_tmp[:,0], x_tmp[:,1], c =  'grey', alpha = 0.5, lw = 0.25, ls = '--');
-    ax.scatter(x_tmp[:, 0], x_tmp[:, 1], c = color_tmp, alpha = 0.9,s = 0.3);
-    ax.scatter(x_tmp[0,0], x_tmp[0,1], c=color_tmp[0], marker='+', s=30)
+    ax.scatter(x_tmp[:, 0], x_tmp[:, 1], c = 'grey', alpha = 0.9,s = 0.3);
+    #ax.scatter(x_tmp[0,0], x_tmp[0,1], c=color_tmp[0], marker='+', s=30)
+    ax.scatter(x_tmp[0,0], x_tmp[0,1], c='grey', marker='+', s=30)
     ax.scatter(x_tmp[-1,0], x_tmp[-1,1], c=color_tmp[-1], marker='o', s=30)
 
 x_tmp = frac_prolif_parameters_original_parameters[[dim_reduction + ' 1', dim_reduction + ' 2']].to_numpy()
