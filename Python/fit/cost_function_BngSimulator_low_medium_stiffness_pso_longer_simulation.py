@@ -97,7 +97,7 @@ def RBS(x,x0,sigma) :
 ##############################################################################
 
 
-def cost_function_30_parameters_pso(parameter_vector, idx):    
+def cost_function_30_parameters_pso(parameter_vector, idx, init_cell_number = [8, 12, 4, 4, 4, 4]):    
 
 
 #    randomnumber = random.random()
@@ -133,7 +133,6 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
     omega = 200
     sigma = 5
     parameter_names = ['a','d','q']
-    init_cell_number = [8, 12, 4, 4, 4, 4]
     
 #    run_times = [120] 
 #    init_cell_number = [4]
@@ -241,6 +240,7 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
             
             
             DIP_sim = np.log2(cell_count_t/cell_count_t[0])
+            
             cost['Cost ' + condition] = np.sqrt(np.sum((DIP_sim[1:len(t_sim)] - means[num_condition][1:len(t_sim)])**2 / stdevs[num_condition][1:len(t_sim)]**2))/len(t_sim)
         
         except:

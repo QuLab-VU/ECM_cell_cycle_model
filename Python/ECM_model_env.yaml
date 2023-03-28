@@ -1,0 +1,20 @@
+name: ECM_model
+channels: 
+  - conda-forge
+  - alubbock
+dependencies:
+  - python=3.8
+  - umap-learn 
+  - seaborn 
+  - matplotlib 
+  - pandas 
+  - joblib 
+  - numpy 
+  - bokeh 
+  - jupyterlab 
+  - cython
+  - pip
+  - pysb
+  - pip:
+    - sobol-seq
+

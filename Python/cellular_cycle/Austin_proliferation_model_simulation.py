@@ -10,7 +10,7 @@ path="/home/jeremie"
 #path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
 
 import sys
-sys.path.insert(0, path+"/cellular_cycle") #add a pathway to the model
+sys.path.insert(0, path+"/Python/cellular_cycle") #add a pathway to the model
 
 from Austin_proliferation_model_concentration_5 import model
 model_concentration=model

@@ -133,17 +133,13 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
     omega = 200
     sigma = 5
     parameter_names = ['a','d','q']
-    init = 1 #40
+    init_cells = [4,6,3,3,2,2]
     
-    condition = '55 kPa DMSO'
-    condition = '0.6 kPa ERL'
-    run_time = 120
-    run_time=60
-    condition = '55 kPa ERL'
+
 ###############################################################################
 ###############################################################################
     
-    for run_time, condition, num_condition in zip(run_times, conditions, range(6)):
+    for init, run_time, condition, num_condition in zip(init_cells, run_times, conditions, range(6)):
         
         t_sim = np.arange(0,run_time,1/3)
         observed_cells_time = run_time
