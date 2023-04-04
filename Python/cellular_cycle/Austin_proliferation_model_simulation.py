@@ -5,6 +5,7 @@ Created on Wed Feb  5 11:52:01 2020
 @author: Jérémie Marlhens
 Title: Austin_proliferation_model_simulation
 """
+###############################################################################
 
 path="/home/jeremie"
 #path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
@@ -26,12 +27,13 @@ from pysb.bng import generate_equations
 
 from pysb.logging import EXTENDED_DEBUG
 
-import pylab as pl
 import numpy as np
 from pysb.export import export
 import matplotlib.pyplot as plt
 
 
+
+###############################################################################
 #Compare with matlab simulations
 
 from scipy.io import loadmat
@@ -71,6 +73,11 @@ nx.draw_networkx(g, with_labels=True)
 generate_equations(model)
 print('\n'.join(f'{n}: {o}' for n,o in enumerate(model.odes)))
 '''
+
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
 #3rd version, changing the parameters:
 
 import mat73
@@ -169,6 +176,13 @@ model_concentration.species[19]
 
 
 
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+
+###############################################################################
 
 ####Deterministic simulation
 
@@ -241,10 +255,12 @@ for ax in axs.flat:
     
 plt.savefig(fn, bbox_inches='tight')
 
+###############################################################################
+###############################################################################
 
 ####Stochastic simulation
 
-t = pl.linspace(0, 120, 170000)
+ t = pl.linspace(0, 120, 170000)
 
 sim = BngSimulator(model_population, tspan=t, verbose=True)
 simres = sim.run(method='ssa', verbose=True)
@@ -326,7 +342,11 @@ plt.plot(t,yout[obs[j+i*4]], label=obs[j+i*4] +' PySB', lw=1, color='orange')
 plt.plot(tmp_t,tmp_x[j+i*4], label=obs[j+i*4] +' Matlab', lw=1, color='blue')
 plt.show()
 
-#############################################
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+"""
 
 import math
 
@@ -388,9 +408,9 @@ plt.legend(loc='best')
 plt.savefig(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\report\figures\stoch_simulations\distrib_SM.pdf')
 
 
+"""
 
-
-
+"""
 ####################################
 #find differences with matlab
 
@@ -447,3 +467,147 @@ l=L.tolist()[0]
 
 plt.plot(t, l)
 plt.plot(t, yout['obsCdc20'], label='obsCdc20', lw=2)
+"""
+
+
+###############################################################################
+###############################################################################
+###############################################################################
+#GPU SSA test
+
+
+PYOPENCL_CTX='0'
+
+import numpy as np
+from pysb.examples.earm_1_0 import model
+from pysb.simulator import OpenCLSSASimulator, ScipyOdeSimulator
+
+if __name__ == "__main__":
+    n_sim = 100
+    tspan = np.linspace(0, 5000, 101)
+    name = 'tBid_total'
+    sim = OpenCLSSASimulator(model, tspan=tspan, verbose=True)
+    traj = sim.run(tspan=tspan, number_sim=n_sim)
+    
+    result = np.array(traj.observables)[name]
+    
+    x = np.array([tr[:] for tr in result]).T
+
+
+
+from pysb.examples.schloegl import model
+
+
+
+if __name__ == '__main__':
+    
+    n_sim=20
+    x_0=100
+    
+    obs_name = 'X_total'
+    tspan = np.linspace(0, 100, 101)
+    x_0 = int(x_0)
+    
+    
+    
+    savename = 'schloegl_{}'.format(int(x_0))
+    model.parameters['X_0'].value = x_0
+    # create simulator and run simulations
+    simulator = OpenCLSSASimulator(model, verbose=True,initials=[[10, 5] for i in range(10)]+ [[1, 2] for i in range(10)])
+    
+    traj = simulator.run(
+        tspan,
+        number_sim=n_sim
+    )
+    
+    
+    x = traj.dataframe[obs_name].unstack(0).values
+
+
+
+###############################################################################
+#test w cell cycle
+
+
+
+from runStochCell import runStochcell
+from peakfinder import peakfinder
+
+from pysb.simulator import OpenCLSSASimulator #from gpu_ssa branch in Pysb github repos
+
+
+
+
+pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2"]
+parameter_vector_original=[]
+for pname in pysb_sampled_parameter_names:
+    #Change model parameter values to current location in parameter space
+    parameter_vector_original+=[model_population.parameters[pname].value]
+
+v = 0.05;     
+sys_size=200; #cell size
+thr = 0.26
+run_time = 120
+observed_cells_time = run_time
+
+idx = 1
+condition =''
+
+variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx, condition, thr);
+
+check_ode = check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.2 #the model doesn't oscillate or the 
+
+cells={}
+cells['molecules']=[]; #Number of molecules taken randomly at one point during the cell cycle
+cells['time']=[]; #
+cells['division']=[]; #
+cells['living_cell']=[]; #living cell?
+cells['recording']=[];
+
+#plt.plot(variable_range['obsCdc20'])
+
+init = 8
+
+for i in range(init) :
+    cells['molecules']=cells['molecules']+[{}]
+    a=np.random.randint(len(variable_range['obsSkp2']))
+    for var in list(variable_range.keys()) :
+        cells['molecules'][i][var] = [round(variable_range[var][a]*200)]
+    cells['time']=cells['time'] + [[0]]
+    cells['division']=cells['division'] + [0]
+    cells['living_cell']=cells['living_cell'] + [True] #living cell = True
+    cells['recording']=cells['recording'] + [True] #recording the cell = True (if it isn't dead and if no event didn't occur after observed_cells_time)
+
+cell_count=np.array([[0., len(cells['molecules'])]]);   #start the cell counter at time zero and with number of initial cells
+current_time=np.transpose(np.concatenate([np.zeros((1,len(cells['molecules']))), np.ones((1,len(cells['molecules'])))])); #keeps track of the current time of each cell and whether it's dead or not 
+
+
+#index of cell we still have to simulate
+index_cell_recording = [i for i, x in enumerate(cells['recording']) if x]
+
+#index of cells that are below the 'observed time', in which we take into account new cell births
+cell_below_observed_time = current_time[:,0]<observed_cells_time
+index_cell_below_observed_time = [i for i, x in enumerate(cell_below_observed_time) if x]
+
+#Initial molecule numbers for the different cells to be simulated
+Initials = []
+for ii in index_cell_recording:
+    Initial=[]
+    for j in cells['molecules'][ii] :
+        Initial=Initial+[cells['molecules'][ii][j][-1]]
+    Initials+=[Initial]
+
+cell_count_tmp=np.zeros((1,2)); #temporary cell count with current cell time and whether a cell was added, taken away, or not
+
+
+T = 30
+tmp_t = np.linspace(0, T, int(T*10))
+
+simulator = OpenCLSSASimulator(model_population, verbose=True, initials=Initials)
+simres = simulator.run(tspan = tmp_t, number_sim=len(index_cell_recording));
+0
+
+
+simres.dataframe['obsBAX'].unstack(0).values
+
+
