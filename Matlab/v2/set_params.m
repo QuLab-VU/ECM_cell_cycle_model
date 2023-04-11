@@ -3,7 +3,7 @@ p.omega=sys_size;
 p.m = 3;
 p.BCL2t = 0.95;
 p.BAXt = 1;
-p.Stress = 1-0.8*AKT-0.2*ERK;
+p.Stress = 1-0.7*AKT+0.3*ERK;
 p.kf1 = 0.01;
 p.kf2 = 2.4;
 p.kb = 0.14;
@@ -68,6 +68,9 @@ p.k_CD = 0.03; %0.03
 p.k_CDS = 0.25;%0.18;%0.11;  %0.25%0.5
 p.k_ED = 0.2; %0.23%0.08
 
+p.K_p21fak = 7; %p21 synthesis from FAK
+p.F_n = 3; %Hill coefficient for p21 synthesis
+
 
 p.k_cd4 = 0.08;
 p.k_myc1 = 0.08;
@@ -114,7 +117,7 @@ p.V_1cdh1 = 1.25; %1.25
 p.V_2cdh1 = 8;
 p.v_scdh1a = 0.11;
 p.v_2fak = 0.1; %0.05
-p.v_s1p21 = 0.5;  %3%0.8
+p.v_s1p21 = 1; %0.8; %0.5;  %3%0.8
 p.v_s2p21 = 0.1;  %2%0.1
 p.K_1cdh1 = 0.1;
 p.K_2cdh1 = 0.1;
@@ -130,6 +133,7 @@ p.K_cac = 0.1;
 p.K_cec = 0.1;
 p.K_da = 0.1;
 p.K_de = 0.1;
+p.K_sp21 = 0.1;
 p.K_1p21 = 0.5;
 p.K_2p21 = 0.5;
 p.k_ddp21 = 0.06;

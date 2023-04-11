@@ -1,4 +1,4 @@
-function [cells, cell_count, cell_table] = runStochCell_death(AKT,ERK,FAK,init,dt,Stress,restruct)
+function [cells, cell_count] = runStochCell_death(AKT,ERK,FAK,init,dt)
 SAVEDIR = strcat(matlabroot, "\ECM_UMAP_output");
 if ~isdir(SAVEDIR)
     mkdir(SAVEDIR)
@@ -47,15 +47,15 @@ variable_range=y(maxima(6):maxima(7),:);
 %disp('Finished ODE')
 p.AKT=AKT;
 p.ERK=ERK;
-p.Stress=Stress;
+%p.Stress=Stress;
 
 runAKTERK_death
 
-if restruct == true
-    [cell_table] = restructure_for_UMAP(cells,dt,p);
-    csvwrite(strcat(SAVEDIR, '\cells_count_',num2str(AKT*100),'_',num2str(ERK*100),...
-        '_',num2str(FAK*100),'.csv'),cell_count)
-end
+% if restruct == true
+%     [cell_table] = restructure_for_UMAP(cells,dt,p);
+%     csvwrite(strcat(SAVEDIR, '\cells_count_',num2str(AKT*100),'_',num2str(ERK*100),...
+%         '_',num2str(FAK*100),'.csv'),cell_count)
+% end
 
 
 end

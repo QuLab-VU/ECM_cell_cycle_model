@@ -28,7 +28,7 @@ BH3 = y(21);
 BH3BCL2 = y(22);
 BAXm=p.BAXt-BAX-BAXmBCL2;
 BCL2=p.BCL2t-BH3BCL2-BAXmBCL2;
-Stress = p.Stress;
+Stress=0.6899-0.064*p.AKT-0.0061*p.ERK;
 %Stress=1-0.8*AKT-0.2*ERK;
  
 %Skp2 
@@ -38,7 +38,7 @@ dydt(1) = p.s*((p.V_sskp2)... %Basal skp2 synthesis
     - (p.k_ddskp2*Skp2)); %skp2 degradation
  
 %p21
-dydt(2) = p.s*((p.v_s1p21)... %p21 synthesis
+dydt(2) = p.s*((p.v_s1p21/(1+p.K_p21fak*FAK^p.F_n))... %p21 synthesis
     -(p.k_c1*CycD*p21)... %p21 cycD association
     +(p.k_c2*CycDp21)... %p21 cycD dis
     -(p.k_c3*CycE*p21)... %p21 cycE association
@@ -48,7 +48,6 @@ dydt(2) = p.s*((p.v_s1p21)... %p21 synthesis
     -(p.k_c7*CycB*p21)... %p21 cycB association
     +(p.k_c8*CycBp21)... %p21 cycB dis
     -(p.V_1p21*CycE*p21/(p.K_1p21+p21))...%p21 inact from cycE
-    -(p.V_Fp*p21*FAK/(p.K_Fp+p21))... %p21 inact from FAK
     +(p.V_2p21*p21p/(p.K_2p21+p21p))... %p21 autoact from p21p 
     -(p.k_ddp21*p21)); %p21 non specific inact  %these prob shouldn't be the same
  
