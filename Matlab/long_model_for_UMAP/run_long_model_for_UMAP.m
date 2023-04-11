@@ -40,7 +40,7 @@ for ii = 1:3
         p.ERK=ERKs(ii);
         p.FAK=FAKs(ii);
         [t,x] = cell_stoch_07_06_21(sys_size,p,Initial_s);
-        filename1=strcat('C:\Program Files\MATLAB\R2018b\ECM_UMAP_output\erl_long_',num2str(ii),'_',num2str(jj));
+        filename1=strcat('C:\Users\olesk\OneDrive\Documents\stoch_runs\erl_long_',num2str(ii),'_',num2str(jj));
         save(filename1,'t','x');
         ii
         jj
@@ -51,12 +51,12 @@ AKTs = [0.6 1 1];
 ERKs = [1 1 1];
 FAKs = [0.4 0.6 1];
 for ii = 1:3
-    for jj = 1:3
+    for jj = 1
         p.AKT=AKTs(ii);
         p.ERK=ERKs(ii);
         p.FAK=FAKs(ii);
         [t,x] = cell_stoch_07_06_21(sys_size,p,Initial_s);
-        filename1=strcat('dmso_7-7_',num2str(ii),'_',num2str(jj));
+        filename1=strcat('C:\Users\olesk\OneDrive\Documents\stoch_runs\dmso_long_',num2str(ii),'_',num2str(jj));
         save(filename1,'t','x');
         ii
         jj
