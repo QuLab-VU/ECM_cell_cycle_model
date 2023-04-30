@@ -193,7 +193,7 @@ model_concentration.parameters['FAK'].value = 1
 model_concentration.parameters['omega'].value = 1
 
 
-t = pl.linspace(0, 1000, 3001)
+t = np.linspace(0, 1000, 3001)
 
 simres = ScipyOdeSimulator(model_concentration, t).run() 
 yout = simres.all
@@ -201,16 +201,16 @@ yout = simres.all
 observables=['obsCycE','obsCdc20']
 
 for obs in range(2) :
-    pl.plot(t,yout[observables[obs]], label=observables[obs], lw=2)
-pl.legend(loc=0)
-pl.show()
+    plt.plot(t,yout[observables[obs]], label=observables[obs], lw=2)
+plt.legend(loc=0)
+plt.show()
 
-pl.plot(t,yout['obsCdc20'], label='obsCdc20', lw=2)
+plt.plot(t,yout['obsCdc20'], label='obsCdc20', lw=2)
 
-pl.plot(t,yout['obsBAXmBCL2'] + yout['obsBAXm'] + yout['obsBAX'], label='obsBAX tot', lw=2)
-pl.plot(t, yout['obsBAXmBCL2'] + yout['obsBH3BCL2'] + yout['obsBCL2'], label='obsBCL2 tot', lw=2)
-pl.plot(t,yout['obsBAX'], label='obsBAX', lw=2)
-pl.plot(t,yout['obsBCL2'], label='obsBCL2', lw=2)
+plt.plot(t,yout['obsBAXmBCL2'] + yout['obsBAXm'] + yout['obsBAX'], label='obsBAX tot', lw=2)
+plt.plot(t, yout['obsBAXmBCL2'] + yout['obsBH3BCL2'] + yout['obsBCL2'], label='obsBCL2 tot', lw=2)
+plt.plot(t,yout['obsBAX'], label='obsBAX', lw=2)
+plt.plot(t,yout['obsBCL2'], label='obsBCL2', lw=2)
 
 pl.plot(l[23])
 
@@ -525,6 +525,122 @@ if __name__ == '__main__':
 
 
 
+
+
+
+
+# import the pysb module and all its methods and functions
+from pysb import *
+import numpy as np
+from pysb.simulator import OpenCLSSASimulator, ScipyOdeSimulator
+
+
+# instantiate a model
+Model()
+
+# declare monomers
+Monomer('C8', ['b'])
+Monomer('Bid', ['b', 'S'], {'S': ['u', 't']})
+
+# input the parameter values
+Parameter('kf', 1.0e-07)
+Parameter('kr', 1.0e-03)
+Parameter('kc', 1.0)
+
+Expression('kg', kf/(kf+kc)) 
+
+# now input the rules
+Rule('C8_Bid_bind', C8(b=None) + Bid(b=None, S='u') | C8(b=1) % Bid(b=1, S='u'), kf, kr)
+Rule('tBid_from_C8Bid', C8(b=1) % Bid(b=1, S='u') >> C8(b=None) + Bid(b=None, S='t'), kg)
+
+model.monomers
+model.parameters
+model.rules
+
+Observable('obsC8', C8(b=None))
+Observable('obsBid', Bid(b=None, S='u'))
+Observable('obstBid', Bid(b=None, S='t'))
+
+Parameter('C8_0', 1000)
+Parameter('Bid_0', 10000)
+Initial(C8(b=None), C8_0)
+Initial(Bid(b=None, S='u'), Bid_0)
+
+from pysb.simulator import ScipyOdeSimulator
+
+t = np.linspace(0, 20000)
+simres = ScipyOdeSimulator(model, tspan=t).run()
+yout = simres.all
+
+n_sim=4
+sim = OpenCLSSASimulator(model, tspan=t, verbose=True)
+traj = sim.run(tspan=t, number_sim=n_sim)
+
+
+
+
+
+
+
+# import the pysb module and all its methods and functions
+from pysb import *
+import numpy as np
+from pysb.simulator import OpenCLSSASimulator, ScipyOdeSimulator
+from pysb.simulator import BngSimulator
+
+
+# instantiate a model
+Model()
+
+# declare monomers
+Monomer('C8', ['b'])
+Monomer('Bid', ['b', 'S'], {'S': ['u', 't']})
+
+# input the parameter values
+Parameter('kf', 1.0e-07)
+Parameter('kr', 1.0e-03)
+Parameter('kc', 1.0)
+
+
+
+Observable('obsC8', C8(b=None))
+Observable('obsBid', Bid(b=None, S='u'))
+Observable('obstBid', Bid(b=None, S='t'))
+
+
+#Expression('kg', (kf+kc)) #expression! OpenCLSSASimulator will work with an expression of this type
+Expression('kg', kf/(kf+obsBid)) #expression! OpenCLSSASimulator won't work with an expression of this type
+
+# now input the rules
+Rule('C8_Bid_bind', C8(b=None) + Bid(b=None, S='u') | C8(b=1) % Bid(b=1, S='u'), kf, kr)
+Rule('tBid_from_C8Bid', C8(b=1) % Bid(b=1, S='u') >> C8(b=None) + Bid(b=None, S='t'), kg)
+
+model.monomers
+model.parameters
+model.rules
+
+Parameter('C8_0', 1000)
+Parameter('Bid_0', 10000)
+Initial(C8(b=None), C8_0)
+Initial(Bid(b=None, S='u'), Bid_0)
+
+#Check if the simulation ODE works 
+t = np.linspace(0, 20000)
+simres = ScipyOdeSimulator(model, tspan=t).run()
+yout = simres.all
+
+#Check bng
+sim = BngSimulator(model, tspan=t, verbose=True)
+simres = sim.run(method='ssa', verbose=True)
+yout = simres.observables
+
+#And check openCLSSASimulator
+n_sim=4
+sim = OpenCLSSASimulator(model, tspan=t, verbose=True)
+traj = sim.run(tspan=t, number_sim=n_sim)
+
+
+
 ###############################################################################
 #test w cell cycle
 
@@ -566,7 +682,7 @@ cells['recording']=[];
 
 #plt.plot(variable_range['obsCdc20'])
 
-init = 8
+init = 2
 
 for i in range(init) :
     cells['molecules']=cells['molecules']+[{}]
@@ -600,12 +716,13 @@ for ii in index_cell_recording:
 cell_count_tmp=np.zeros((1,2)); #temporary cell count with current cell time and whether a cell was added, taken away, or not
 
 
-T = 30
+T = 1
 tmp_t = np.linspace(0, T, int(T*10))
 
-simulator = OpenCLSSASimulator(model_population, verbose=True, initials=Initials)
+
+simulator = OpenCLSSASimulator(model_population, verbose=3, initials=Initials)
 simres = simulator.run(tspan = tmp_t, number_sim=len(index_cell_recording));
-0
+
 
 
 simres.dataframe['obsBAX'].unstack(0).values

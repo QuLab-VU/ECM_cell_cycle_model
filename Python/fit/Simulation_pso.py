@@ -11,7 +11,7 @@ import os
 import sys
 path= r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model'
 
-#path= os.getcwd()
+path= os.getcwd()
 
 sys.path.insert(0, path + "/Python/cellular_cycle") #add a pathway to the model #not sure about how to use folder dependency, to change
 #sys.path.insert(0, path + "/Python/test_treatments") #add a pathway to the model #not sure about how to use folder dependency, to change
@@ -329,7 +329,7 @@ optimizer = ps.single.LocalBestPSO(n_particles=30, dimensions=30, options=option
 #optimizer.pos = np.array(initial_positions[0:10]).copy()
 
 # Perform optimization
-cost, pos = optimizer.optimize(cost_function_f, iters=60)
+cost, pos = optimizer.optimize(cost_function_f, iters=300)
 
 
 
