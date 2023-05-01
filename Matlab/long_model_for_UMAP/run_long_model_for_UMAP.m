@@ -39,8 +39,8 @@ for ii = 1:3
         p.AKT=AKTs(ii);
         p.ERK=ERKs(ii);
         p.FAK=FAKs(ii);
-        [t,x] = cell_stoch_07_06_21(sys_size,p,Initial_s);
-        filename1=strcat('C:\Users\olesk\OneDrive\Documents\stoch_runs\erl_long_',num2str(ii),'_',num2str(jj));
+        [t,x] = cell_stoch_death_test(sys_size,p,Initial_s);
+        filename1=strcat('C:\Users\olesk\OneDrive\Documents\stoch_runs\erl_long_4_29_',num2str(ii),'_',num2str(jj));
         save(filename1,'t','x');
         ii
         jj
@@ -55,8 +55,8 @@ for ii = 1:3
         p.AKT=AKTs(ii);
         p.ERK=ERKs(ii);
         p.FAK=FAKs(ii);
-        [t,x] = cell_stoch_07_06_21(sys_size,p,Initial_s);
-        filename1=strcat('C:\Users\olesk\OneDrive\Documents\stoch_runs\dmso_long_',num2str(ii),'_',num2str(jj));
+        [t,x] = cell_stoch_death_test(sys_size,p,Initial_s);
+        filename1=strcat('C:\Users\olesk\OneDrive\Documents\stoch_runs\dmso_long_4_29_',num2str(ii),'_',num2str(jj));
         save(filename1,'t','x');
         ii
         jj

@@ -28,7 +28,7 @@ BH3 = y(21);
 BH3BCL2 = y(22);
 BAXm=p.BAXt-BAX-BAXmBCL2;
 BCL2=p.BCL2t-BH3BCL2-BAXmBCL2;
-Stress=0.6899-0.064*p.AKT-0.0061*p.ERK;
+Stress=0.6815-0.112*p.AKT-0.0111*p.ERK;
 %Stress=1-0.8*AKT-0.2*ERK;
  
 %Skp2 
