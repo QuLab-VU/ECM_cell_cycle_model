@@ -5,120 +5,222 @@ Created on Sat Aug 22 11:24:52 2020
 @author: Grim.M
 """
 
-path="/home/jeremie"
+# Import the required libraries
+import numpy as np                           # Library for numerical operations on arrays
+from scipy.optimize import minimize, fmin_l_bfgs_b, brentq, approx_fprime, least_squares   # Optimization functions
+from scipy.special import erf                 # Error function
+from scipy.stats import norm                  # Normal distribution functions
+import scipy.integrate as integrate           # Integration functions
+import matplotlib.pyplot as plt               # Plotting library
+from sklearn.linear_model import LinearRegression    # Linear regression function
+from scipy.optimize import leastsq            # Least squares optimization function
 
 
 
-import numpy as np
-from scipy.optimize import minimize, fmin_l_bfgs_b, brentq, approx_fprime, least_squares
-from scipy.special import erf
-from scipy.stats import norm
-import scipy.integrate as integrate
-import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
-from scipy.optimize import leastsq
 
-#############################################################################
+###############################################################################
+###############################################################################
+
 
 def demg(x, mu=0, sigma=1, lambd=1):
+    """
+    Double exponential modified Gaussian (DEMG) distribution function.
+
+    Args:
+        x (float or array_like): Value(s) at which to evaluate the DEMG function.
+        mu (float, optional): Mean parameter of the DEMG distribution. Default is 0.
+        sigma (float, optional): Standard deviation parameter of the DEMG distribution. Default is 1.
+        lambd (float, optional): Skewness parameter of the DEMG distribution. Default is 1.
+
+    Returns:
+        float or ndarray: DEMG function value(s) evaluated at x.
+    """
     return (lambd/2) * np.exp((lambd/2)*(2*mu -2*x + lambd*(sigma*sigma))) * (1 - erf((-x+mu+lambd*(sigma**2))/(np.sqrt(2)*sigma)))
 
-def pemg(q, mu = 0, sigma = 1, lambd = 1, lower_tail = True):
+
+def pemg(q, mu=0, sigma=1, lambd=1, lower_tail=True):
+    """
+    Probability density function of the positive half of the double exponential modified Gaussian (DEMG) distribution.
+
+    Args:
+        q (float or array_like): Value(s) at which to evaluate the PEMG function.
+        mu (float, optional): Mean parameter of the DEMG distribution. Default is 0.
+        sigma (float, optional): Standard deviation parameter of the DEMG distribution. Default is 1.
+        lambd (float, optional): Skewness parameter of the DEMG distribution. Default is 1.
+        lower_tail (bool, optional): If True, returns the probability of a value less than or equal to q. 
+                                      If False, returns the probability of a value greater than q. Default is True.
+
+    Returns:
+        float or ndarray: PEMG function value(s) evaluated at q.
+    """
     u = (q - mu) * lambd
     sigma1 = lambd * sigma
-    p = norm.cdf(u, 0, sigma1) - np.exp(-u + (sigma1 * sigma1)/2 +  np.log(norm.cdf(u, sigma1 * sigma1, sigma1)))
-    if lower_tail==False:
-        p=1-p
+    p = norm.cdf(u, 0, sigma1) - np.exp(-u + (sigma1 * sigma1)/2 + np.log(norm.cdf(u, sigma1 * sigma1, sigma1)))
+    if lower_tail == False:
+        p = 1 - p
     return p
 
 
 def qsurvival_nllik(x0):
+    """
+    Negative log-likelihood function for the q-suvival model.
+
+    Args:
+        x0 (tuple): A tuple of four float values representing the parameters
+                    of the model: mu, sigma, lambda, and Q.
+
+    Returns:
+        float: The negative log-likelihood of the model, given the parameters x0.
+
+    """
     mu, sigma, lambd, Q = x0   
     global mitotic_lifespans, censored_lifespans
     return - sum([np.log(1-Q) + np.log(demg(i, mu = mu, sigma = sigma, lambd = lambd)) for i in  mitotic_lifespans]) - sum([np.log(Q+(1-Q)*pemg(i,  mu = mu, sigma = sigma, lambd = lambd, lower_tail = False)) for i in censored_lifespans])
-    
 
 
 
 def mle(mitotic_lifespans, censored_lifespans):
+    """
+    Function to estimate the maximum likelihood estimates (MLEs) of the parameters of the mixed-effects gamma distribution, using the mitotic and censored lifespans as input.
+    
+    Parameters:
+    - mitotic_lifespans: an array of mitotic lifespans
+    - censored_lifespans: an array of censored lifespans
+    
+    Returns:
+    - m: an object that contains the MLEs of the parameters
+    
+    Note: The function uses the demg and pemg functions defined previously.
+    """
+    # Define initial guesses for the parameters
     x0 = np.array([np.median(mitotic_lifespans), np.std(mitotic_lifespans), 1/np.mean(mitotic_lifespans), 0.5])
     
+    # Define the negative log-likelihood function to minimize
     def qsurvival_nllik(x0):
         mu, sigma, lambd, Q = x0   
-        #global mitotic_lifespans, censored_lifespans
         return - sum([np.log(1-Q) + np.log(demg(i, mu = mu, sigma = sigma, lambd = lambd)) for i in  mitotic_lifespans]) - sum([np.log(Q+(1-Q)*pemg(i,  mu = mu, sigma = sigma, lambd = lambd, lower_tail = False)) for i in censored_lifespans])
-        return - sum([np.log(1-Q) + np.log(demg(i, mu = mu, sigma = sigma, lambd = lambd)) for i in  mitotic_lifespans])
     
+    # Define the bounds for the parameters
     bounds = [(1, 100), (0.01, (max(mitotic_lifespans) - min(mitotic_lifespans))), (0.001, 100), (1e-41, 0.999999999999)]
-    #
-    #m = minimize(qsurvival_nllik, x0, method='nelder-mead', bounds=bounds) #Change the method to minimize
-    #x: array([18.89482881,  1.67120341,  0.09735528,  0.59049594])
-    #x0: array([25.5       , 10.35847627,  0.03450854,  0.5       ])
     
-    #m = minimize(qsurvival_nllik, x0, method="L-BFGS-B", bounds=bounds)
-    
-    #m = minimize(qsurvival_nllik, x0, method="TNC", bounds=bounds)
-    #print(mitotic_lifespans)
-    #print(censored_lifespans)
-    #print(x0)
-    #print(bounds)
     try:
+        # Minimize the negative log-likelihood function using the SLSQP method
         m = minimize(qsurvival_nllik, x0, method="SLSQP", bounds=bounds)
         return m
     except:
         pass
-#        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/mitotic_lifespans.npy", mitotic_lifespans)
-#        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/censored_lifespans.npy", censored_lifespans)
-#        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/x0.npy", x0)
-#        np.save(path + "/fit_data/pydream/frac_prolif_quiescence_DMSO_only_30_parameters/bounds.npy", bounds)
-    #m = minimize(qsurvival_nllik, x0, method="trust-constr", bounds=bounds)        
 
 
-def q_rates_inner(m_x) : #m_x is 
+
+def q_rates_inner(m_x) :
+    """
+    Calculate values for division (d) and quiescence (q) rates given parameter values.
+
+    Args:
+    - m_x: list or array-like object of model parameters, in the form [mu, sigma, lambda, Q]
+
+    Returns:
+    - tuple containing two float values: d (division rate) and q (quiescence rate)
+    """
+    
     def integrand(t, v):
-        return np.exp(-v*t)*demg(t, mu=m_x[0], sigma=m_x[1], lambd=m_x[2])
-    def integr(v) : 
+        # Define the integrand of the function
+        return np.exp(-v*t) * demg(t, mu=m_x[0], sigma=m_x[1], lambd=m_x[2])
+    
+    def integr(v):
+        # Define the function that calculates the integral
         return integrate.quad(integrand, 0, np.inf, args=(v))[0] - 0.5
+    
+    # Find the root of the integrand using Brent's method
     root = brentq(integr, 1e-04, 1)
+    
+    # Calculate d and q using the root and the value of Q
     d = root
-    q = m_x[3] * root/(1 - m_x[3])
+    q = m_x[3] * root / (1 - m_x[3])
+    
     return d, q
 
 
 def q_rates(m):
+    """
+    Calculate the d and q rates for a given set of parameters.
+
+    Args:
+        m (dict): A dictionary containing the following keys:
+            - 'nit': The number of iterations.
+            - 'x'  : A list of parameters [mu, sigma, lambda, q].
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - 'd': The d rate.
+            - 'q': The q rate.
+    """
     n = m['nit']
-#    def q_rates_inner_d(m_x):
-#        return q_rates_inner(m_x)[0]
-#    def q_rates_inner_q(m_x):
-#        return q_rates_inner(m_x)[1]
-#    
-    rates=q_rates_inner(m['x']) #
-#    eps = m['x']/1000
-#    gd = approx_fprime(m['x'], q_rates_inner_d, eps)
-#    gq = approx_fprime(m['x'], q_rates_inner_q, eps)
-#    
-    v={}
-    v['d']=rates[0]
-    v['q']=rates[1]
-    #v["stderr"] = c(sqrt(t(gd) %*% vcov(est)[1:3, 1:3] %*% gd/n), sqrt(t(gq) %*% vcov(est) %*% gq/n))
-    #v["n"] = n
-    #v["df"] = n - 2
+
+    rates = q_rates_inner(m['x'])
+
+    v = {}
+    v['d'] = rates[0]
+    v['q'] = rates[1]
+
     return v
 
 
-def prolif_q(t, d, q, ad, aq, x0, q0 = 0, tol = 1e-06) :
-    if abs(d - q) < tol :
-        if abs(ad - aq) < tol :
+
+
+###############################################################################
+###############################################################################
+
+def prolif_q(t: float, d: float, q: float, ad: float, aq: float, x0: float, q0: float = 0, tol: float = 1e-06) -> float:
+    """
+    Computes the number of quiescent cells at time `t` given the initial number of quiescent cells `q0`, the initial number of dividing cells `x0`, the division rate of dividing cells `d`, the apoptosis rate of dividing cells `ad`, the apoptosis rate of quiescent cells `aq`, and the division rate of quiescent cells `q`.
+
+    Args:
+    - t (float): The time at which to evaluate the number of quiescent cells.
+    - d (float): The division rate of dividing cells.
+    - q (float): The division rate of quiescent cells.
+    - ad (float): The apoptosis rate of dividing cells.
+    - aq (float): The apoptosis rate of quiescent cells.
+    - x0 (float): The initial number of dividing cells.
+    - q0 (float): The initial number of quiescent cells. Default is 0.
+    - tol (float): The tolerance value used to check for equality between `d` and `q`. Default is 1e-06.
+
+    Returns:
+    - float: The number of quiescent cells at time `t`.
+    """
+    if abs(d - q) < tol:
+        if abs(ad - aq) < tol:
             return np.exp(-aq * t) * (q0 + x0 * q * t)
         else:
-            return np.exp(-aq * t)/(ad - aq) * (x0 * q * (1 - exp((aq - ad) * t)) + (ad - aq) * q0)
-    else :
+            return np.exp(-aq * t) / (ad - aq) * (x0 * q * (1 - np.exp((aq - ad) * t)) + (ad - aq) * q0)
+    else:
         beta = d - q + aq - ad
-        return np.exp(-aq * t)/beta * (q * (x0 * (np.exp(beta * t) - 1) - q0) + (beta + q) * q0)
+        return np.exp(-aq * t) / beta * (q * (x0 * (np.exp(beta * t) - 1) - q0) + (beta + q) * q0)
 
-    
-def prolif_d(t, d, q, ad, aq, x0, q0 = 0, tol = 1e-06):
+
+
+
+
+def prolif_d(t: float, d: float, q: float, ad: float, aq: float, x0: float, q0: float = 0, tol: float = 1e-06) -> float:
+    """
+    Computes the number of dividing cells at time `t` given the initial number of dividing cells `x0`, the division rate of dividing cells `d`, the apoptosis rate of dividing cells `ad`, the apoptosis rate of quiescent cells `aq`, and the division rate of quiescent cells `q`.
+
+    Args:
+    - t (float): The time at which to evaluate the number of dividing cells.
+    - d (float): The division rate of dividing cells.
+    - q (float): The division rate of quiescent cells.
+    - ad (float): The apoptosis rate of dividing cells.
+    - aq (float): The apoptosis rate of quiescent cells.
+    - x0 (float): The initial number of dividing cells.
+    - q0 (float): The initial number of quiescent cells. Default is 0.
+    - tol (float): The tolerance value used to check for equality between `d` and `q`. Default is 1e-06.
+
+    Returns:
+    - float: The number of dividing cells at time `t`.
+    """
     return x0 * np.exp((d - q - ad) * t)
+
+
 
 
 def split_tot(t, d1, d2, q1, q2, ad1, aq1, ad2, aq2, x0, q0=0, br = 20) :
@@ -159,7 +261,13 @@ def split_fq(t, d1, d2, q1, q2, ad1, aq1, ad2, aq2, x0, q0=0, br = 20) :
 
 def split_fd(t, d1, d2, q1, q2, ad1, aq1, ad2, aq2, x0, q0=0, br = 20) :
     return split_d(t, d1, d2, q1, q2, ad1, aq1, ad2, aq2,x0, q0=q0, br = 20)/split_tot(t, d1, d2, q1, q2, ad1, aq1, ad2, aq2,x0, q0=q0, br = 20)
-    
+
+
+
+
+###############################################################################
+###############################################################################
+
 
 def death_rate(Time_h, card_total, card_total_e16000, v) :
     X = np.array([Time_h]).T
@@ -184,7 +292,7 @@ def death_rate(Time_h, card_total, card_total_e16000, v) :
 
 def death_rate_without_delay(Time_h, card_total, v) :
     X = np.array([Time_h]).T
-    Y= np.array([card_total]).T
+    Y = np.array([card_total]).T
     
     reg = LinearRegression().fit(X, Y)
     reg.score(X, Y)
@@ -202,7 +310,10 @@ def death_rate_without_delay(Time_h, card_total, v) :
     return half_imt, untreated_division_rate, res["x"]
 
 
-######################
+
+###############################################################################
+###############################################################################
+
 #test
 """
 mitotic_lifespans = [17.0, 21.7, 21.7, 23.0, 22.5, 20.0, 20.0, 24.2, 19.2, 55.3, 20.7, 29.0, 21.0, 23.7, 34.5, 34.5, 35.3, 35.3, 29.0, 28.3, 57.5, 30.3, 31.2, 23.2, 28.7, 32.8, 21.7, 25.8, 21.3, 61.8, 28.0, 28.7, 22.2, 22.2, 34.0, 27.7, 21.7, 21.7, 28.0, 31.8, 25.0, 20.7, 28.8, 31.7, 45.0, 25.2, 23.2, 42.5, 23.0, 31.8, 18.2, 37.2, 22.2, 22.2, 17.8, 17.8, 41.0, 45.0, 24.2, 60.0]
