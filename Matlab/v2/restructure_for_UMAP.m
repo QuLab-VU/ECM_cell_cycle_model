@@ -1,4 +1,4 @@
-function [cell_table] = restructure_for_UMAP(cells,dt,p)
+function [cell_table] = restructure_for_UMAP(cells,dt,p,save_t)
 SAVEDIR = strcat(matlabroot, "\ECM_UMAP_output");
 if ~isdir(SAVEDIR)
     mkdir(SAVEDIR)
@@ -119,6 +119,8 @@ end
 
 
 cell_table = cell2table(all_cells, "VariableNames",v_names);
-writetable(cell_table,strcat(SAVEDIR, '\cells_',num2str(p.AKT*100),'_',num2str(p.ERK*100),...
-    '_',num2str(p.FAK*100),'.csv'));
+if save_t == true
+    writetable(cell_table,strcat(SAVEDIR, '\cells_',num2str(p.AKT*100),'_',num2str(p.ERK*100),...
+        '_',num2str(p.FAK*100),'.csv'));
+end
     
