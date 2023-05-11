@@ -189,6 +189,11 @@ Parameter('K_Fp', 0.1)
 Parameter('F_n', 3)
 Parameter('K_p21fak', 7)
 
+Parameter('a_stress', 0.6899)
+Parameter('b_stress_AKT', 0.064)
+Parameter('b_stress_ERK', 0.0061)
+
+
 ##Positive feedback loops on the G1/S and G2/M transitions
 Parameter('b1', 1) #term representing the self-activation of cyclinE/Cdk2 through the mutual activation between cyclinE/Cdk2 and its phosphatase Cdc25(PF loop in the G1/S transition)) without=0 with=1
 Parameter('b2', 1) #term representing the self-activation of cyclinB/Cdk1 through mutual activation between cyclin B/cdk1 and its phosphatase cdk25(PF loop in the G2/M transition)) without=0 with=1
@@ -311,7 +316,7 @@ Expression('kinact_BAXm', m * kb)
 Expression('kasso_BAXm_BCL2', m * (kasbaxmbcl2 / omega))
 Expression('kdiss_BAXmBCL2', m * kdsbaxmbcl2)
 Expression('kinact_BAXmBCL2', m * kb)
-Expression('ks_BH3', m * (k1sbh3 * omega + k2sbh3 * (omega - 0.8 * AKT - 0.2 * ERK)))
+Expression('ks_BH3', m * (k1sbh3 * omega + k2sbh3 * (omega * a_stress - b_stress_AKT * AKT - b_stress_ERK * ERK)))
 Expression('kd_BH3', m * kdbh3)
 Expression('kasso_BH3_BCL2', m * (kasbh3bcl2 / omega))
 Expression('kdiss_BH3BCL2', m * kdsbh3bcl2)

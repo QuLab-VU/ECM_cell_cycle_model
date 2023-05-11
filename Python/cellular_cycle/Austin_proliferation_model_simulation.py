@@ -9,14 +9,15 @@ Title: Austin_proliferation_model_simulation
 
 path="/home/jeremie"
 #path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
+path=r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model"
 
 import sys
 sys.path.insert(0, path+"/Python/cellular_cycle") #add a pathway to the model
 
-from Austin_proliferation_model_concentration_5 import model
+from Austin_proliferation_model_concentration_6 import model
 model_concentration=model
 
-from Austin_proliferation_model_population_5 import model
+from Austin_proliferation_model_population_6 import model
 model_population=model
 
 
@@ -176,6 +177,21 @@ model_concentration.species[19]
 
 
 
+import pandas as pd
+#change the model parameters of the model if needed
+omega = 200
+new_param = pd.read_csv(path + "/umap_window/parameters.csv")
+del new_param['Stress']
+for key in new_param.keys():
+    if model_population.parameters[key].value != new_param[key][0]:
+        model_population.parameters[key].value = new_param[key]
+    if model_concentration.parameters[key].value != new_param[key][0]:
+        model_concentration.parameters[key].value = new_param[key]
+
+model_concentration.parameters['omega'].value = 1
+model_population.parameters['omega'].value
+
+
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -260,7 +276,7 @@ plt.savefig(fn, bbox_inches='tight')
 
 ####Stochastic simulation
 
- t = pl.linspace(0, 120, 170000)
+t = np.linspace(0, 120, 170000)
 
 sim = BngSimulator(model_population, tspan=t, verbose=True)
 simres = sim.run(method='ssa', verbose=True)
