@@ -53,7 +53,6 @@ dydt(2) = p.s*((p.v_s1p21/(1+p.K_p21fak*FAK^p.F_n))... %p21 synthesis
  
 %p21p
 dydt(3) = p.s*((p.V_1p21*CycE*p21/(p.K_1p21+p21))... %p21 inact from cycE
-    +(p.V_Fp*p21*FAK/(p.K_Fp+p21))... %p21 autoact from p21p 
     -(p.V_2p21*p21p/(p.K_2p21+p21p))... %p21 autoact from p21p 
     -(p.V_dp21p*Skp2/(p.K_dp21p+Skp2)*p21p/(p.K_dp21skp2+p21p))... %p21p deg from skp2
     -(p.k_ddp21*p21p)); %p21p non specific inact  %these prob shouldn't be the same

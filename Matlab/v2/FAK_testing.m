@@ -423,7 +423,7 @@ for ii = 1:3
     [cells, cell_count] = runStochCell_death(0.6,1,0.4,5,0.01) %0.6
     plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0 0.4470 0.7410])
     death_rates_low(ii,1) = calc_death(cells);
-    [cells, cell_count] = runStochCell_death(0.3,0.2,0.4,5,0.01) %0.65
+    [cells, cell_count] = runStochCell_death(0.3,0.2,0.4,10,0.01) %0.65
     plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0.6350 0.0780 0.1840])
     death_rates_low(ii,2) = calc_death(cells);
 end
