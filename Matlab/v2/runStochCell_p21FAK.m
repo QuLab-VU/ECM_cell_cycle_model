@@ -1,4 +1,4 @@
-function [cells, cell_count] = runStochCell_p21FAK(AKT,ERK,FAK,init,dt)
+function [cells, cell_count] = runStochCell_p21FAK(AKT,ERK,FAK,init,dt,stress)
 SAVEDIR = strcat(matlabroot, "\ECM_UMAP_output");
 if ~isdir(SAVEDIR)
     mkdir(SAVEDIR)
@@ -17,6 +17,7 @@ run_time=120;
 p.AKT=1;
 p.ERK=1;
 p.FAK=FAK;
+
 
 %this is the starting for a normal oscillation
 
@@ -47,7 +48,7 @@ variable_range=y(maxima(6):maxima(7),:);
 %disp('Finished ODE')
 p.AKT=AKT;
 p.ERK=ERK;
-p.Stress=0.62;
+p.Stress=stress;
 
 runAKTERK_p21FAK
 

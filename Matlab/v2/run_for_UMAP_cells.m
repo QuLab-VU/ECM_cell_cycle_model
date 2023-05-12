@@ -29,8 +29,8 @@ for ii = 1:3
     while divs < 200
         
 
-        [cells, cell_count, cell_table] = runStochCell(AKT,ERK,FAK,init,dt,save_t);
-        %[cell_table] = restructure_for_UMAP(cells,dt,p,save_t);
+        [cells, cell_count] = runStochCell_death(AKT,ERK,FAK,init,dt);
+        [cell_table] = restructure_for_UMAP(cells,dt,p,save_t);
 
         tmp_t = cell_table(cell_table.eoe == 0, :);
         tmp_t1 = tmp_t(tmp_t.death == 0, :);
@@ -52,7 +52,7 @@ for ii = 1:3
 
     end
     cell_table = cell2table(all_divs, "VariableNames",v_names);
-    writetable(cell_table,strcat(SAVEDIR, '\cells_divs_',num2str(AKT*100),'_',num2str(ERK*100),...
+    writetable(cell_table,strcat(SAVEDIR, '\cells_divs_0501_',num2str(AKT*100),'_',num2str(ERK*100),...
         '_',num2str(FAK*100),'.csv'));
 end
 
@@ -67,7 +67,7 @@ for ii = 1:5
     [cells, cell_count, cell_table] = runStochCell(AKT,ERK,FAK,25,dt,save_t);
 
     
-    writetable(cell_table,strcat(SAVEDIR, '\all_cells_0904_',num2str(ii),'_',num2str(AKT*100),'_',num2str(ERK*100),...
+    writetable(cell_table,strcat(SAVEDIR, '\all_cells_05041_',num2str(ii),'_',num2str(AKT*100),'_',num2str(ERK*100),...
         '_',num2str(FAK*100),'.csv'));
     csvwrite(strcat(SAVEDIR, '\cells_count_0904_',num2str(ii),'_',num2str(AKT*100),'_',num2str(ERK*100),...
     '_',num2str(FAK*100),'.csv'),cell_count)
