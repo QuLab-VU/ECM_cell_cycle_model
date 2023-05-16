@@ -1,3 +1,12 @@
+# other hidden files
+.idea*
+.vscode*
+.DS_Store
+
+# large data files for UMAP (extracted from a zip file available on DropBox)
+extracted_files/
+temp.zip
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
