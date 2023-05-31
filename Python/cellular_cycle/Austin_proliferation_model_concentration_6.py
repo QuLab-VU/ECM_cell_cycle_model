@@ -17,33 +17,32 @@ sys.path.insert(0, path+"/cellular_cycle") #add a pathway to the model
 
 from Austin_proliferation_ODE_model_6 import model
 
-
 ###Initials
-Parameter('Skp2_0', (0.0758759637154584 * 1))
-Parameter('p21_0', (0.0179573231225730* 1))
-Parameter('p21p_0', (0.0304907956309426* 1))
-Parameter('cdh1act_0', (0.0868238125152800* 1))
-Parameter('cdh1inact_0', ((1-0.0868238125152800)* 1)) #cdh1tot - cdh1act
-Parameter('Myc_0', (0.358070500927645* 1))
-Parameter('CycD_0', (0.246007623346968* 1))
-Parameter('CycDp21_0', (0.0114732033609201* 1))
-Parameter('pRb_0', (0.209618782280972* 1))
-Parameter('pRbp_0', (0.596265732766763* 1))
-Parameter('E2F_0', (0.0663628730831172* 1))
-Parameter('pRbE2F_0', (0.659538609880404* 1))
-Parameter('CycE_0', (0.0823229552545997* 1))
-Parameter('CycEp21_0', (0.00601176670298263* 1))
-Parameter('CycA_0', (0.0781546778431587* 1))
-Parameter('CycAp21_0', (0.0110421142038035 * 1))
-Parameter('CycB_0', (0.200858887607416* 1))
-Parameter('CycBp21_0', (0.00209763607378452* 1))
-Parameter('Cdc20_0', (0.367494461337630 * 1))
-Parameter('BAX_0', (0.992676117362238 * 1))
-Parameter('BAXmBCL2_0', (0.00730440429784349 * 1))
-Parameter('BH3_0', (0.000428591174323906* 1))
-Parameter('BH3BCL2_0', (0.199169986463653* 1))
-Parameter('BAXm_0', ((1 - 0.992676117362238 - 0.00730440429784349)* 1)) #BAXt - BAX - BAXmBCL2
-Parameter('BCL2_0', ((0.95 - 0.199169986463653 -0.00730440429784349) * 1)) #BCL2t - BH3BCL2 -BAXmBCL2
+Parameter('Skp2_0', (0.0199387776457489 * 1))
+Parameter('p21_0', (0.0212324326339528* 1))
+Parameter('p21p_0', (0.104907517295920* 1))
+Parameter('cdh1act_0', (0.970596980815461* 1))
+Parameter('cdh1inact_0', ((1-0.970596980815461)* 1)) #cdh1tot - cdh1act
+Parameter('Myc_0', (0.321067821067829* 1))
+Parameter('CycD_0', (0.175953608509162* 1))
+Parameter('CycDp21_0', (0.0138939800293163* 1))
+Parameter('pRb_0', (0.301757475166483* 1))
+Parameter('pRbp_0', (0.545620559818762* 1))
+Parameter('E2F_0', (0.0403080965235495* 1))
+Parameter('pRbE2F_0', (0.554487916752975* 1))
+Parameter('CycE_0', (0.0640517424993558* 1))
+Parameter('CycEp21_0', (0.00487528808175496* 1))
+Parameter('CycA_0', (0.0182005140710040* 1))
+Parameter('CycAp21_0', (0.00234453838504852 * 1))
+Parameter('CycB_0', (0.0234757871244827* 1))
+Parameter('CycBp21_0', (0.00435874152378834* 1))
+Parameter('Cdc20_0', (0.0204771947463057 * 1))
+Parameter('BAX_0', (0.999000159839911 * 1))
+Parameter('BAXmBCL2_0', (0.000997752220497874 * 1))
+Parameter('BH3_0', (5.81398691338436e-05* 1))
+Parameter('BH3BCL2_0', (0.0332751934642001* 1))
+Parameter('BAXm_0', ((1 - 0.999000159839911 - 0.000997752220497874)* 1)) #BAXt - BAX - BAXmBCL2
+Parameter('BCL2_0', ((0.95 - 0.0332751934642001 - 0.000997752220497874) * 1)) #BCL2t - BH3BCL2 -BAXmBCL2
 
 
 Initial(model.monomers['Skp2'], model.parameters['Skp2_0'])

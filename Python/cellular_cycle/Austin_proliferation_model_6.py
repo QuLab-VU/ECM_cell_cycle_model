@@ -189,9 +189,9 @@ Parameter('K_Fp', 0.1)
 Parameter('F_n', 3)
 Parameter('K_p21fak', 7)
 
-Parameter('a_stress', 0.6899)
-Parameter('b_stress_AKT', 0.064)
-Parameter('b_stress_ERK', 0.0061)
+Parameter('a_stress', 0.6815)
+Parameter('b_stress_AKT', 0.112)
+Parameter('b_stress_ERK', 0.0111)
 
 ##Positive feedback loops on the G1/S and G2/M transitions
 Parameter('b1', 1) #term representing the self-activation of cyclinE/Cdk2 through the mutual activation between cyclinE/Cdk2 and its phosphatase Cdc25(PF loop in the G1/S transition)) without=0 with=1
@@ -238,6 +238,7 @@ Expression('kd_Skp2_cdh1', s * V_dskp2 * omega / (( K_dskp2 * omega + obsSkp2 )*
 
 ##p21
 Expression('ks_p21', s * v_s1p21 * omega/ (omega**F_n + K_p21fak * FAK**F_n))
+
 Expression('ks_p21_E2F', s * v_s2p21*((K_i13 * omega) / (K_i13 * omega + obspRb)) * ((K_i14 * omega) / (K_i14 * omega + obspRbp)))
 Expression('kasso_p21_CycD', s * (k_c1 / omega))
 Expression('kdiss_p21_CycD', s * k_c2)

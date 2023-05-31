@@ -96,8 +96,10 @@ def RBS(x,x0,sigma) :
 
 ##############################################################################
 
+def prior(parameter_vector, idx):    
 
-def cost_function_30_parameters_pso(parameter_vector, idx):    
+
+def likelihood(parameter_vector, idx):    
 
 
     randomnumber = random.random()
@@ -135,12 +137,17 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
     parameter_names = ['a','d','q']
     init_cells = [4,6,3,3,2,2]
     
+    number_of_imt_to_sample_list = [60, 60, 60, 60, 60, 60]    
 
 ###############################################################################
 ###############################################################################
     
-    for init, run_time, condition, num_condition in zip(init_cells, run_times, conditions, range(6)):
+    for init, run_time, condition, num_condition, number_of_imt_to_sample in zip(init_cells, run_times, conditions, range(6), number_of_imt_to_sample_list):
         
+        stiffness, _, treatment = condition.split(maxsplit=2)  # split the string into two parts
+        stiffness = float(stiffness)  # convert the stiffness from string to float
+        treatment = treatment.strip()  # remove any leading or trailing white spaces
+                
         t_sim = np.arange(0,run_time,1/3)
         observed_cells_time = run_time
         cond_split = condition.split(' ')
@@ -158,7 +165,6 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
         
 ###############################################################################
             
-        #try:
         
         (cells, cell_count) = runAKTERK(init, run_time, run_time, model_concentration, model_population, idx, condition);
         
@@ -181,7 +187,7 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
 
         
 ###############################################################################
-        #Extract useful inforation from the simulations:
+        #Extract useful information from the simulations:
         
         try:
             simulated_IMT, simulated_sm, simulated_g1 = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
@@ -220,6 +226,14 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
             parameters_sim[condition]['sigma'] = np.nan
             parameters_sim[condition]['lambda'] = np.nan
 ###############################################################################         
+        #Compare distributions
+        
+        experimental_IMTs_picked = random.sample(list(all_IMTs[(all_IMTs['Drug']==treatment) & (all_IMTs['Stiffness']==stiffness)]['IMT_t']), number_of_imt_to_sample)
+        simulated_IMTs = random.sample(list(mitotic_lifespans), number_of_imt_to_sample)
+        
+        cost_mmd = nmmd2_rbf(np.array([simulated_IMTs]).transpose(), np.array([experimental_IMTs_picked]).transpose(), 1) #difference between IMT distribution
+            
+###############################################################################         
         #cost computation: rmse dip rates
         
         try:
@@ -238,25 +252,18 @@ def cost_function_30_parameters_pso(parameter_vector, idx):
             cost['Cost ' + condition] = np.inf
         
 ###############################################################################         
-        
-        #except :
-            #cost['Cost ' + condition] = np.inf
-
-
-
+    #Save cost summary
     parameters_sim = {param + ' ' + cond_tmp: [val_tmp] for cond_tmp in parameters_sim.keys() for param, val_tmp in parameters_sim[cond_tmp].items()}
-    
-    
     frac_prolif_parameters_temp = {"index":[idx], **parameters_sim, **cost}
-    
     vect = pd.DataFrame(np.array([parameter_vector]), columns = pysb_sampled_parameter_names)
-    
     frac_prolif_parameters_temp = pd.DataFrame(data=frac_prolif_parameters_temp)
-        
     frac_prolif_parameters_temp = pd.concat([frac_prolif_parameters_temp, vect], axis=1)
-        
     frac_prolif_parameters_temp.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/cost/parameters_" + str(idx) + "_" + str(randomnumber) + "_pso.pkl")        
 
     return sum(cost.values())
+
+
+def posterior(parameter_vector, idx): 
+    return prior(parameter_vector, idx) + likelihood(parameter_vector, idx) 
 
 

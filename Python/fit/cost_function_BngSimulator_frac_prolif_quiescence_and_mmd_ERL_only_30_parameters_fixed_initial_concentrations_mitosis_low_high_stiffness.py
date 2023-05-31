@@ -54,6 +54,7 @@ pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","
 import glob
 
 IMT_DATADIR = Path(os.path.dirname(__file__) + "/../../Data/Exp_Intermitotic_Times")
+IMT_DATADIR = Path(path + "/Data/Exp_Intermitotic_Times")
 
 print(IMT_DATADIR)
 file_location = os.path.join(IMT_DATADIR,'*imt_*.csv')
@@ -226,16 +227,6 @@ def cost_function_reduced_quiescence_ERL_only_30_parameters(parameter_vector, id
     cost_006_ERL = cost_mmd_006_ERL
     
     print('o7')
-#    except :
-#        parameters_sim[condition]['a'] = np.nan
-#        parameters_sim[condition]['d'] = np.nan
-#        parameters_sim[condition]['q'] = np.nan
-#        parameters_sim[condition]['mu'] = np.nan
-#        parameters_sim[condition]['sigma'] = np.nan
-#        parameters_sim[condition]['lambda'] = np.nan
-#        
-#        cost_mmd_006_ERL = np.inf
-#        cost_006_ERL = np.inf
 
 ###############################################################################
 ###############################################################################

@@ -189,9 +189,9 @@ Parameter('K_Fp', 0.1)
 Parameter('F_n', 3)
 Parameter('K_p21fak', 7)
 
-Parameter('a_stress', 0.6899)
-Parameter('b_stress_AKT', 0.064)
-Parameter('b_stress_ERK', 0.0061)
+Parameter('a_stress', 0.6815)
+Parameter('b_stress_AKT', 0.112)
+Parameter('b_stress_ERK', 0.0111)
 
 
 ##Positive feedback loops on the G1/S and G2/M transitions
@@ -238,8 +238,7 @@ Expression('ks_Skp2_FAK', s * V_s2skp * FAK)
 Expression('kd_Skp2_cdh1', s * V_dskp2 * omega / (( K_dskp2 * omega + obsSkp2 )*( K_cdh1 * omega + obscdh1act)))
 
 ##p21
-Expression('ks_p21', s * v_s1p21 / (1 + K_p21fak * FAK**F_n))
-
+Expression('ks_p21', s * v_s1p21 * omega/ (omega**F_n + K_p21fak * FAK**F_n))
 Expression('ks_p21_E2F', s * v_s2p21*((K_i13 * omega) / (K_i13 * omega + obspRb)) * ((K_i14 * omega) / (K_i14 * omega + obspRbp)))
 Expression('kasso_p21_CycD', s * (k_c1 / omega))
 Expression('kdiss_p21_CycD', s * k_c2)
@@ -251,6 +250,7 @@ Expression('kasso_p21_CycB', s * (k_c7 / omega))
 Expression('kdiss_p21_CycB', s * k_c8)
 Expression('kp_p21_CycE', s * V_1p21 / (K_1p21 * omega + obsp21))
 Expression('kunph_p21p', s * ((V_2p21 * omega) / (K_2p21 * omega + obsp21p)))
+
 Expression('kp_p21_FAK', s * ((V_Fp * FAK)/ ((K_Fp * omega) + obsp21)))
 Expression('kd_p21', s * (k_ddp21))
 Expression('kd_p21p_Skp2', s * (V_dp21p * omega * (1 / (K_dp21skp2 * omega + obsSkp2)) * (1 / (K_dp21p * omega + obsp21p))))
