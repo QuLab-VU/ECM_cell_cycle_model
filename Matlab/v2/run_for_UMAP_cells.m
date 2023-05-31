@@ -19,13 +19,14 @@ v_names = {'id', 'eoe', 'death', 'time', 'Skp2', 'p21', 'p21p', 'Cdh1', 'Myc', '
 
 
 
-for ii = 1:3
+for ii = 1
     divs = 0;
     count = 1;
     all_divs = {};
     AKT = AKT_DMSO(ii);
     ERK = ERK_DMSO(ii);
     FAK = FAK_DMSO(ii);
+    all_cell_counts = [];
     while divs < 200
         
 
@@ -46,15 +47,28 @@ for ii = 1:3
                 all_divs = [all_divs; num2cell(tmp_cell)];    
             end
         end
+        
+        cell_count(:,3) = ones(length(cell_count),1).*count;
+        all_cell_counts = [all_cell_counts; cell_count];
 
         divs = divs + length(C);
+        count = count + 1;
         divs
 
     end
     cell_table = cell2table(all_divs, "VariableNames",v_names);
-    writetable(cell_table,strcat(SAVEDIR, '\cells_divs_0501_',num2str(AKT*100),'_',num2str(ERK*100),...
+    writetable(cell_table,strcat(SAVEDIR, '\cells_divs_0514_',num2str(AKT*100),'_',num2str(ERK*100),...
         '_',num2str(FAK*100),'.csv'));
+    csvwrite(strcat(SAVEDIR, '\cells_count_0514_',num2str(ii),'_',num2str(AKT*100),'_',num2str(ERK*100),...
+    '_',num2str(FAK*100),'.csv'),all_cell_counts)
 end
+
+
+
+
+
+
+
 
 for ii = 1:5
     divs = 0;
@@ -67,7 +81,7 @@ for ii = 1:5
     [cells, cell_count, cell_table] = runStochCell(AKT,ERK,FAK,25,dt,save_t);
 
     
-    writetable(cell_table,strcat(SAVEDIR, '\all_cells_05041_',num2str(ii),'_',num2str(AKT*100),'_',num2str(ERK*100),...
+    writetable(cell_table,strcat(SAVEDIR, '\all_cells_0515_',num2str(ii),'_',num2str(AKT*100),'_',num2str(ERK*100),...
         '_',num2str(FAK*100),'.csv'));
     csvwrite(strcat(SAVEDIR, '\cells_count_0904_',num2str(ii),'_',num2str(AKT*100),'_',num2str(ERK*100),...
     '_',num2str(FAK*100),'.csv'),cell_count)

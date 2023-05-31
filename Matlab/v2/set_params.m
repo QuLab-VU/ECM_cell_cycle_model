@@ -63,10 +63,10 @@ p.V_1Mb = 1;       %1         % Rate for activation of cyclinB/Cdk1 by cyclinA/C
 p.V_2Mb = 0.8;        %0.8      % Rate constant for inactivation of cyclinB/Cdk1 by Cdc20; /h
 
 p.k_M =  0.27;%0.18;%0.11; %0.27%0.1
-p.k_EMY = 0.37;%0.25;%0.18; %0.37%0.1
+p.k_EMY = 0.37;%0.37;%0.25;%0.18; %0.37%0.1
 p.k_CD = 0.03; %0.03
-p.k_CDS = 0.25;%0.18;%0.11;  %0.25%0.5
-p.k_ED = 0.2; %0.23%0.08
+p.k_CDS = 0.25;%0.25;%0.18;%0.11;  %0.25%0.5
+p.k_ED = 0.2;%0.2; %0.23%0.08
 
 p.K_p21fak = 5; %p21 synthesis from FAK
 p.F_n = 8; %Hill coefficient for p21 synthesis
@@ -117,7 +117,7 @@ p.V_1cdh1 = 1.25; %1.25
 p.V_2cdh1 = 8;
 p.v_scdh1a = 0.11;
 p.v_2fak = 0.1; %0.05
-p.v_s1p21 = 0.3; %0.8; %0.5;  %3%0.8
+p.v_s1p21 = 0.3; %0.3; %0.8; %0.5;  %3%0.8
 p.v_s2p21 = 0.1;  %2%0.1
 p.K_1cdh1 = 0.1;
 p.K_2cdh1 = 0.1;

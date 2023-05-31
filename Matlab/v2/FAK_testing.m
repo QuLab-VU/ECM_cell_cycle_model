@@ -327,10 +327,10 @@ axis([0 120 0 5])
 death_rates_low=[];
 for ii = 1:3
     [cells, cell_count] = runStochCell_death(0.6,1,0.4,5,0.01)
-    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)),"Color",[0 0.4470 0.7410])
+    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0 0.4470 0.7410])
     death_rates_low(ii,1) = calc_death(cells);
     [cells, cell_count] = runStochCell_death(0.3,0.2,0.4,5,0.01)
-    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)),"Color",[0.6350 0.0780 0.1840])
+    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0.6350 0.0780 0.1840])
     death_rates_low(ii,2) = calc_death(cells);
 end
 
@@ -339,11 +339,11 @@ set(gcf,'color','w')
 axis([0 120 0 5])
 death_rates_int=[];
 for ii = 1:3
-    [cells, cell_count] = runStochCell_death(1,1,0.6,3,0.01)
-    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)),"Color",[0 0.4470 0.7410])
+    [cells, cell_count] = runStochCell_death(1,1,0.6,5,0.01)
+    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0 0.4470 0.7410])
     death_rates_int(ii,1) = calc_death(cells);
-    [cells, cell_count] = runStochCell_death(0.6,0.2,0.6,3,0.01)
-    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)),"Color",[0.6350 0.0780 0.1840])
+    [cells, cell_count] = runStochCell_death(0.6,0.2,0.6,5,0.01)
+    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0.6350 0.0780 0.1840])
     death_rates_int(ii,2) = calc_death(cells);
 end
 
@@ -353,11 +353,11 @@ set(gcf,'color','w')
 axis([0 120 0 5])
 death_rates_hi=[];
 for ii = 1:3
-    [cells, cell_count] = runStochCell_death(1,1,1,3,0.01)
-    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)),"Color",[0 0.4470 0.7410])
+    [cells, cell_count] = runStochCell_death(1,1,1,5,0.01)
+    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0 0.4470 0.7410])
     death_rates_hi(ii,1) = calc_death(cells);
-    [cells, cell_count] = runStochCell_death(0.6,0.2,1,3,0.01)
-    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)),"Color",[0.6350 0.0780 0.1840])
+    [cells, cell_count] = runStochCell_death(0.6,0.2,1,5,0.01)
+    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0.6350 0.0780 0.1840])
     death_rates_hi(ii,2) = calc_death(cells);
 end
 
@@ -373,10 +373,10 @@ axis([0 120 0 5])
 death_rates_si=[];
 for ii = 1:3
     [cells, cell_count] = runStochCell_death(0.6,0.2,0.6,5,0.01)
-    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)),"Color",[0 0.4470 0.7410])
+    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0 0.4470 0.7410])
     death_rates_int(ii,2) = calc_death(cells);
     [cells, cell_count] = runStochCell_death(0.6,0.2,1,5,0.01)
-    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)),"Color",[0.6350 0.0780 0.1840])
+    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0.6350 0.0780 0.1840])
     death_rates_si(ii,2) = calc_death(cells);
 end
 
@@ -387,11 +387,11 @@ figure; hold on
 set(gcf,'color','w')
 axis([0 120 0 5])
 death_rates_hi=[];
-for ii = 1:3
-    [cells, cell_count] = runStochCell_death(1,1,1,5,0.01) %0.56
+for ii = 1
+    [cells, cell_count] = runStochCell_death(1,1,1,0.57,5,0.01) %0.56
     plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0 0.4470 0.7410])
     death_rates_hi(ii,1) = calc_death(cells);
-    [cells, cell_count] = runStochCell_death(0.6,0.2,1,5,0.01) %0.61
+    [cells, cell_count] = runStochCell_death(0.6,0.2,1,0.615,5,0.01) %0.61
     plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0.6350 0.0780 0.1840])
     death_rates_hi(ii,2) = calc_death(cells);
 end
@@ -403,11 +403,11 @@ figure; hold on
 set(gcf,'color','w')
 axis([0 120 0 5])
 death_rates_int=[];
-for ii = 1:3
-    [cells, cell_count] = runStochCell_death(1,1,0.6,5,0.01) %0.56
+for ii = 1
+    [cells, cell_count] = runStochCell_death(1,1,0.6,0.61,5,0.01) %0.56
     plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0 0.4470 0.7410])
     death_rates_int(ii,1) = calc_death(cells);
-    [cells, cell_count] = runStochCell_death(0.6,0.2,0.6,5,0.01) %0.61
+    [cells, cell_count] = runStochCell_death(0.6,0.2,0.6,0.615,5,0.01) %0.61
     plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0.6350 0.0780 0.1840])
     death_rates_int(ii,2) = calc_death(cells);
 end
@@ -419,13 +419,28 @@ figure; hold on
 set(gcf,'color','w')
 axis([0 120 0 5])
 death_rates_low=[];
-for ii = 1:3
-    [cells, cell_count] = runStochCell_death(0.6,1,0.4,5,0.01) %0.6
+for ii = 1
+    [cells, cell_count] = runStochCell_death(0.6,1,0.4,0.61,5,0.01) %0.6
     plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0 0.4470 0.7410])
     death_rates_low(ii,1) = calc_death(cells);
-    [cells, cell_count] = runStochCell_death(0.3,0.2,0.4,10,0.01) %0.65
+    [cells, cell_count] = runStochCell_death(0.3,0.2,0.4,0.62,10,0.01) %0.65
     plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),"Color",[0.6350 0.0780 0.1840])
     death_rates_low(ii,2) = calc_death(cells);
+end
+
+%%
+
+
+
+figure; hold on
+set(gcf,'color','w')
+axis([0 120 0 5])
+
+for ii = 1
+    [cells, cell_count] = runStochCell_death(0.6,0.2,1,0.65,5,0.01) %0.61
+    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2))
+    [cells, cell_count] = runStochCell_death(0.6,0.2,0.6,0.65,5,0.01) %0.61
+    plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2))
 end
 
 %%
