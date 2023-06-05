@@ -91,7 +91,7 @@ for key in new_param.keys():
 
 model_population.parameters['omega'].value = 200
 model_concentration.parameters['omega'].value = 1
-model.parameters['omega'].value = 1
+#model.parameters['omega'].value = 1
 
 
 #model_concentration.parameters['v_s1p21'].value = 0.3
@@ -113,15 +113,15 @@ for species_initial, species_initials_value in zip(species_initials, species_ini
     model_population.parameters[species_initial].value = int(round(species_initials_value * model_population.parameters['omega'].value))
     
 
-
-model_concentration.initials[0].value.name
-
-
-for parameter in model.parameters:
-    print(parameter.name)
-    print(model.parameters[parameter.name].value==model_concentration.parameters[parameter.name].value)
-    if not model.parameters[parameter.name].value==model_concentration.parameters[parameter.name].value:
-        print(' AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+#
+#model_concentration.initials[0].value.name
+#
+#
+#for parameter in model.parameters:
+#    print(parameter.name)
+#    print(model.parameters[parameter.name].value==model_concentration.parameters[parameter.name].value)
+#    if not model.parameters[parameter.name].value==model_concentration.parameters[parameter.name].value:
+#        print(' AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
 
 
 ###############################################################################
