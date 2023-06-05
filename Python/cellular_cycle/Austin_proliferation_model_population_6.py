@@ -5,44 +5,42 @@ Created on Mon Feb 3 14:57:38 2020
 @author: Jérémie Marlhens
 Title: Austin_proliferation_model
 """
-#path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle"
+
 path="/home/jeremie"
-
-from pysb import * 
-
+#path=r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python"
 import sys
-sys.path.insert(0, path) #add a pathway to the model
-
+sys.path.insert(0, path+"/cellular_cycle") #add a pathway to the model
 from Austin_proliferation_model_6 import model
 
 
+from pysb import * 
 
 ###Initials
-Parameter('Skp2_0', int(round(0.0758759637154584 * 200)))
-Parameter('p21_0', int(round(0.0179573231225730* 200)))
-Parameter('p21p_0', int(round(0.0304907956309426* 200)))
-Parameter('cdh1act_0', int(round(0.0868238125152800* 200)))
-Parameter('cdh1inact_0', int(round((1-0.0868238125152800) * 200))) #cdh1tot - cdh1act
-Parameter('Myc_0', int(round(0.358070500927645* 200)))
-Parameter('CycD_0', int(round(0.246007623346968* 200)))
-Parameter('CycDp21_0', int(round(0.0114732033609201* 200)))
-Parameter('pRb_0', int(round(0.209618782280972* 200)))
-Parameter('pRbp_0', int(round(0.596265732766763* 200)))
-Parameter('E2F_0', int(round(0.0663628730831172 * 200)))
-Parameter('pRbE2F_0', int(round(0.659538609880404* 200)))
-Parameter('CycE_0', int(round(0.0823229552545997* 200)))
-Parameter('CycEp21_0', int(round(0.00601176670298263* 200)))
-Parameter('CycA_0', int(round(0.0781546778431587* 200)))
-Parameter('CycAp21_0', int(0.0110421142038035 * 200))
-Parameter('CycB_0', int(round(0.200858887607416* 200)))
-Parameter('CycBp21_0', int(round(0.00209763607378452* 200)))
-Parameter('Cdc20_0', int(round(0.367494461337630 * 200)))
-Parameter('BAX_0', int(round(0.992676117362238 * 200)))
-Parameter('BAXmBCL2_0', int(round(0.00730440429784349 * 200)))
-Parameter('BH3_0', int(round(0.000428591174323906* 200)))
-Parameter('BH3BCL2_0', int(round(0.199169986463653* 200)))
-Parameter('BAXm_0', int(round((1 - 0.992676117362238 - 0.00730440429784349)* 200))) #BAXt - BAX - BAXmBCL2
-Parameter('BCL2_0', int(round((0.95 - 0.199169986463653 -0.00730440429784349) * 200))) #BCL2t - BH3BCL2 -BAXmBCL2
+Parameter('Skp2_0', int(round(0.0199387776457489 * 200)))
+Parameter('p21_0', int(round(0.0212324326339528 * 200)))
+Parameter('p21p_0', int(round(0.104907517295920 * 200)))
+Parameter('cdh1act_0', int(round(0.970596980815461 * 200)))
+Parameter('cdh1inact_0', int(round((1-0.970596980815461) * 200))) #cdh1tot - cdh1act
+Parameter('Myc_0', int(round(0.321067821067829 * 200)))
+Parameter('CycD_0', int(round(0.175953608509162 * 200)))
+Parameter('CycDp21_0', int(round(0.0138939800293163 * 200)))
+Parameter('pRb_0', int(round(0.301757475166483 * 200)))
+Parameter('pRbp_0', int(round(0.545620559818762 * 200)))
+Parameter('E2F_0', int(round(0.0403080965235495 * 200)))
+Parameter('pRbE2F_0', int(round(0.554487916752975 * 200)))
+Parameter('CycE_0', int(round(0.0640517424993558 * 200)))
+Parameter('CycEp21_0', int(round(0.00487528808175496 * 200)))
+Parameter('CycA_0', int(round(0.0182005140710040 * 200)))
+Parameter('CycAp21_0', int(round(0.00234453838504852  * 200)))
+Parameter('CycB_0', int(round(0.0234757871244827 * 200)))
+Parameter('CycBp21_0', int(round(0.00435874152378834 * 200)))
+Parameter('Cdc20_0', int(round(0.0204771947463057  * 200)))
+Parameter('BAX_0', int(round(0.999000159839911  * 200)))
+Parameter('BAXmBCL2_0', int(round(0.000997752220497874  * 200)))
+Parameter('BH3_0', int(round(5.81398691338436e-05 * 200)))
+Parameter('BH3BCL2_0', int(round(0.0332751934642001 * 200)))
+Parameter('BAXm_0', int(round((1 - 0.999000159839911 - 0.000997752220497874) * 200))) #BAXt - BAX - BAXmBCL2
+Parameter('BCL2_0', int(round((0.95 - 0.0332751934642001 - 0.000997752220497874)  * 200))) #BCL2t - BH3BCL2 -BAXmBCL2
 
 
 

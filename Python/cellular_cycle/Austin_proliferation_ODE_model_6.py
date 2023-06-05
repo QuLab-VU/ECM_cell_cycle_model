@@ -10,7 +10,7 @@ from pysb import *
 
 Model()
 
-Parameter('omega', 1)
+Parameter('omega', 200)
 
 ###Monomers:
 
@@ -37,9 +37,9 @@ Monomer('ERK', )
 
 ###Parameter
 
-Parameter('AKT',1)
-Parameter('ERK',1)
-Parameter('FAK',1)
+Parameter('AKT',200)
+Parameter('ERK',200)
+Parameter('FAK',200)
 
 Parameter('m', 3)
 Parameter('BCL2t', 0.95)
@@ -193,7 +193,6 @@ Parameter('a_stress', 0.6815)
 Parameter('b_stress_AKT', 0.112)
 Parameter('b_stress_ERK', 0.0111)
 
-
 ##Positive feedback loops on the G1/S and G2/M transitions
 Parameter('b1', 1) #term representing the self-activation of cyclinE/Cdk2 through the mutual activation between cyclinE/Cdk2 and its phosphatase Cdc25(PF loop in the G1/S transition)) without=0 with=1
 Parameter('b2', 1) #term representing the self-activation of cyclinB/Cdk1 through mutual activation between cyclin B/cdk1 and its phosphatase cdk25(PF loop in the G2/M transition)) without=0 with=1
@@ -239,6 +238,7 @@ Expression('kd_Skp2_cdh1', s * V_dskp2 * omega / (( K_dskp2 * omega + obsSkp2 )*
 
 ##p21
 Expression('ks_p21', s * v_s1p21 * omega/ (omega**F_n + K_p21fak * FAK**F_n))
+
 Expression('ks_p21_E2F', s * v_s2p21*((K_i13 * omega) / (K_i13 * omega + obspRb)) * ((K_i14 * omega) / (K_i14 * omega + obspRbp)))
 Expression('kasso_p21_CycD', s * (k_c1 / omega))
 Expression('kdiss_p21_CycD', s * k_c2)
@@ -250,7 +250,6 @@ Expression('kasso_p21_CycB', s * (k_c7 / omega))
 Expression('kdiss_p21_CycB', s * k_c8)
 Expression('kp_p21_CycE', s * V_1p21 / (K_1p21 * omega + obsp21))
 Expression('kunph_p21p', s * ((V_2p21 * omega) / (K_2p21 * omega + obsp21p)))
-
 Expression('kp_p21_FAK', s * ((V_Fp * FAK)/ ((K_Fp * omega) + obsp21)))
 Expression('kd_p21', s * (k_ddp21))
 Expression('kd_p21p_Skp2', s * (V_dp21p * omega * (1 / (K_dp21skp2 * omega + obsSkp2)) * (1 / (K_dp21p * omega + obsp21p))))
@@ -311,12 +310,12 @@ Expression('kinact_Cdc20', s * ((V_2cdc20 * omega) * (1 / (K_2cdc20 * omega + ob
 
 
 ##Switch apoptosis
-Expression('kact_BAXm', m * (kf1  + (kf2 / omega) * obsBH3))
+Expression('kact_BAXm', m * (kf1 + (kf2 / omega) * obsBH3))
 Expression('kinact_BAXm', m * kb)
 Expression('kasso_BAXm_BCL2', m * (kasbaxmbcl2 / omega))
 Expression('kdiss_BAXmBCL2', m * kdsbaxmbcl2)
 Expression('kinact_BAXmBCL2', m * kb)
-Expression('ks_BH3', m * (k1sbh3 * omega + k2sbh3 * (omega * a_stress - b_stress_AKT * AKT - b_stress_ERK * ERK)))
+Expression('ks_BH3', m * ((k1sbh3 * omega) + k2sbh3 * (omega * a_stress - b_stress_AKT * AKT - b_stress_ERK * ERK)))
 Expression('kd_BH3', m * kdbh3)
 Expression('kasso_BH3_BCL2', m * (kasbh3bcl2 / omega))
 Expression('kdiss_BH3BCL2', m * kdsbh3bcl2)
@@ -330,7 +329,6 @@ Rule('Skp2_synthesis', None >> Skp2(), ks_Skp2) #Sytnhesis of Skp2
 Rule('Skp2_degradation', Skp2() >> None, kd_Skp2) #Degradation of Skp2
 Rule('Skp2_synthesis_FAK', None >> Skp2() , ks_Skp2_FAK) #Skp2 synthesis from FAK
 Rule('Skp2_degradation_cdh1', Skp2() + cdh1(A='yes') >> cdh1(A='yes'), kd_Skp2_cdh1) #degradation of Skp2 by cdh1
-
 
 
 ##p21 and p21p

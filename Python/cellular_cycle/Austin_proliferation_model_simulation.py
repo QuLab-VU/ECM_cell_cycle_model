@@ -7,8 +7,7 @@ Title: Austin_proliferation_model_simulation
 """
 ###############################################################################
 
-path="/home/jeremie"
-#path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code"
+#path="/home/jeremie"
 path=r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model"
 
 import sys
@@ -16,11 +15,22 @@ sys.path.insert(0, path+"/Python/cellular_cycle") #add a pathway to the model
 sys.path.insert(0, path+"/Python/fit") #add a pathway to the model
 
 from Austin_proliferation_model_concentration_6 import model
-model_concentration=model
+model_concentration = model
+from Austin_proliferation_model_population_6 import model
+model_population = model
+
+#model_population = model
+#del model
+"""
+import copy
 
 from Austin_proliferation_model_population_6 import model
-model_population=model
+model_concentration = copy.deepcopy(model)
 
+del model
+from Austin_proliferation_model_population_6 import model
+model_population = copy.deepcopy(model)
+"""
 
 from pysb.simulator import ScipyOdeSimulator
 from pysb.simulator import BngSimulator
@@ -38,15 +48,18 @@ import matplotlib.pyplot as plt
 ###############################################################################
 #Compare with matlab simulations
 
-
-y = np.genfromtxt(path + '/Matlab/v2/ode_100_100_100.csv', delimiter=',').T
+simulation_ode_matlab = {}
+simulation_ode_matlab['55 kPa DMSO'] = np.genfromtxt(path + '/Matlab/v2/ode_100_100_100.csv', delimiter=',').T
+simulation_ode_matlab['55 kPa ERL'] = np.genfromtxt(path + '/Matlab/v2/ode_060_020_100.csv', delimiter=',').T
+simulation_ode_matlab['4 kPa DMSO'] = np.genfromtxt(path + '/Matlab/v2/ode_100_100_060.csv', delimiter=',').T
+simulation_ode_matlab['0.6 kPa DMSO'] = np.genfromtxt(path + '/Matlab/v2/ode_060_100_040.csv', delimiter=',').T
 
 
 stoch_run = {}
-for file_tmp, condition in zip(['dmso_long_4_29_1_1', 'dmso_long_4_29_2_1', 'dmso_long_4_29_3_1', 'erl_long_4_29_1_1', 'erl_long_4_29_2_1', 'erl_long_4_29_3_1'], ['DMSO 06kPa', 'DMSO 4kPa', 'DMSO 55kPa', 'ERL 06kPa', 'ERL 4kPa', 'ERL 55kPa']):
+for file_tmp, condition in zip(['dmso_long_4_29_1_1', 'dmso_long_4_29_2_1', 'dmso_long_4_29_3_1', 'erl_long_4_29_1_1', 'erl_long_4_29_2_1', 'erl_long_4_29_3_1'], ['06 kPa DMSO', '4 kPa DMSO', '55 kPa DMSO', '06 kPa ERL', '4 kPa ERL', '55 kPa ERL']):
     stoch_run[condition] = np.genfromtxt(r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\matlab_runs/" +  file_tmp + ".txt", delimiter=',', skip_footer=450000).T
 
-plt.plot(stoch_run['DMSO 55kPa'][3, :10000])
+plt.plot(stoch_run['55 kPa DMSO'][3, :10000])
 
 
 
@@ -68,28 +81,47 @@ for key in new_param.keys():
             model_population.parameters[key].value = new_param[key]
         if model_concentration.parameters[key].value != new_param[key][0]:
             model_concentration.parameters[key].value = new_param[key]
+
+#        if model.parameters[key].value != new_param[key][0]:
+#            model.parameters[key].value = new_param[key]
+
     except: print(key)
 
 
+
+model_population.parameters['omega'].value = 200
 model_concentration.parameters['omega'].value = 1
-model_concentration.parameters['v_s1p21'].value = 0.3
-model_population.parameters['omega'].value
-
-model_concentration.parameters['b_stress_ERK'].value = 0.0111
-model_concentration.parameters['a_stress'].value  = 0.6815
-model_concentration.parameters['b_stress_AKT'].value  = 0.112
+model.parameters['omega'].value = 1
 
 
-
-model_population.parameters['v_s1p21'].value = 0.8
-model_population.parameters['F_n'].value = 8
-
-model_population.parameters['omega'].value
-model_population.parameters['b_stress_ERK'].value = 0.0111
-model_population.parameters['a_stress'].value  = 0.6815
-model_population.parameters['b_stress_AKT'].value  = 0.112
+#model_concentration.parameters['v_s1p21'].value = 0.3
+#model_population.parameters['v_s1p21'].value = 0.8
+#model_population.parameters['F_n'].value = 8
 
 
+###############################################################################
+# Setting initial concentrations
+
+species_initials = ['Skp2_0', 'p21_0', 'p21p_0', 'cdh1act_0', 'cdh1inact_0', 'Myc_0', 'CycD_0', 'CycDp21_0', 'pRb_0', 'pRbp_0', 'E2F_0', 'pRbE2F_0', 'CycE_0', 'CycEp21_0', 'CycA_0', 'CycAp21_0', 'CycB_0', 'CycBp21_0', 'Cdc20_0', 'BAX_0', 'BAXmBCL2_0', 'BH3_0', 'BH3BCL2_0', 'BAXm_0', 'BCL2_0']
+species_initials_values = [0.0199387776457489, 0.0212324326339528, 0.104907517295920, 0.970596980815461, 1-0.970596980815461, 0.321067821067829, 0.175953608509162, 0.0138939800293163, 0.301757475166483, 0.545620559818762, 0.0403080965235495, 0.554487916752975, 0.0640517424993558, 0.00487528808175496, 0.0182005140710040, 0.00234453838504852, 0.0234757871244827, 0.00435874152378834, 0.0204771947463057, 0.999000159839911, 0.000997752220497874, 5.81398691338436e-05, 0.0332751934642001, 1 - 0.999000159839911 - 0.000997752220497874, 0.95 - 0.0332751934642001 - 0.000997752220497874]
+
+for species_initial, species_initials_value in zip(species_initials, species_initials_values):
+    
+    # print(model_concentration.parameters[species_initial].value==model_concentration.parameters[species_initial].value)
+    
+    model_concentration.parameters[species_initial].value = species_initials_value
+    model_population.parameters[species_initial].value = int(round(species_initials_value * model_population.parameters['omega'].value))
+    
+
+
+model_concentration.initials[0].value.name
+
+
+for parameter in model.parameters:
+    print(parameter.name)
+    print(model.parameters[parameter.name].value==model_concentration.parameters[parameter.name].value)
+    if not model.parameters[parameter.name].value==model_concentration.parameters[parameter.name].value:
+        print(' AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
 
 
 ###############################################################################
@@ -97,36 +129,42 @@ model_population.parameters['b_stress_AKT'].value  = 0.112
 ###############################################################################
 ###############################################################################
 ###############################################################################
+
+conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
+inputs = {}
+inputs['FAK'] = {'4 kPa DMSO': 0.6, '4 kPa ERL': 0.6, '0.6 kPa DMSO': 0.4, '0.6 kPa ERL': 0.4, '55 kPa DMSO': 1.0, '55 kPa ERL': 1.0}
+inputs['ERK'] = {'4 kPa DMSO': 1.0, '4 kPa ERL': 0.2, '0.6 kPa DMSO': 1.0, '0.6 kPa ERL': 0.2, '55 kPa DMSO': 1.0, '55 kPa ERL': 0.2}
+inputs['AKT'] = {'4 kPa DMSO': 1.0, '4 kPa ERL': 0.6, '0.6 kPa DMSO': 0.6, '0.6 kPa ERL': 0.3, '55 kPa DMSO': 1.0, '55 kPa ERL': 0.6}
 
 ###############################################################################
 
 ####Deterministic simulation
 
+condition = '55 kPa DMSO'
+condition = '0.6 kPa DMSO'
+condition = '55 kPa ERL'
 
-model_concentration.parameters['AKT'].value = 1
-model_concentration.parameters['ERK'].value = 1
-model_concentration.parameters['FAK'].value = 1
-model_concentration.parameters['omega'].value = 1
-
+for input_signal in inputs.keys():
+    model_concentration.parameters[input_signal].value = inputs[input_signal][condition]
+    # model.parameters[input_signal].value = inputs[input_signal][condition]
 
 t = np.linspace(0, 1000, 100001)
-
 simres = ScipyOdeSimulator(model_concentration, t).run() 
 yout = simres.all
 
-observables=['obsCycE','obsCdc20']
-
-for obs in range(2) :
-    plt.plot(t,yout[observables[obs]], label=observables[obs], lw=2)
+observables=['obsCycE','obsCdc20', 'obsCycA', 'obsCycB', 'obsp21']
+for obs in range(4) :
+    plt.plot(t, yout[observables[obs]], label=observables[obs], lw=2)
+    print(yout[observables[obs]][0])
 plt.legend(loc=0)
 plt.show()
 
 
 ####Comparison with Matlab deterministic simulation
 
-nmax = 1000
+nmax = 10000
 from pathlib import Path
-fn = Path(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle\comparison_pysb_matlab_5_0-300.pdf').expanduser()
+fn = Path(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle\comparison_pysb_matlab_6_'+ condition.replace(' ', '_') +'_0-'+ str(t[nmax]) + '.pdf').expanduser()
 
 obs = ['obsSkp2', 'obsp21', 'obsp21p', 'obscdh1act', 'obsMyc', 'obsCycD', 'obsCycDp21', 'obspRb', 'obspRbp', 'obsE2F', 'obspRbE2F', 'obsCycE', 'obsCycEp21', 'obsCycA', 'obsCycAp21', 'obsCycB', 'obsCycBp21', 'obsCdc20', 'obsBAX', 'obsBAXmBCL2', 'obsBH3','obsBH3BCL2','obsBAXm','obsBCL2']
 
@@ -134,13 +172,13 @@ fig, axs = plt.subplots(6, 4)
 
 for i in range(4):
     for j in range(6):
-        axs[j, i].plot(t[0:nmax],yout[obs[j+i*6]][0:nmax], label=obs[j+i*6] +' PySB', lw=0.01)
-        axs[j, i].plot(t[0:nmax],y[j+i*6][0:nmax], label=obs[j+i*6] +' Matlab', lw=0.01)
+        axs[j, i].plot(t[0:nmax], yout[obs[j+i*6]][0:nmax], label=obs[j+i*6] +' PySB', lw=0.01)
+        axs[j, i].plot(t[0:nmax], simulation_ode_matlab[condition][j+i*6][0:nmax], label=obs[j+i*6] +' Matlab', lw=0.01)
         axs[j, i].legend(fontsize=2)
 
 for ax in axs.flat:
     ax.label_outer()
-    
+
 plt.savefig(fn, bbox_inches = 'tight')
 
 ###############################################################################
@@ -148,11 +186,12 @@ plt.savefig(fn, bbox_inches = 'tight')
 
 ####Stochastic simulation
 
+condition = '55 kPa DMSO'
 
 
-model_population.parameters['AKT'].value = 200
-model_population.parameters['ERK'].value = 200
-model_population.parameters['FAK'].value = 200
+for input_signal in inputs.keys():
+    model_population.parameters[input_signal].value = inputs[input_signal][condition] * 200
+
 
 t = np.linspace(0, 500, 50001)
 
@@ -162,8 +201,6 @@ yout = simres.observables
 
 observables=['obsCycE','obsCdc20', 'obsCycD']
 observables=['obsCycE','obsCdc20', 'obsCycA', 'obsCycB', 'obsp21']
-#observables=['obsSkp2']
-
 
 for obs in range(len(observables)) :    
     plt.plot(t,yout[observables[obs]], label=observables[obs], lw=2)
@@ -171,33 +208,9 @@ plt.legend(loc=0)
 plt.show()
 
 
-"""
-#save to matlab
-from scipy.io import savemat
-savemat(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\obsCycE.mat', {'obsCycE': yout['obsCycE']})
+####Comparison with Matlab Stochastic simulation
 
-from peakfinder import peakfinder
-(a,b)=peakfinder(yout['obsCycE'], [], 0.2)
-
-
-simres2= sim.run(tspan = t[-1] + t, initials = simres.species[-1])
-yout2 = simres2.observables
-
-for obs in model.observables:    
-    plt.plot(t[-1] + t,yout2[obs.name], label=obs.name, lw=2)
-plt.legend(loc=0)
-plt.show()
-
-
-plt.plot(t[3100:],yout['obsCycE'][3100:], label='Cyclin E', lw=2)
-plt.plot(t[3100:],yout['obsCdc20'][3100:], label='Cdc 20', lw=2)
-plt.legend(loc=0)
-plt.savefig(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\report\figures\stoch_simulations\stoch_sim_param_0.pdf')
-"""
-
-####Comparing
-
-condition = 'DMSO 55kPa'
+condition = '55 kPa DMSO'
 
 from pathlib import Path
 fn = Path(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle\comparison_pysb_matlab_stoch_6_' + condition.replace(' ', '_') +'.pdf').expanduser()

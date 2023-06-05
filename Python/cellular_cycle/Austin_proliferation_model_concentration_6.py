@@ -7,15 +7,13 @@ Title: Austin_proliferation_model
 """
 
 path="/home/jeremie"
-#path=r"C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle"
+#path=r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python"
+import sys
+sys.path.insert(0, path+"/cellular_cycle") #add a pathway to the model
+from Austin_proliferation_ODE_model_6 import model
 
 
 from pysb import * 
-
-import sys
-sys.path.insert(0, path+"/cellular_cycle") #add a pathway to the model
-
-from Austin_proliferation_ODE_model_6 import model
 
 ###Initials
 Parameter('Skp2_0', (0.0199387776457489 * 1))
