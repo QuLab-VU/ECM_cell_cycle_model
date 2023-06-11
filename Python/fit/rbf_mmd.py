@@ -11,25 +11,43 @@ Title: rbf_mmd
 
 import numpy as np
 
+def rbf(X, Y, sigma):
+    Q = np.transpose(np.tile(X.T[:, :, None], (1, 1, Y.shape[0])), (1, 0, 2))
+    R = np.transpose( np.tile(Y.T[:, :, None], (1, 1, X.shape[0])), (2, 0, 1))
+    return np.exp(-np.sum((Q-R)**2, axis=1) / (2 * sigma ** 2))
 
-def rbf(X, Y, sigma=0):
-    a=np.shape(X)
-    b=np.shape(Y)
+def mmd_rbf(X, Y, sigma):
+    m = X.shape[0]
+    n = Y.shape[0]
     
-
-    G=np.square(X).sum(axis=1)
-    H=np.square(Y).sum(axis=1)
+    Kxx = rbf_2(X, X, sigma)
+    Kyy = rbf_2(Y, Y, sigma)
+    Kxy = rbf_2(X, Y, sigma)
     
-    Q=np.tile(G,(a[0],1)).transpose()
-    R=np.tile(H,(b[0],1))
+    np.fill_diagonal(Kxx, 0)
+    np.fill_diagonal(Kyy, 0)
     
-    H= Q+R-2*np.dot(X,Y.transpose())
-    
-    return np.exp(-H/(2*sigma**2))
-    
-    
-def nmmd2_rbf(X,Y,sigma) :
-    a=np.shape(X)
-    return np.sum(rbf(X, X, sigma)+rbf(Y, Y, sigma)-2*rbf(X, Y, sigma))/a[0]
+    return (np.sum(Kxx) / (m * (m - 1)) + np.sum(Kyy) / (n * (n - 1)) - 2 * np.sum(Kxy) / (m * n))
 
 
+
+if __name__ == "__main__":
+    sigma = 1
+    X = np.array([np.random.rand(10)]).transpose()
+    Y = np.array([np.random.rand(20)]).transpose()
+    mmd_rbf(X, Y, sigma)
+    
+    test_10=0
+    for i in range(1000):
+        X = np.array([np.random.rand(10)]).transpose()
+        Y = 4 * np.array([np.random.rand(10)]).transpose()
+        test_10 += mmd_rbf(X, Y, sigma)
+    test_10/1000
+        
+    test_100=0
+    for i in range(1000):
+        X = np.array([np.random.rand(100)]).transpose()
+        Y = 4 * np.array([np.random.rand(100)]).transpose()
+        test_100 += mmd_rbf(X, Y, sigma)
+    test_100/1000
+    

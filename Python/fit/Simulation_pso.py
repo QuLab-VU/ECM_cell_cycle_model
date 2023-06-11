@@ -355,7 +355,7 @@ parameters_longer_sim = frac_prolif_parameters_pso[frac_prolif_parameters_pso['C
 parameters_longer_sim = parameters_longer_sim.sort_values(by=['Cost'])
 
 
-#trying best and worst para,eter
+#trying best and worst parameter
 parameter_vector = parameters_longer_sim[pysb_sampled_parameter_names].to_numpy()[0]
 idx = parameters_longer_sim.index[0]
 cost_function_30_parameters_pso(parameter_vector, '0.' + idx)

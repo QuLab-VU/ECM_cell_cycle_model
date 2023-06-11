@@ -237,7 +237,7 @@ Expression('ks_Skp2_FAK', s * V_s2skp * FAK)
 Expression('kd_Skp2_cdh1', s * V_dskp2 * omega / (( K_dskp2 * omega + obsSkp2 )*( K_cdh1 * omega + obscdh1act)))
 
 ##p21
-Expression('ks_p21', s * v_s1p21 * omega/ (omega**F_n + K_p21fak * FAK**F_n))
+Expression('ks_p21', s * ((v_s1p21 * omega) * (omega**F_n)/ (omega**F_n + K_p21fak * FAK**F_n)))
 
 Expression('ks_p21_E2F', s * v_s2p21*((K_i13 * omega) / (K_i13 * omega + obspRb)) * ((K_i14 * omega) / (K_i14 * omega + obspRbp)))
 Expression('kasso_p21_CycD', s * (k_c1 / omega))
