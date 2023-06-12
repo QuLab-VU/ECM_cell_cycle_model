@@ -6,8 +6,8 @@ Created on Sat May 13 16:35:22 2023
 """
 
 
-#path="/home/jeremie"
-path=r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model"
+path="/home/jeremie"
+#path=r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model"
 
 import sys
 sys.path.insert(0, path+"/Python/cellular_cycle") #add a pathway to the model
@@ -21,6 +21,10 @@ model_population = model
 from cost_function_BngSimulator_low_medium_stiffness_pso import likelihood, prior, posterior
 
 import numpy as np
+
+###############################################################################
+
+pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2", 'v_s1p21', 'F_n', 'K_p21fak', 'a_stress', 'b_stress_AKT', 'b_stress_ERK']
 
 ###############################################################################
 #Changing the parameters:
@@ -71,17 +75,9 @@ for condition, run_time_tmp in zip(conditions, run_times):
     for init_cell_tmp in init_cells:
         name = condition.replace(' ', '_') + "_" + str(init_cell_tmp) + "_initial_cells"
         print(name)
-        
-        init_cell_tmp = 1
-        iteration = 0
-        c = posterior(parameter_vector, condition, [condition], [run_time_tmp], [init_cell_tmp],  [10])
-
-
-
-
-
-
-
+                
+        for iteration in range(10):
+            c = posterior(parameter_vector, 'test_initial_cell_number_' + name , pysb_sampled_parameter_names, [condition], [run_time_tmp], [init_cell_tmp],  [10], True, iteration)
 
 
 

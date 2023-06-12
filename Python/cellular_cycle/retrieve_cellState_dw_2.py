@@ -7,12 +7,11 @@ from peakfinder import peakfinder
 import pandas as pd
 import numpy as np
 from tempfile import TemporaryDirectory
-import matplotlib.pyplot as plt
 
-def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_starting_at_mitosis=True):
+def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_starting_at_mitosis=True, thr = 0.4, omega=200):
+    
     all_prot = np.empty((0,len(cells['molecules'][0])+6)) #cell ind, time, relative time, protein time courses
     index_cell=0 #cell identification nber
-    omega=200
     IMT_eoe_counts = pd.DataFrame(columns=['Starting cell', 'End_of_Expt', 'Death' ,'Birthtime','Lifespan'])
 #    divSum=0;
 #    for ii in range(len(cells['molecules'])):
@@ -32,7 +31,7 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
 #                plt.plot(cells['molecules'][ii]['obsBAXm'][:end_index[-1]])
                 try:
                     # choose threshold values
-                    thr = 0.4
+                    
                     (a,max_tmp_cdc) = peakfinder(cells['molecules'][ii]['obsCdc20'], thr*omega, thr*omega, 1, includeEndpoints=1); #peakfinder parameters, can be changed
                     (a,max_tmp_cycE) = peakfinder(cells['molecules'][ii]['obsCycE'], thr*omega, thr*omega, 1, includeEndpoints=1);
                     

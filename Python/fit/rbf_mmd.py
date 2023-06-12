@@ -20,9 +20,9 @@ def mmd_rbf(X, Y, sigma):
     m = X.shape[0]
     n = Y.shape[0]
     
-    Kxx = rbf_2(X, X, sigma)
-    Kyy = rbf_2(Y, Y, sigma)
-    Kxy = rbf_2(X, Y, sigma)
+    Kxx = rbf(X, X, sigma)
+    Kyy = rbf(Y, Y, sigma)
+    Kxy = rbf(X, Y, sigma)
     
     np.fill_diagonal(Kxx, 0)
     np.fill_diagonal(Kyy, 0)

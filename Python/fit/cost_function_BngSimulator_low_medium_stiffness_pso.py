@@ -32,7 +32,6 @@ from pysb.simulator import BngSimulator
 from pysb.simulator import ScipyOdeSimulator
 import fracprolif as fp
 from rbf_mmd import mmd_rbf
-import random
 from pathlib import Path
 from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
 import re
@@ -51,13 +50,11 @@ traj = sim.run()
 
 omega=200
 
-pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2"]
-
 ###############################################################################
 # Importing data
 
 DATADIR = os.path.dirname(__file__) + "/../../Data/Exp_Cell_Counts"
-DATADIR = os.getcwd() + "/Documents/git_repos/ECM_cell_cycle_model/Data/Exp_Cell_Counts"
+#DATADIR = os.getcwd() + "/Documents/git_repos/ECM_cell_cycle_model/Data/Exp_Cell_Counts"
 filepaths = os.listdir(DATADIR)
 filenames = [f for f in filepaths if re.match(r'^DIP_DS8', f)]
 filepaths = [Path(DATADIR, f) for f in filenames]
@@ -81,7 +78,7 @@ t = np.arange(0,420/3,1/3)
 import glob
 
 IMT_DATADIR = Path(os.path.dirname(__file__) + "/../../Data/Exp_Intermitotic_Times")
-IMT_DATADIR = Path(path + "/Data/Exp_Intermitotic_Times")
+#IMT_DATADIR = Path(path + "/Data/Exp_Intermitotic_Times")
 
 print(IMT_DATADIR)
 file_location = os.path.join(IMT_DATADIR,'*imt_*.csv')
@@ -129,6 +126,8 @@ centers = np.arange(0.5, 100.5, 1)  # histogram bin centers
 
 all_IMTs = all_IMTs[all_IMTs['IMT_t'].notna()]
 
+all_IMTs = all_IMTs[all_IMTs['S-M_t']>0]
+all_IMTs = all_IMTs[all_IMTs['G1_t']>0]
 
 ##############################################################################
 
@@ -154,10 +153,8 @@ def prior(parameter_vector):
 
 ##############################################################################
 
-def likelihood_single_condition(init, run_time, condition, num_condition, number_of_imt_to_sample, chain):
-    
-    print(iteration)
-    
+def likelihood_single_condition(init, run_time, condition, number_of_imt_to_sample, chain, iteration, save=True):
+        
     inputs = {}
     inputs['FAK'] = {'4 kPa DMSO': 0.6, '4 kPa ERL': 0.6, '0.6 kPa DMSO': 0.4, '0.6 kPa ERL': 0.4, '55 kPa DMSO': 1.0, '55 kPa ERL': 1.0}
     inputs['ERK'] = {'4 kPa DMSO': 1.0, '4 kPa ERL': 0.2, '0.6 kPa DMSO': 1.0, '0.6 kPa ERL': 0.2, '55 kPa DMSO': 1.0, '55 kPa ERL': 0.2}
@@ -167,27 +164,27 @@ def likelihood_single_condition(init, run_time, condition, num_condition, number
     stiffness, _, treatment = condition.split(maxsplit=2)  # split the string into two parts
     stiffness = float(stiffness)  # convert the stiffness from string to float
     treatment = treatment.strip()  # remove any leading or trailing white spaces
-    
-    number_of_G1_to_sample = 10
-    number_of_SM_to_sample = 10
-    
+        
     omega=200
     t_sim = np.arange(0,run_time,1/3)
     observed_cells_time = run_time
-    cond_split_DMSO = condition.split(' ')
-    cond_split_DMSO[-1] = 'DMSO'
+
     parameters_sim = {}
     cost = {}
     
+    # FAK, ERK and AKT inputs
+    cond_split = condition.split(' ')
     model_population.parameters['ERK'].value = inputs['ERK'][condition] * omega
     model_population.parameters['FAK'].value = inputs['FAK'][condition] * omega
     model_population.parameters['AKT'].value = inputs['AKT'][condition] * omega
     
+    cond_split_DMSO = condition.split(' ')
+    cond_split_DMSO[-1] = 'DMSO'
     model_concentration.parameters['ERK'].value = inputs['ERK'][' '.join(cond_split_DMSO)] * 1
     model_concentration.parameters['FAK'].value = inputs['FAK'][' '.join(cond_split_DMSO)] * 1
     model_concentration.parameters['AKT'].value = inputs['AKT'][' '.join(cond_split_DMSO)] * 1
     
-        
+    
     ###########################################################################
     (cells, cell_count) = runAKTERK(init, run_time, run_time, model_concentration, model_population, chain, condition);
     
@@ -195,8 +192,8 @@ def likelihood_single_condition(init, run_time, condition, num_condition, number
     print('Cell count')
     print(cell_count)
     
-    # if type(cell_count)==np.ndarray:
-        # np.save(os.path.dirname(__file__) + "/../fit_data/pso/cell_count/cell_count_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", cell_count)
+    if type(cell_count)==np.ndarray and save:
+        np.save(os.path.dirname(__file__) + "/../fit_data/pso/cell_count/cell_count_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", cell_count)
     
     try:
         IMT_eoe_counts = retrieve_cellState(run_time, init, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
@@ -205,7 +202,8 @@ def likelihood_single_condition(init, run_time, condition, num_condition, number
         all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
         mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
         censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
-#        all_events_simulated.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/distribution/Events_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".pkl") #doesn't save all imts, only the cells that are born before 30 hours
+        if save:
+            all_events_simulated.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/distribution/Events_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".pkl") #doesn't save all imts, only the cells that are born before 30 hours
     except:
         pass
 
@@ -213,14 +211,14 @@ def likelihood_single_condition(init, run_time, condition, num_condition, number
     #Extract useful information from the simulations:
     try:
         simulated_IMTs, simulated_SMs, simulated_G1s = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
-#        
-#        np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/G1_distribution_particle_"  + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy",np.array(simulated_g1))
-#        np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/SM_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy",np.array(simulated_sm))
-#        
-#        #save density estimation
-#        x=np.linspace(0, run_time, 360)
-#        y=[RBS(i, np.transpose([mitotic_lifespans.tolist()])) for i in x]
-#        np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distributionparticle_" + str(chain) + "_iteration_" + str(iteration) + '_'.join(cond_split) + "_kde.npy",np.array(y))
+        
+        if save:
+            np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/G1_distribution_particle_"  + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_G1s))
+            np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/SM_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_SMs))
+            #save density estimation
+            x=np.linspace(0, run_time, 360)
+            y=[RBS(i, np.transpose([mitotic_lifespans.tolist()])) for i in x]
+            np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + '_' + '_'.join(cond_split) + "_kde.npy", np.array(y))
     
     except:
         pass
@@ -251,11 +249,16 @@ def likelihood_single_condition(init, run_time, condition, num_condition, number
     ###########################################################################      
     # Compare distributions
     
-    experimental_G1s = all_IMTs[(all_IMTs['Drug']==treatment) & (all_IMTs['Stiffness']==stiffness)]['G1_t']
-    experimental_SMs = all_IMTs[(all_IMTs['Drug']==treatment) & (all_IMTs['Stiffness']==stiffness)]['S-M_t']
+    try:
+        experimental_G1s = all_IMTs[(all_IMTs['Drug']==treatment) & (all_IMTs['Stiffness']==stiffness)]['G1_t']
+        experimental_SMs = all_IMTs[(all_IMTs['Drug']==treatment) & (all_IMTs['Stiffness']==stiffness)]['S-M_t']
+        
+        cost['cost G1 distributions'] = mmd_rbf(np.array([simulated_G1s]).transpose(), np.array([experimental_G1s]).transpose(), 1) #difference between IMT distribution
+        cost['cost S-M distributions'] = mmd_rbf(np.array([simulated_SMs]).transpose(), np.array([experimental_SMs]).transpose(), 1) #difference between IMT distribution
     
-    cost['cost G1 distributions'] = mmd_rbf(np.array([simulated_G1s]).transpose(), np.array([experimental_G1s]).transpose(), 1) #difference between IMT distribution
-    cost['cost S-M distributions'] = mmd_rbf(np.array([simulated_SMs]).transpose(), np.array([experimental_SMs]).transpose(), 1) #difference between IMT distribution
+    except:
+        cost['cost G1 distributions'] = np.inf
+        cost['cost S-M distributions'] = np.inf
     
     ###########################################################################
     # Cost computation: rmse dip rates
@@ -268,6 +271,7 @@ def likelihood_single_condition(init, run_time, condition, num_condition, number
             cell_count_t[(time_tmp_m <= t_sim) & (t_sim < time_tmp_p)] = cell_count_time_tmp
             time_tmp_m = time_tmp_p
         
+        num_condition = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'].index(condition)
         
         DIP_sim = np.log2(cell_count_t/cell_count_t[0])
         cost['cost population dynamics'] = np.sqrt(np.sum((DIP_sim[1:len(t_sim)] - means[num_condition][1:len(t_sim)])**2 / stdevs[num_condition][1:len(t_sim)]**2))/len(t_sim)
@@ -282,13 +286,13 @@ def likelihood_single_condition(init, run_time, condition, num_condition, number
 
 
 
-def likelihood(parameter_vector, chain, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], number_of_imt_to_sample_list = [60, 60, 60, 60, 60, 60]):
+def likelihood(parameter_vector, chain, pysb_sampled_parameter_names, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], number_of_imt_to_sample_list = [60, 60, 60, 60, 60, 60], save=True, iteration=0):
     
     print("The parameters are ")
     print(parameter_vector)
     # np.save(os.path.dirname(__file__) + "/../fit_data/pso/particle_position/parameter_vector_particle_" + str(chain) + "_iteration_" + str(iteration) + ".npy", parameter_vector)
     
-    global model_concentration, model_population, t, means, iteration
+    global model_concentration, model_population, t, means
     
     print(iteration)
     
@@ -304,9 +308,9 @@ def likelihood(parameter_vector, chain, conditions = ['0.6 kPa DMSO', '0.6 kPa E
 ###############################################################################
 ###############################################################################
     
-    for init, run_time, condition, num_condition, number_of_imt_to_sample in zip(init_cells, run_times, conditions, range(6), number_of_imt_to_sample_list):
+    for init, run_time, condition, number_of_imt_to_sample in zip(init_cells, run_times, conditions, number_of_imt_to_sample_list):
         print(condition)
-        parameters_sim_tmp, cost_tmp = likelihood_single_condition(init, run_time, condition, num_condition, number_of_imt_to_sample, chain)
+        parameters_sim_tmp, cost_tmp = likelihood_single_condition(init, run_time, condition, number_of_imt_to_sample, chain, iteration, save)
         
         parameters_sim[condition] = parameters_sim_tmp
         cost[condition] = cost_tmp
@@ -324,15 +328,16 @@ def likelihood(parameter_vector, chain, conditions = ['0.6 kPa DMSO', '0.6 kPa E
     
     frac_prolif_parameters_temp.columns = pd.MultiIndex.from_tuples([("pso", "chain"), ("pso", "iteration")] + [("fractional proliferation model", param_name) for param_name in parameters_sim.keys()] + [("cost", cost_tmp_name) for cost_tmp_name in cost.keys()] + [("model parameters", parameter_name) for parameter_name in pysb_sampled_parameter_names])
     
-#    frac_prolif_parameters_temp.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/cost/parameters_particle_" + str(chain) + "_iteration_" + str(iteration) + "_pso.pkl")   
+    if save:
+        frac_prolif_parameters_temp.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/cost/parameters_particle_" + str(chain) + "_iteration_" + str(iteration) + "_pso.pkl")   
 
     iteration += 1
 
     return 0
 
 
-def posterior(parameter_vector, chain, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], number_of_imt_to_sample_list = [60, 60, 60, 60, 60, 60]): 
-    return prior(parameter_vector) + likelihood(parameter_vector, chain, conditions, run_times, init_cells, number_of_imt_to_sample_list)
+def posterior(parameter_vector, chain, pysb_sampled_parameter_names, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], number_of_imt_to_sample_list = [60, 60, 60, 60, 60, 60], save=True, iteration = 0): 
+    return prior(parameter_vector) + likelihood(parameter_vector, chain, pysb_sampled_parameter_names, conditions, run_times, init_cells, number_of_imt_to_sample_list, save, iteration)
 
 
 
