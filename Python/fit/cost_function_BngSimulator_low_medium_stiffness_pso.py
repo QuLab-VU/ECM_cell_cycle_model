@@ -9,6 +9,9 @@ Created on Wed May 20 10:42:26 2020
 
 import sys
 import os
+import re
+from pathlib import Path
+import glob
 
 sys.path.insert(0, os.path.dirname(__file__) + "/../cellular_cycle")
 sys.path.insert(0, os.path.dirname(__file__) + "/../fit")
@@ -32,9 +35,7 @@ from pysb.simulator import BngSimulator
 from pysb.simulator import ScipyOdeSimulator
 import fracprolif as fp
 from rbf_mmd import mmd_rbf
-from pathlib import Path
 from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
-import re
 
 ###############################################################################
 # Model run check
@@ -55,6 +56,7 @@ omega=200
 
 DATADIR = os.path.dirname(__file__) + "/../../Data/Exp_Cell_Counts"
 #DATADIR = os.getcwd() + "/Documents/git_repos/ECM_cell_cycle_model/Data/Exp_Cell_Counts"
+#DATADIR ='C:\\Users\\Grim.M' + "/Documents/git_repos/ECM_cell_cycle_model/Data/Exp_Cell_Counts"
 filepaths = os.listdir(DATADIR)
 filenames = [f for f in filepaths if re.match(r'^DIP_DS8', f)]
 filepaths = [Path(DATADIR, f) for f in filenames]
@@ -75,7 +77,6 @@ for vals in range(len(all_response)):
   
 t = np.arange(0,420/3,1/3)
 
-import glob
 
 IMT_DATADIR = Path(os.path.dirname(__file__) + "/../../Data/Exp_Intermitotic_Times")
 #IMT_DATADIR = Path(path + "/Data/Exp_Intermitotic_Times")

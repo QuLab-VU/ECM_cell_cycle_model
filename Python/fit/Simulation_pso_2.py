@@ -43,6 +43,9 @@ for key in new_param.keys():
 model_population.parameters['omega'].value = 200
 model_concentration.parameters['omega'].value = 1
 
+
+model_concentration.parameters['v_s1p21'].value
+model_concentration.parameters['v_s1p21'].value
 # Setting initial concentrations
 
 species_initials = ['Skp2_0', 'p21_0', 'p21p_0', 'cdh1act_0', 'cdh1inact_0', 'Myc_0', 'CycD_0', 'CycDp21_0', 'pRb_0', 'pRbp_0', 'E2F_0', 'pRbE2F_0', 'CycE_0', 'CycEp21_0', 'CycA_0', 'CycAp21_0', 'CycB_0', 'CycBp21_0', 'Cdc20_0', 'BAX_0', 'BAXmBCL2_0', 'BH3_0', 'BH3BCL2_0', 'BAXm_0', 'BCL2_0']
@@ -68,7 +71,7 @@ idx = 'original_parameters'
 
 conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
 run_times = [120, 120, 120, 120, 60, 60]
-init_cells = range(10)
+init_cells = range(1, 11)
 
 
 for condition, run_time_tmp in zip(conditions, run_times):
