@@ -32,7 +32,7 @@ def mmd_rbf(X, Y, sigma):
 
 
 if __name__ == "__main__":
-    sigma = 1
+    sigma = 5
     X = np.array([np.random.rand(10)]).transpose()
     Y = np.array([np.random.rand(20)]).transpose()
     mmd_rbf(X, Y, sigma)
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     test_100=0
     for i in range(1000):
         X = np.array([np.random.rand(100)]).transpose()
-        Y = 4 * np.array([np.random.rand(100)]).transpose()
+        Y = 4 * np.array([np.random.rand(20)]).transpose()
         test_100 += mmd_rbf(X, Y, sigma)
     test_100/1000
     

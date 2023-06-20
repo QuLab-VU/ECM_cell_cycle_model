@@ -37,6 +37,8 @@ import fracprolif as fp
 from rbf_mmd import mmd_rbf
 from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
 
+from scipy.stats import multivariate_normal
+
 ###############################################################################
 # Model run check
 
@@ -148,13 +150,25 @@ def RBS(x, x0, sigma = 5) :
 
 ##############################################################################
 
-def prior(parameter_vector):    
-    return 0
+def log_prior(parameter_vector):   
+    mean = np.log10(np.array([1.000e-02, 1.500e+00, 2.700e-01, 3.700e-01, 2.100e-01, 2.500e-01, 2.000e-01, 8.000e-01, 1.000e-01, 8.000e-01, 1.500e+00, 1.800e+01, 1.800e+01, 5.500e-01, 4.000e-01, 2.000e-01, 5.500e-01, 7.000e-01, 5.000e-01, 1.800e+02, 1.000e-02, 2.400e+00, 1.400e-01, 7.500e+01, 5.000e-02, 1.000e-03, 2.500e-02, 3.000e-02, 2.500e+01, 1.000e-02, 7.000e-01, 8.000e+00, 5.000e+00, 6.815e-01, 1.120e-01, 1.110e-02]))
+    variance = 10 * np.ones(len(mean))
+    mvn = multivariate_normal(mean, np.diag(variance))
+    
+    # Calculate the log likelihood for each data point
+    log_likelihoods = mvn.logpdf(parameter_vector)
+    
+    # Calculate the sum of log likelihoods
+    log_likelihood_sum = np.sum(log_likelihoods)
+    
+    return log_likelihood_sum
 
+
+    
 
 ##############################################################################
 
-def likelihood_single_condition(init, run_time, condition, number_of_imt_to_sample, chain, iteration, save=True):
+def log_likelihood_single_condition(init, run_time, condition, chain, iteration, save=True):
         
     inputs = {}
     inputs['FAK'] = {'4 kPa DMSO': 0.6, '4 kPa ERL': 0.6, '0.6 kPa DMSO': 0.4, '0.6 kPa ERL': 0.4, '55 kPa DMSO': 1.0, '55 kPa ERL': 1.0}
@@ -216,10 +230,11 @@ def likelihood_single_condition(init, run_time, condition, number_of_imt_to_samp
         if save:
             np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/G1_distribution_particle_"  + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_G1s))
             np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/SM_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_SMs))
+            np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_IMTs))
             #save density estimation
-            x=np.linspace(0, run_time, 360)
-            y=[RBS(i, np.transpose([mitotic_lifespans.tolist()])) for i in x]
-            np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + '_' + '_'.join(cond_split) + "_kde.npy", np.array(y))
+            # x=np.linspace(0, run_time, 360)
+            # y=[RBS(i, np.transpose([mitotic_lifespans.tolist()])) for i in x]
+           #  np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + '_' + '_'.join(cond_split) + "_kde.npy", np.array(y))
     
     except:
         pass
@@ -287,7 +302,7 @@ def likelihood_single_condition(init, run_time, condition, number_of_imt_to_samp
 
 
 
-def likelihood(parameter_vector, chain, pysb_sampled_parameter_names, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], number_of_imt_to_sample_list = [60, 60, 60, 60, 60, 60], save=True, iteration=0):
+def log_likelihood(parameter_vector, chain, pysb_sampled_parameter_names, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=True, iteration=0):
     
     print("The parameters are ")
     print(parameter_vector)
@@ -309,9 +324,9 @@ def likelihood(parameter_vector, chain, pysb_sampled_parameter_names, conditions
 ###############################################################################
 ###############################################################################
     
-    for init, run_time, condition, number_of_imt_to_sample in zip(init_cells, run_times, conditions, number_of_imt_to_sample_list):
+    for init, run_time, condition in zip(init_cells, run_times, conditions):
         print(condition)
-        parameters_sim_tmp, cost_tmp = likelihood_single_condition(init, run_time, condition, number_of_imt_to_sample, chain, iteration, save)
+        parameters_sim_tmp, cost_tmp = log_likelihood_single_condition(init, run_time, condition, chain, iteration, save)
         
         parameters_sim[condition] = parameters_sim_tmp
         cost[condition] = cost_tmp
@@ -329,16 +344,20 @@ def likelihood(parameter_vector, chain, pysb_sampled_parameter_names, conditions
     
     frac_prolif_parameters_temp.columns = pd.MultiIndex.from_tuples([("pso", "chain"), ("pso", "iteration")] + [("fractional proliferation model", param_name) for param_name in parameters_sim.keys()] + [("cost", cost_tmp_name) for cost_tmp_name in cost.keys()] + [("model parameters", parameter_name) for parameter_name in pysb_sampled_parameter_names])
     
+          
+    
+    
+    return frac_prolif_parameters_temp['cost'].sum(axis=1).values[0], frac_prolif_parameters_temp
+
+
+def log_posterior(parameter_vector, chain, pysb_sampled_parameter_names, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=True, iteration = 0): 
+    
+    prior = - log_prior(parameter_vector)
+    ll, frac_prolif_parameters_temp = log_likelihood(10**parameter_vector, chain, pysb_sampled_parameter_names, conditions, run_times, init_cells, save, iteration)
+    frac_prolif_parameters_temp[('cost', '- log prior')] = prior
     if save:
-        frac_prolif_parameters_temp.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/cost/parameters_particle_" + str(chain) + "_iteration_" + str(iteration) + "_pso.pkl")   
-
-    iteration += 1
-
-    return 0
-
-
-def posterior(parameter_vector, chain, pysb_sampled_parameter_names, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], number_of_imt_to_sample_list = [60, 60, 60, 60, 60, 60], save=True, iteration = 0): 
-    return prior(parameter_vector) + likelihood(parameter_vector, chain, pysb_sampled_parameter_names, conditions, run_times, init_cells, number_of_imt_to_sample_list, save, iteration)
+        frac_prolif_parameters_temp.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/cost/parameters_particle_" + str(chain) + "_iteration_" + str(iteration) + "_pso.pkl") 
+    return prior + ll
 
 
 
