@@ -50,7 +50,7 @@ for condition in conditions[:]:
                 all_events_tmp = pd.read_pickle(path_distribution + "\Events_particle_test_initial_cell_number_" + condition.replace(" ", "_" ) + '_' + str(init_cell_number) + '_initial_cells_iteration_' + str(i) + '_' + condition.replace(" ", "_" ) + ".pkl")
                 time_dict['IMT'][condition][init_cell_number] += [all_events_tmp['Lifespan'][all_events_tmp['event']=='mitosis'].to_list()]
             except:
-                IMT_dict[condition][init_cell_number]  +=[[]]
+                time_dict['IMT'][condition][init_cell_number]+=[[]]
 
 frac_prolif_parameters_pso_initial_cell = pd.concat(frames, sort=False)
 
@@ -71,6 +71,7 @@ def import_data_pso(dimensions,iterations, path_pso):
 
             filename = '/parameters_particle_' + str(chain) + "_iteration_" + str(iteration) + "_pso.pkl"
             frac_prolif_parameters_temp = pd.read_pickle(path_cost + filename)
+        
             frames += [frac_prolif_parameters_temp]
             for condition in conditions:
                 try:
@@ -364,10 +365,9 @@ def figure_pso_cell_count(frac_prolif_parameters_pso, cell_count_dict, condition
 def plot_distributions_cost_pso(conditions, time_dict_pso, cell_numbers, frac_prolif_parameters_pso_initial_cell, all_IMTs, sigma = 1, colorcode = 'Initial Cell Number'):
     costs_array = np.array([frac_prolif_parameters_pso[('cost', 'cost ' + cell_phase + ' distributions ' + condition)].to_numpy() for condition in conditions for cell_phase in ['G1', 'S-M']])
     
-    normalize = mcolors.Normalize(vmin=vmin, vmax=vmax)
-
     vmax = np.nanmax(costs_array)
     vmin = min(np.nanmin(costs_array), 0)
+    normalize = mcolors.Normalize(vmin=vmin, vmax=vmax)
 
     g1_min = sm_min = imt_min = 0
     g1_max = 80
@@ -450,14 +450,13 @@ dimensions = 35
 iterations = 80
 path_pso = r'C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\model6'
 
-frac_prolif_parameters_pso, cell_count_dict_pso, time_dict_pso = import_data_pso(dimensions,iterations, path)
+frac_prolif_parameters_pso, cell_count_dict_pso, time_dict_pso = import_data_pso(dimensions, iterations, path_pso)
 
 time_dict_pso = time_dict
 cell_count_dict_pso = cell_count_dict
 
-figure_initial_cell_number_cell_count(cell_count_dict, conditions, run_times, means, stdevs, cell_numbers)
+figure_pso_cell_count(frac_prolif_parameters_pso, cell_count_dict, conditions, run_times, means, stdevs)
 
-
-plot_distributions_cost(conditions, time_dict, cell_numbers, frac_prolif_parameters_pso_initial_cell, all_IMTs, sigma = 4, colorcode = 'Initial Cell Number')
+plot_distributions_cost_pso(conditions, time_dict, cell_numbers, frac_prolif_parameters_pso_initial_cell, all_IMTs, sigma = 4, colorcode = 'Initial Cell Number')
 
 
