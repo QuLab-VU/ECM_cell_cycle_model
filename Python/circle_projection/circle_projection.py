@@ -6,8 +6,7 @@ Created on Fri Jul  7 22:54:04 2023
 @author: jeremie
 """
 
-
-
+from sklearn.decomposition import PCA
 import torch
 import torch.nn as nn
 import numpy as np
@@ -17,7 +16,7 @@ import matplotlib.pyplot as plt
 class LinearTransform(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(LinearTransform, self).__init__()
-        self.A = nn.Parameter(torch.randn(input_dim, output_dim)/6)
+        self.A = nn.Parameter(torch.randn(input_dim, output_dim)/3)
 
     def forward(self, x):
         projected_points = torch.matmul(x, self.A)
@@ -30,13 +29,14 @@ class LinearTransform(nn.Module):
         cost = torch.norm(projected_points - normalized_projected_points)
         return cost
 
-def plot_projection(projected_points, time=None, title="Linear projection in 2D"):
-    # Set the seed for reproducibility
-    np.random.seed(42)
+def plot_projection(projected_points, time=None, ax=None, limits=None, title=None):
+    if ax is None:
+        ax = plt.gca()
 
-    # Check if time is provided
-    if time is not None and len(time) != projected_points.shape[0]:
-        raise ValueError("The length of time should match the number of projected points.")
+    if title is not None:
+        ax.set_title(title)
+
+
 
     # Convert the projected points array to a tensor
     projected_points_tensor = torch.Tensor(projected_points)
@@ -52,38 +52,46 @@ def plot_projection(projected_points, time=None, title="Linear projection in 2D"
 
     # Plot the projected points using scatter
     if time is not None:
-        plt.scatter(projected_points[:, 0], projected_points[:, 1], label='Projected Points', s=5, c=time, cmap='viridis')
-        plt.colorbar(label='Time')
+        sc = ax.scatter(projected_points[:, 0], projected_points[:, 1], s=5, c=time, cmap='viridis')
+        fig = ax.get_figure()
+        cbar = fig.colorbar(sc, ax=ax)
+        cbar.set_label('Time')
     else:
-        plt.scatter(projected_points[:, 0], projected_points[:, 1], label='Projected Points', s=5, c='blue')
+        ax.scatter(projected_points[:, 0], projected_points[:, 1], label='Projected Points', s=5, c='blue')
+
 
     # Plot the normalized projected points using scatter
-    plt.scatter(normalized_projected_points[:, 0], normalized_projected_points[:, 1],
+    ax.scatter(normalized_projected_points[:, 0], normalized_projected_points[:, 1],
                 label='Normalized Projected Points', s=5, c='red')
 
     # Plot lines between projected points and normalized projected points
     for i in range(projected_points.shape[0]):
-        plt.plot([projected_points[i, 0], normalized_projected_points[i, 0]],
+        ax.plot([projected_points[i, 0], normalized_projected_points[i, 0]],
                  [projected_points[i, 1], normalized_projected_points[i, 1]],
                  color='gray', alpha=0.3)
 
-    # Set x and y axes to have the same scale
-    plt.axis('equal')
+
 
     # Plot a circle with center (0, 0) and radius 1
     theta = np.linspace(0, 2 * np.pi, 100)
     x = np.cos(theta)
     y = np.sin(theta)
-    plt.plot(x, y, 'r--')
+    ax.plot(x, y, 'r--')
 
-    plt.title(title)
-    plt.xlabel("Dimension 1")
-    plt.ylabel("Dimension 2")
-    plt.legend()
+    ax.set_xlabel("Dimension 1")
+    ax.set_ylabel("Dimension 2")
+    ax.legend()
 
+    ax.axis('equal')
+    if limits is not None:
+        print(limits)
+        ax.set_xlim(limits)
+        ax.set_ylim(limits)
+        ax.set_xbound(lower=limits[0], upper=limits[1])
+        ax.set_ybound(lower=limits[0], upper=limits[1])
+        ax.set_aspect('equal', adjustable='box')
 
-
-def plot_projection_before_after_optimisation(initial_projection, final_projection, time=None):
+def plot_projection_before_after_optimisation(initial_projection, final_projection, pca_projection, time=None):
     # Set the seed for reproducibility
     np.random.seed(42)
 
@@ -92,27 +100,29 @@ def plot_projection_before_after_optimisation(initial_projection, final_projecti
         raise ValueError("The length of time should match the number of projected points.")
 
     # Get the x and y limits for both initial and final projections
-    x_limits = [min(np.min(initial_projection[:, 0]), np.min(final_projection[:, 0])),
-                max(np.max(initial_projection[:, 0]), np.max(final_projection[:, 0]))]
-    y_limits = [min(np.min(initial_projection[:, 1]), np.min(final_projection[:, 1])),
-                max(np.max(initial_projection[:, 1]), np.max(final_projection[:, 1]))]
+    x_limits = [min(np.min(initial_projection[:, 0]), np.min(final_projection[:, 0]), np.min(pca_projection[:, 0])),
+                max(np.max(initial_projection[:, 0]), np.max(final_projection[:, 0]), np.max(pca_projection[:, 0]))]
+    y_limits = [min(np.min(initial_projection[:, 1]), np.min(final_projection[:, 1]), np.min(pca_projection[:, 1])),
+                max(np.max(initial_projection[:, 1]), np.max(final_projection[:, 1]), np.max(pca_projection[:, 1]))]
+    # limits = [1.1 * min(x_limits[0], y_limits[0]), 1.1 * max(x_limits[1], y_limits[1])]
 
-    plt.figure(figsize=(12, 6))
-    plt.subplot(1, 2, 1)
-    plot_projection(initial_projection, time, title="Linear transformation before optimisation")
-    plt.xlim(x_limits)
-    plt.ylim(y_limits)
+    limits = [-1.1 * max(abs(x_limits[0]), abs(x_limits[1]), abs(y_limits[0]), abs(y_limits[1])),
+              1.1 * max(abs(x_limits[0]), abs(x_limits[1]), abs(y_limits[0]), abs(y_limits[1]))]
 
-    # Plot the final projection
-    plt.subplot(1, 2, 2)
-    plot_projection(final_projection, time, title="Linear transformation after optimisation")
+    fig, axs = plt.subplots(1, 3, figsize=(20, 6))
 
-    # Set the same x and y limits for both subplots
-    plt.xlim(x_limits)
-    plt.ylim(y_limits)
+    axs[0].set_title("Linear transformation before optimization")
+    sc = plot_projection(initial_projection, time, ax=axs[0], limits=limits)
 
-    plt.tight_layout()
+    axs[1].set_title("Linear transformation after optimization")
+    sc = plot_projection(final_projection, time, ax=axs[1], limits=limits)
+
+    axs[2].set_title("PCA linear projection")
+    sc = plot_projection(pca_projection, time, ax=axs[2], limits=limits)
+
+    fig.tight_layout()
     plt.show()
+
 
 # Perform the linear transformation using the forward method
 def optimize_linear_transform(points, time=None):
@@ -175,7 +185,10 @@ def optimize_linear_transform(points, time=None):
     final_projection = linear_transform(points_tensor).detach().numpy()
     plot_projection(final_projection, time)
     plt.show()
-    plot_projection_before_after_optimisation(initial_projection, final_projection, time)
+
+    pca_projection = PCA(n_components=2).fit_transform(points)
+
+    plot_projection_before_after_optimisation(initial_projection, final_projection, pca_projection, time)
     # Access the updated matrix A
     updated_A = linear_transform.A
 
@@ -197,9 +210,10 @@ np.random.seed(42)
 num_points = 100
 time_start = 0
 time_end = 0.3 * np.pi
-num_dimensions = 4
+num_dimensions = 20
 period = 2 * np.pi
-noise_std = 0.4
+noise_std = 0.5
+amp = 0.6
 # Generate time points
 time_points = np.linspace(time_start, time_end, num_points)
 
@@ -209,7 +223,7 @@ phases = np.random.uniform(low=0, high=2 * np.pi, size=num_dimensions)
 # Generate points from the multidimensional sinusoidal function
 points = []
 for t in time_points:
-    point = 2 * np.sin(period * t + phases) + np.random.normal(0, noise_std, size=num_dimensions)
+    point = amp * np.sin(period * t + phases) + np.random.normal(0, noise_std, size=num_dimensions)
     points.append(point)
 points = np.array(points)
 optimize_linear_transform(points, time=time_points)
