@@ -3,7 +3,7 @@
 ### Creating conda env
 To create a conda environment to run umap-generating code, use the following command:  
 
-`conda create --file Python/ECM_model_env.yaml`  
+`conda env create -f ./Python/ECM_model_env.yaml`  
 _(Assumes you are in the `ECM_cell_cycle_model` top directory.)_
 
   
