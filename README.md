@@ -3,20 +3,14 @@
 ### Creating conda env
 To create a conda environment to run umap-generating code, use the following command:  
 
-`conda create -n ECM_model -c conda-forge umap-learn python=3.8 seaborn matplotlib pandas joblib numpy bokeh jupyter jupyterlab cython`
-  
+`conda create --file Python/ECM_model_env.yaml`  
+_(Assumes you are in the `ECM_cell_cycle_model` top directory.)_
 
+  
 Activate the new environment:
 
 `conda activate ECM_model`  
 
-Add the pysb module:
-  
-`conda install -c alubbock pysb`  
-
-Add the sobol_seq module:
-
-`pip install sobol-seq`
 
 To allow access in JupyterHub server:
 

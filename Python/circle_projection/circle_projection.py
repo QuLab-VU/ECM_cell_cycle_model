@@ -195,35 +195,35 @@ def optimize_linear_transform(points, time=None):
     print("Updated Matrix A:")
     print(updated_A)
 
+if __name__ == '__main__':
+    # Generate 100 points in 10 dimensions
+    np.random.seed(42)  # Set the random seed for reproducibility
+    m = 100  # Number of points
+    n = 40  # Number of dimensions
+    points = np.random.randn(m, n)/2
 
-# Generate 100 points in 10 dimensions
-np.random.seed(42)  # Set the random seed for reproducibility
-m = 100  # Number of points
-n = 40  # Number of dimensions
-points = np.random.randn(m, n)/2
-
-optimize_linear_transform(points, time=None)
+    optimize_linear_transform(points, time=None)
 
 
-#
-np.random.seed(42)
-num_points = 100
-time_start = 0
-time_end = 0.3 * np.pi
-num_dimensions = 20
-period = 2 * np.pi
-noise_std = 0.5
-amp = 0.6
-# Generate time points
-time_points = np.linspace(time_start, time_end, num_points)
+    #
+    np.random.seed(42)
+    num_points = 100
+    time_start = 0
+    time_end = 0.3 * np.pi
+    num_dimensions = 20
+    period = 2 * np.pi
+    noise_std = 0.5
+    amp = 0.6
+    # Generate time points
+    time_points = np.linspace(time_start, time_end, num_points)
 
-# Generate phases for each dimension
-phases = np.random.uniform(low=0, high=2 * np.pi, size=num_dimensions)
+    # Generate phases for each dimension
+    phases = np.random.uniform(low=0, high=2 * np.pi, size=num_dimensions)
 
-# Generate points from the multidimensional sinusoidal function
-points = []
-for t in time_points:
-    point = amp * np.sin(period * t + phases) + np.random.normal(0, noise_std, size=num_dimensions)
-    points.append(point)
-points = np.array(points)
-optimize_linear_transform(points, time=time_points)
+    # Generate points from the multidimensional sinusoidal function
+    points = []
+    for t in time_points:
+        point = amp * np.sin(period * t + phases) + np.random.normal(0, noise_std, size=num_dimensions)
+        points.append(point)
+    points = np.array(points)
+    optimize_linear_transform(points, time=time_points)
