@@ -104,6 +104,18 @@ parameter_vector
 10**sample
 ###############################################################################
 
+pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2", 'v_s1p21', 'F_n', 'K_p21fak', 'a_stress', 'b_stress_AKT', 'b_stress_ERK']
+conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
+run_times = [120, 120, 120, 120, 60, 60]
+init_cells = (5*np.ones(6)).astype(int)
+chain = 0
+save=True
+
+
+cost = log_posterior(np.log10(np.array(parameter_vector)), 'original_parameters', pysb_sampled_parameter_names, conditions, run_times, init_cells, save, 'original_parameters')
+
+###############################################################################
+
 def cost_function(parameter_vectors):
     pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2", 'v_s1p21', 'F_n', 'K_p21fak', 'a_stress', 'b_stress_AKT', 'b_stress_ERK']
     conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
