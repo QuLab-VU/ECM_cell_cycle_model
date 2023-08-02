@@ -111,14 +111,16 @@ def plot_projection_before_after_optimisation(initial_projection, final_projecti
 
     fig, axs = plt.subplots(1, 3, figsize=(20, 6))
 
+    coeff_corr = np.sum(np.linalg.norm(final_projection, axis=1))/np.sum(np.linalg.norm(initial_projection, axis=1))
     axs[0].set_title("Linear transformation before optimization")
-    sc = plot_projection(initial_projection, time, ax=axs[0], limits=limits)
+    sc = plot_projection(coeff_corr * initial_projection, time, ax=axs[0], limits=limits)
 
     axs[1].set_title("Linear transformation after optimization")
     sc = plot_projection(final_projection, time, ax=axs[1], limits=limits)
 
+    coeff_corr = np.sum(np.linalg.norm(final_projection, axis=1))/np.sum(np.linalg.norm(pca_projection, axis=1))
     axs[2].set_title("PCA linear projection")
-    sc = plot_projection(pca_projection, time, ax=axs[2], limits=limits)
+    sc = plot_projection(coeff_corr * pca_projection, time, ax=axs[2], limits=limits)
 
     fig.tight_layout()
     plt.show()
@@ -196,7 +198,7 @@ def optimize_linear_transform(points, time=None):
     print(updated_A)
 
 
-# Generate 100 points in 10 dimensions
+# Generate 100 points in 40 dimensions
 np.random.seed(42)  # Set the random seed for reproducibility
 m = 100  # Number of points
 n = 40  # Number of dimensions
@@ -210,9 +212,9 @@ np.random.seed(42)
 num_points = 100
 time_start = 0
 time_end = 0.3 * np.pi
-num_dimensions = 20
+num_dimensions = 30
 period = 2 * np.pi
-noise_std = 0.5
+noise_std = 0.3
 amp = 0.6
 # Generate time points
 time_points = np.linspace(time_start, time_end, num_points)

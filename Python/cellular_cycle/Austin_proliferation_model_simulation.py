@@ -7,18 +7,24 @@ Title: Austin_proliferation_model_simulation
 """
 ###############################################################################
 
-#path="/home/jeremie"
-path=r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model"
-
-import sys
-sys.path.insert(0, path+"/Python/cellular_cycle") #add a pathway to the model
-sys.path.insert(0, path+"/Python/fit") #add a pathway to the model
+# path="/home/jeremie"
+# path=r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model"
+#
+# import sys
+# sys.path.insert(0, path+"/Python/cellular_cycle") #add a pathway to the model
+# sys.path.insert(0, path+"/Python/fit") #add a pathway to the model
+# Get current path
+import os
+path = os.getcwd()
 
 from Austin_proliferation_model_concentration_6 import model
 model_concentration = model
-from Austin_proliferation_model_population_6 import model
+
+from Austin_proliferation_model_6 import model
 model_population = model
 
+import pandas as pd
+pass
 #model_population = model
 #del model
 """
@@ -48,18 +54,18 @@ import matplotlib.pyplot as plt
 ###############################################################################
 #Compare with matlab simulations
 
-simulation_ode_matlab = {}
-simulation_ode_matlab['55 kPa DMSO'] = np.genfromtxt(path + '/Matlab/v2/ode_100_100_100.csv', delimiter=',').T
-simulation_ode_matlab['55 kPa ERL'] = np.genfromtxt(path + '/Matlab/v2/ode_060_020_100.csv', delimiter=',').T
-simulation_ode_matlab['4 kPa DMSO'] = np.genfromtxt(path + '/Matlab/v2/ode_100_100_060.csv', delimiter=',').T
-simulation_ode_matlab['0.6 kPa DMSO'] = np.genfromtxt(path + '/Matlab/v2/ode_060_100_040.csv', delimiter=',').T
+# simulation_ode_matlab = {}
+# simulation_ode_matlab['55 kPa DMSO'] = np.genfromtxt(path + '/../../Matlab/v2/ode_100_100_100.csv', delimiter=',').T
+# simulation_ode_matlab['55 kPa ERL'] = np.genfromtxt(path + '/../../Matlab/v2/ode_060_020_100.csv', delimiter=',').T
+# simulation_ode_matlab['4 kPa DMSO'] = np.genfromtxt(path + '/../../Matlab/v2/ode_100_100_060.csv', delimiter=',').T
+# simulation_ode_matlab['0.6 kPa DMSO'] = np.genfromtxt(path + '/../../Matlab/v2/ode_060_100_040.csv', delimiter=',').T
 
 
-stoch_run = {}
-for file_tmp, condition in zip(['dmso_long_4_29_1_1', 'dmso_long_4_29_2_1', 'dmso_long_4_29_3_1', 'erl_long_4_29_1_1', 'erl_long_4_29_2_1', 'erl_long_4_29_3_1'], ['06 kPa DMSO', '4 kPa DMSO', '55 kPa DMSO', '06 kPa ERL', '4 kPa ERL', '55 kPa ERL']):
-    stoch_run[condition] = np.genfromtxt(r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\matlab_runs/" +  file_tmp + ".txt", delimiter=',', skip_footer=450000).T
-
-plt.plot(stoch_run['55 kPa DMSO'][3, :10000])
+# stoch_run = {}
+# for file_tmp, condition in zip(['dmso_long_4_29_1_1', 'dmso_long_4_29_2_1', 'dmso_long_4_29_3_1', 'erl_long_4_29_1_1', 'erl_long_4_29_2_1', 'erl_long_4_29_3_1'], ['06 kPa DMSO', '4 kPa DMSO', '55 kPa DMSO', '06 kPa ERL', '4 kPa ERL', '55 kPa ERL']):
+#     stoch_run[condition] = np.genfromtxt(r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\matlab_runs/" +  file_tmp + ".txt", delimiter=',', skip_footer=450000).T
+#
+# plt.plot(stoch_run['55 kPa DMSO'][3, :10000])
 
 
 
@@ -73,7 +79,7 @@ import pandas as pd
 #change the model parameters of the model if needed
 omega = 200
 #new_param = pd.read_csv(path + "/umap_window/parameters.csv")
-new_param = pd.read_csv(path + "/Matlab/v2/parameters.csv")
+new_param = pd.read_csv(path + "/../../Matlab/v2/parameters.csv")
 del new_param['Stress']
 for key in new_param.keys():
     try:
@@ -106,9 +112,6 @@ species_initials = ['Skp2_0', 'p21_0', 'p21p_0', 'cdh1act_0', 'cdh1inact_0', 'My
 species_initials_values = [0.0199387776457489, 0.0212324326339528, 0.104907517295920, 0.970596980815461, 1-0.970596980815461, 0.321067821067829, 0.175953608509162, 0.0138939800293163, 0.301757475166483, 0.545620559818762, 0.0403080965235495, 0.554487916752975, 0.0640517424993558, 0.00487528808175496, 0.0182005140710040, 0.00234453838504852, 0.0234757871244827, 0.00435874152378834, 0.0204771947463057, 0.999000159839911, 0.000997752220497874, 5.81398691338436e-05, 0.0332751934642001, 1 - 0.999000159839911 - 0.000997752220497874, 0.95 - 0.0332751934642001 - 0.000997752220497874]
 
 for species_initial, species_initials_value in zip(species_initials, species_initials_values):
-    
-    # print(model_concentration.parameters[species_initial].value==model_concentration.parameters[species_initial].value)
-    
     model_concentration.parameters[species_initial].value = species_initials_value
     model_population.parameters[species_initial].value = int(round(species_initials_value * model_population.parameters['omega'].value))
 
@@ -146,16 +149,29 @@ condition = '55 kPa ERL'
 
 for input_signal in inputs.keys():
     model_concentration.parameters[input_signal].value = inputs[input_signal][condition]
+    model_population.parameters[input_signal].value = inputs[input_signal][condition] * model_population.parameters['omega'].value
     # model.parameters[input_signal].value = inputs[input_signal][condition]
 
 t = np.linspace(0, 1000, 100001)
-simres = ScipyOdeSimulator(model_concentration, t).run() 
+t = np.linspace(0, 100, 10001)
+simres = ScipyOdeSimulator(model_concentration, t).run()
 yout = simres.all
 
 observables=['obsCycE','obsCdc20', 'obsCycA', 'obsCycB', 'obsp21']
 for obs in range(4) :
     plt.plot(t, yout[observables[obs]], label=observables[obs], lw=2)
     print(yout[observables[obs]][0])
+plt.legend(loc=0)
+plt.show()
+
+
+simres = ScipyOdeSimulator(model_population, t).run()
+yout_pop = simres.all
+
+observables=['obsCycE','obsCdc20', 'obsCycA', 'obsCycB', 'obsp21']
+for obs in range(4) :
+    plt.plot(t, yout_pop[observables[obs]]/model_population.parameters['omega'].value, label=observables[obs], lw=2)
+    print(yout_pop[observables[obs]][0])
 plt.legend(loc=0)
 plt.show()
 
@@ -244,128 +260,125 @@ plt.savefig(fn, bbox_inches='tight')
 ###############################################################################
 ###############################################################################
 ###############################################################################
-"""
 
-import math
+#
+# import math
+#
+# def RBS(x,x0,sigma) :
+#     observations , dimensions= np.shape(x0)
+#     s=0
+#     for i in range(observations):
+#         s+=math.exp(-np.linalg.norm(x-x0[i])**2/(2*sigma**2)) / (sigma*math.sqrt(2*math.pi))
+#     if observations != 0:
+#         return s/observations
+#     else:
+#         return s
+#
+#
+# from pysb.simulator import BngSimulator
+# from SMs_G1s_simulation_BngSimulator import IMTs
+# from runStochCell import runStochcell
+#
+#
+# tmp_t=pl.linspace(0, 4000, 8000)
+# sim = BngSimulator(model_population, tspan=tmp_t, verbose=True)
+# traj = sim.run()
+#
+# variable_range = runStochcell(model_concentration)
+#
+#
+# ini={}
+# print(len(variable_range['obsBCL2']));
+# a=np.random.randint(len(variable_range['obsBCL2']))
+# for var in list(variable_range.keys()) :
+#     ini[var] = [round(variable_range[var][a]*200)]
+#
+# Initial=[]
+# for j in ini:
+#     Initial=Initial+[ini[j][-1]]
+# initials=np.array(Initial)
+#
+# (a,b) = IMTs(tmp_t, initials, model_population)
+#
+# sigma=2
+# x=np.linspace(0,80,800)
+# y_sim=[RBS(i,np.transpose(np.array([b])),sigma) for i in x]
+# # Plot the KDE as fitted using the default arguments
+# bins_list = np.linspace(0,90,25)
+# plt.plot(x, y_sim, lw=3, label = "G1 simulations")
+# plt.legend(loc='best')
+#
+# plt.savefig(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\report\figures\stoch_simulations\distrib_G1.pdf')
+#
+#
+# sigma=2
+# x=np.linspace(0,80,800)
+# y_sim=[RBS(i,np.transpose(np.array([a])),sigma) for i in x]
+# # Plot the KDE as fitted using the default arguments
+# bins_list = np.linspace(0,90,25)
+# plt.plot(x, y_sim, lw=3, label = "S-M simulations")
+# plt.legend(loc='best')
+#
+# plt.savefig(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\report\figures\stoch_simulations\distrib_SM.pdf')
+#
 
-def RBS(x,x0,sigma) :
-    observations , dimensions= np.shape(x0)
-    s=0
-    for i in range(observations):
-        s+=math.exp(-np.linalg.norm(x-x0[i])**2/(2*sigma**2)) / (sigma*math.sqrt(2*math.pi))
-    if observations != 0:
-        return s/observations
-    else:
-        return s
-    
-    
-from pysb.simulator import BngSimulator
-from SMs_G1s_simulation_BngSimulator import IMTs
-from runStochCell import runStochcell
-
-
-tmp_t=pl.linspace(0, 4000, 8000)
-sim = BngSimulator(model_population, tspan=tmp_t, verbose=True)
-traj = sim.run()
-
-variable_range = runStochcell(model_concentration)
-
-
-ini={}
-print(len(variable_range['obsBCL2']));
-a=np.random.randint(len(variable_range['obsBCL2']))
-for var in list(variable_range.keys()) :
-    ini[var] = [round(variable_range[var][a]*200)]
-    
-Initial=[]
-for j in ini:
-    Initial=Initial+[ini[j][-1]]
-initials=np.array(Initial)
-        
-(a,b) = IMTs(tmp_t, initials, model_population)
-
-sigma=2
-x=np.linspace(0,80,800)
-y_sim=[RBS(i,np.transpose(np.array([b])),sigma) for i in x]    
-# Plot the KDE as fitted using the default arguments
-bins_list = np.linspace(0,90,25)
-plt.plot(x, y_sim, lw=3, label = "G1 simulations")
-plt.legend(loc='best')
-
-plt.savefig(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\report\figures\stoch_simulations\distrib_G1.pdf')
-
-
-sigma=2
-x=np.linspace(0,80,800)
-y_sim=[RBS(i,np.transpose(np.array([a])),sigma) for i in x]    
-# Plot the KDE as fitted using the default arguments
-bins_list = np.linspace(0,90,25)
-plt.plot(x, y_sim, lw=3, label = "S-M simulations")
-plt.legend(loc='best')
-
-plt.savefig(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\report\figures\stoch_simulations\distrib_SM.pdf')
-
-
-"""
-
-"""
 ####################################
 #find differences with matlab
+#
+# from numpy import diff
+# observables=['obsCycE','obsCdc20']
+# dt = t[1] - t[0]
+#
+# y = yout[observables[obs]]
+# dy = diff(y)/dt
+#
+# derivate={}
+#
+# for o in range(len(model_concentration.observables)):
+#     model_concentration.observables[o].name
+#
+#     dt = t[1] - t[0]
+#     y = yout[model_concentration.observables[o].name]
+#     dy = diff(y)/dt
+#     derivate[model_concentration.observables[o].name]=dy[0]
+#
+#
+#
+# V_1Mb=model_concentration.parameters['V_1Mb'].value
+# V_2Mb=model_concentration.parameters['V_2Mb'].value
+# K_ie=model_concentration.parameters['K_ie'].value
+# K_ib=model_concentration.parameters['K_ib'].value
+# b=model_concentration.parameters['b'].value
+# b2=model_concentration.parameters['b2'].value
+# K_1Mb=model_concentration.parameters['K_1Mb'].value
+# K_2Mb=model_concentration.parameters['K_2Mb'].value
+# V_1cdc20=model_concentration.parameters['V_1cdc20'].value
+# K_1cdc20=model_concentration.parameters['K_1cdc20'].value
+# V_2cdc20=model_concentration.parameters['V_2cdc20'].value
+# K_2cdc20=model_concentration.parameters['K_2cdc20'].value
+# CycB_tot=model_concentration.parameters['CycB_tot'].value
+# s=model_concentration.parameters['s'].value
+# k_c7=model_concentration.parameters['k_c7'].value
+# k_c8=model_concentration.parameters['k_c8'].value
+# s=model_concentration.parameters['s'].value
+#
+# obsCycB=yout['obsCycB'][0]
+# obsCycE=yout['obsCycE'][0]
+# obsCycA=yout['obsCycA'][0]
+# obsCycBp21=yout['obsCycBp21'][0]
+# obsp21=yout['obsp21'][0]
+# obsCdc20=yout['obsCdc20'][0]
+#
+#
+#
+# from scipy.io import loadmat
+# y = loadmat('C:/Users/Grim.M/Ecole/ens/Master/S2/Stage/Code/v1_test/cdc20.mat')
+# L=np.transpose(y['z'])
+# l=L.tolist()[0]
+#
+# plt.plot(t, l)
+# plt.plot(t, yout['obsCdc20'], label='obsCdc20', lw=2)
 
-from numpy import diff
-observables=['obsCycE','obsCdc20']
-dt = t[1] - t[0]
-
-y = yout[observables[obs]]
-dy = diff(y)/dt
-
-derivate={}
-
-for o in range(len(model_concentration.observables)):
-    model_concentration.observables[o].name
-    
-    dt = t[1] - t[0]
-    y = yout[model_concentration.observables[o].name]
-    dy = diff(y)/dt
-    derivate[model_concentration.observables[o].name]=dy[0]
-    
-
-
-V_1Mb=model_concentration.parameters['V_1Mb'].value
-V_2Mb=model_concentration.parameters['V_2Mb'].value
-K_ie=model_concentration.parameters['K_ie'].value
-K_ib=model_concentration.parameters['K_ib'].value
-b=model_concentration.parameters['b'].value
-b2=model_concentration.parameters['b2'].value
-K_1Mb=model_concentration.parameters['K_1Mb'].value
-K_2Mb=model_concentration.parameters['K_2Mb'].value
-V_1cdc20=model_concentration.parameters['V_1cdc20'].value
-K_1cdc20=model_concentration.parameters['K_1cdc20'].value
-V_2cdc20=model_concentration.parameters['V_2cdc20'].value
-K_2cdc20=model_concentration.parameters['K_2cdc20'].value
-CycB_tot=model_concentration.parameters['CycB_tot'].value
-s=model_concentration.parameters['s'].value
-k_c7=model_concentration.parameters['k_c7'].value
-k_c8=model_concentration.parameters['k_c8'].value
-s=model_concentration.parameters['s'].value
-
-obsCycB=yout['obsCycB'][0]
-obsCycE=yout['obsCycE'][0]
-obsCycA=yout['obsCycA'][0]
-obsCycBp21=yout['obsCycBp21'][0]
-obsp21=yout['obsp21'][0]
-obsCdc20=yout['obsCdc20'][0]
-
-
-
-from scipy.io import loadmat
-y = loadmat('C:/Users/Grim.M/Ecole/ens/Master/S2/Stage/Code/v1_test/cdc20.mat')
-L=np.transpose(y['z'])
-l=L.tolist()[0]
-
-plt.plot(t, l)
-plt.plot(t, yout['obsCdc20'], label='obsCdc20', lw=2)
-"""
 
 
 ###############################################################################

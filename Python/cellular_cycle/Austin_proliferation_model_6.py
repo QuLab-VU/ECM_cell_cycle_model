@@ -6,7 +6,7 @@ Created on Mon Feb 3 14:57:38 2020
 Title: Austin_proliferation_model_concentration_skeleton
 """
 from pysb import *
-
+from pysb.util import alias_model_components
 
 Model()
 
@@ -198,6 +198,59 @@ Parameter('b1', 1) #term representing the self-activation of cyclinE/Cdk2 throug
 Parameter('b2', 1) #term representing the self-activation of cyclinB/Cdk1 through mutual activation between cyclin B/cdk1 and its phosphatase cdk25(PF loop in the G2/M transition)) without=0 with=1
 Parameter('K_ib', 0.5) #0.5
 
+
+#Initial conditions
+Parameter('Skp2_0', int(round(0.06 * 200)))
+Parameter('p21_0', int(round(0.005 * 200)))
+Parameter('p21p_0', int(round(0.08 * 200)))
+Parameter('cdh1act_0', int(round(0.03 * 200)))
+Parameter('cdh1inact_0', int(round((1-0.03) * 200))) #cdh1tot - cdh1act
+Parameter('Myc_0', int(round(0.695 * 200)))
+Parameter('CycD_0', int(round(0.235 * 200)))
+Parameter('CycDp21_0', int(round(0.005 * 200)))
+Parameter('pRb_0', int(round(0.025 * 200)))
+Parameter('pRbp_0', int(round(1.21 * 200)))
+Parameter('E2F_0', int(round(0.62 * 200)))
+Parameter('pRbE2F_0', int(round(0.095 * 200)))
+Parameter('CycE_0', int(round(0.815 * 200)))
+Parameter('CycEp21_0', int(round(0.015 * 200)))
+Parameter('CycA_0', int(round(0.51 * 200)))
+Parameter('CycAp21_0', int(round(0.01  * 200)))
+Parameter('CycB_0', int(round(0.085 * 200)))
+Parameter('CycBp21_0', int(round(0.01 * 200)))
+Parameter('Cdc20_0', int(round(0.03  * 200)))
+Parameter('BAX_0', int(round(0.999000159839911  * 200)))
+Parameter('BAXmBCL2_0', int(round(0.000997752220497874  * 200)))
+Parameter('BH3_0', int(round(5.81398691338436e-05 * 200)))
+Parameter('BH3BCL2_0', int(round(0.0332751934642001 * 200)))
+Parameter('BAXm_0', int(round((1 - 0.999000159839911 - 0.000997752220497874) * 200))) #BAXt - BAX - BAXmBCL2
+Parameter('BCL2_0', int(round((0.95 - 0.0332751934642001 - 0.000997752220497874)  * 200))) #BCL2t - BH3BCL2 -BAXmBCL2
+
+Initial(model.monomers['Skp2'], Skp2_0)
+Initial(model.monomers['p21'](b=None, S='u'), p21_0)
+Initial(model.monomers['p21'](b=None, S='p'), p21p_0)
+Initial(model.monomers['cdh1'](A='yes'), cdh1act_0)
+Initial(model.monomers['cdh1'](A='no'), cdh1inact_0)
+Initial(model.monomers['Myc'](), Myc_0)
+Initial(model.monomers['CycD'](b=None), CycD_0)
+Initial(model.monomers['CycD'](b=1)%model.monomers['p21'](b=1, S='u'), CycDp21_0)
+Initial(model.monomers['pRb'](b=None, S='u'), pRb_0)
+Initial(model.monomers['pRb'](b=None, S='p'), pRbp_0)
+Initial(model.monomers['E2F'](b=None), E2F_0)
+Initial(model.monomers['pRb'](b=1, S='u')%model.monomers['E2F'](b=1), pRbE2F_0)
+Initial(model.monomers['CycE'](b=None), CycE_0)
+Initial(model.monomers['CycE'](b=1)%model.monomers['p21'](b=1, S='u'), CycEp21_0)
+Initial(model.monomers['CycA'](b=None), CycA_0)
+Initial(model.monomers['CycA'](b=1)%model.monomers['p21'](b=1, S='u'), CycAp21_0)
+Initial(model.monomers['CycB'](b=None), CycB_0)
+Initial(model.monomers['CycB'](b=1)%model.monomers['p21'](b=1, S='u'), CycBp21_0)
+Initial(model.monomers['Cdc20'](), Cdc20_0)
+Initial(model.monomers['BAX'](m='no', b=None), BAX_0)
+Initial(model.monomers['BAX'](m='yes', b=1)%model.monomers['BCL2'](b=1), BAXmBCL2_0)
+Initial(model.monomers['BH3'](b=None), BH3_0)
+Initial(model.monomers['BH3'](b=1)%model.monomers['BCL2'](b=1), BH3BCL2_0)
+Initial(model.monomers['BAX'](m='yes', b=None), BAXm_0)
+Initial(model.monomers['BCL2'](b=None), BCL2_0)
 
 
 
@@ -420,4 +473,6 @@ Rule('BH3_synthesis', None >> BH3(b=None), ks_BH3) #Synthesis of BH3
 Rule('BH3_degradation', BH3(b=None) >> None, kd_BH3) #Degradation of BH3
 Rule('BH3mBCL2_association_dissociation', BH3(b=None) + BCL2(b=None) | BH3(b=1)%BCL2(b=1), kasso_BH3_BCL2, kdiss_BH3BCL2) #BH3 and BCL2 association and dissociation
 Rule('BH3BCL2_degradation', BH3(b=1)%BCL2(b=1) >> BCL2(b=None) , kd_BH3) #bh3 degradation in bh3bcl2
+
+alias_model_components()
 

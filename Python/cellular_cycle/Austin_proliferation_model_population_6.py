@@ -11,12 +11,21 @@ path="/home/jeremie"
 import sys
 sys.path.insert(0, path+"/cellular_cycle") #add a pathway to the model
 from Austin_proliferation_model_6 import model
-
+import sympy as sp
 
 from pysb import * 
 
 ###Initials
-Parameter('Skp2_0', int(round(0.06 * 200)))
+from pysb.util import alias_model_components
+alias_model_components()
+print(omega)
+# omega = model.parameters['omega']
+# def transform(initial_condition): return sp.Integer(sp.Float(initial_condition * omega.value).round())
+#
+# Expression('Skp2_____', sp.Integer(sp.Float(0.059 * omega.value).round()))
+# Expression('Skp2_______', sp.floor(0.059 * omega + 0.5))
+
+Expression('Skp2_0', sp.Integer(0.06 * omega))
 Parameter('p21_0', int(round(0.005 * 200)))
 Parameter('p21p_0', int(round(0.08 * 200)))
 Parameter('cdh1act_0', int(round(0.03 * 200)))
@@ -44,7 +53,7 @@ Parameter('BCL2_0', int(round((0.95 - 0.0332751934642001 - 0.000997752220497874)
 
 
 
-Initial(model.monomers['Skp2'], model.parameters['Skp2_0'])
+Initial(model.monomers['Skp2'], model.expressions['Skp2_0'])
 Initial(model.monomers['p21'](b=None, S='u'), model.parameters['p21_0'])
 Initial(model.monomers['p21'](b=None, S='p'), model.parameters['p21p_0'])
 Initial(model.monomers['cdh1'](A='yes'), model.parameters['cdh1act_0'])
