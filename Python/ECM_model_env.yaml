@@ -13,6 +13,7 @@ dependencies:
   - numpy
   - bokeh
   - jupyterlab
+  - ipywidgets
   - cython
   - pip
   - pysb
