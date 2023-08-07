@@ -1,0 +1,16 @@
+---
+title: "Stress term for apoptosis"
+output: html_notebook
+author: "Darren Tyson"
+date: "February 7, 2023"
+---
+
+## Objective
+Determine a formula that best converts ERK, AKT and FAK signal levels to a value for `stress` that results in the expected proportion of apoptosis for each of the 6 experimental conditions.  
+
+First, clean up the values from the (unstructured) file containing the relevant values assembled by Austin. 
+
+```{r}
+d <- readLines("../Data/deathrates_modelinputs.txt")
+```
+
