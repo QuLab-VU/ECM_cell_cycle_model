@@ -10,7 +10,7 @@ path="/home/jeremie"
 #path=r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python"
 import sys
 sys.path.insert(0, path+"/cellular_cycle") #add a pathway to the model
-from Austin_proliferation_ODE_model_6 import model
+from Python.obsolete.Austin_proliferation_model_concentration_6 import model
 
 
 from pysb import * 
