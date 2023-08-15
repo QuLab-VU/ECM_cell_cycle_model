@@ -1,3 +1,10 @@
+"""
+Modified from Austin_proliferation_model_6.py
+@author: Jérémie Marlhens
+@author: Darren Tyson
+Title: cell_cycle_death_model
+"""
+
 from pysb import *
 from pysb.simulator import ScipyOdeSimulator
 from pylab import linspace, plot, xlabel, ylabel, show
@@ -25,16 +32,14 @@ Monomer('BH3', ['b'])
 
 '''
 Monomer('YAP', )
-Monomer('AKT', )
-Monomer('ERK', )
 '''
 
 ### Parameter
-Parameter('omega', 200)
+Parameter('omega', 200) # 1/µM
 
-Parameter('AKT',200)
-Parameter('ERK',200)
-Parameter('FAK',200)
+Parameter('AKT',1) # µM
+Parameter('ERK',1)  # µM
+Parameter('FAK',1) # µM
 
 Parameter('m', 3)
 Parameter('BCL2t', 0.95)
@@ -97,12 +102,12 @@ Parameter('V_2Mb', 0.8) #0.8 #Rate constant for inactivation of cyclinB/Cdk1 by 
 Parameter('k_cd4', 0.08)
 Parameter('k_myc1', 0.08)
 Parameter('k_E', 0.4) #0.4
-Parameter('k_M', 0.11) #0.27#0.1
-Parameter('k_EMY', 0.18) #0.2 #0.12 #0.37#0.1
+Parameter('k_M', 0.27) # updated 20230808
+Parameter('k_EMY', 0.37) # updated 20230808
 Parameter('k_ED', 0.2) #0.23#0.08
 Parameter('k_CDF', 0.21) #0.18
 Parameter('k_CD', 0.03) #0.03
-Parameter('k_CDS', 0.11) #0.25#0.5
+Parameter('k_CDS', 0.25) # updated 20230808
 Parameter('k_R', 0.07) #.03 #0.18
 Parameter('k_RE', 180) #180
 Parameter('k_b', 0.003) #0.003
@@ -119,7 +124,7 @@ Parameter('d_RE', 0.03) #0.03
 Parameter('k_P1', 18) #18
 Parameter('k_P2', 18) #18
 Parameter('k_DP', 3.6) #3.6
-Parameter('K_M', 0.2) #0.5
+Parameter('K_M', 0.27) # updated 20230808
 Parameter('K_MY', 0.1) #0.15#0.1
 Parameter('K_E', 0.15) #0.1
 Parameter('K_CD', 0.55) #0.92
@@ -149,7 +154,7 @@ Parameter('V_2cdh1', 8) #8
 Parameter('V_db', 0.8) #0.08 #0.15 #0.06 #new value for cyc B deg
 Parameter('v_scdh1a', 0.11)
 Parameter('v_2fak', 0.1) #0.05
-Parameter('v_s1p21', 0.5) #3#0.8
+Parameter('v_s1p21', 0.7) # updated 20230808
 Parameter('v_s2p21', 0.1) #2#0.1
 Parameter('K_1cdh1', 0.1)
 Parameter('K_2cdh1', 0.1)
@@ -181,8 +186,8 @@ Parameter('k_c8', 0.2)
 Parameter('V_Fp', 1.5)
 Parameter('K_Fp', 0.1)
 
-Parameter('F_n', 3)
-Parameter('K_p21fak', 7)
+Parameter('F_n', 8)        # updated 20230808
+Parameter('K_p21fak', 5)     # updated 20230808
 
 Parameter('a_stress', 0.6815)
 Parameter('b_stress_AKT', 0.112)
@@ -195,58 +200,59 @@ Parameter('K_ib', 0.5) #0.5
 
 
 # Initial conditions
-# first calculate values relative to omega (scaling factor to convert volume to molecule #)
-Expression('Skp2_0', sp.floor(0.059 * omega + 0.5))
-Expression('p21_0', sp.floor(0.005 * omega + 0.5))
-Expression('p21p_0', sp.floor(0.08 * omega + 0.5))
-Expression('cdh1act_0', sp.floor(0.03 * omega + 0.5))
-Expression('cdh1inact_0', sp.floor((1-0.03) * omega + 0.5)) #cdh1tot - cdh1act
-Expression('Myc_0', sp.floor(0.695 * omega + 0.5))
-Expression('CycD_0', sp.floor(0.235 * omega + 0.5))
-Expression('CycDp21_0', sp.floor(0.005 * omega + 0.5))
-Expression('pRb_0', sp.floor(0.025 * omega + 0.5))
-Expression('pRbp_0', sp.floor(1.21 * omega + 0.5))
-Expression('E2F_0', sp.floor(0.62 * omega + 0.5))
-Expression('pRbE2F_0', sp.floor(0.095 * omega + 0.5))
-Expression('CycE_0', sp.floor(0.815 * omega + 0.5))
-Expression('CycEp21_0', sp.floor(0.015 * omega + 0.5))
-Expression('CycA_0', sp.floor(0.51 * omega + 0.5))
-Expression('CycAp21_0', sp.floor(0.01  * omega + 0.5))
-Expression('CycB_0', sp.floor(0.085 * omega + 0.5))
-Expression('CycBp21_0', sp.floor(0.01 * omega + 0.5))
-Expression('Cdc20_0', sp.floor(0.03  * omega + 0.5))
-Expression('BAX_0', sp.floor(0.999000159839911  * omega + 0.5))
-Expression('BAXmBCL2_0', sp.floor(0.000997752220497874  * omega + 0.5))
-Expression('BH3_0', sp.floor(5.81398691338436e-05 * omega + 0.5))
-Expression('BH3BCL2_0', sp.floor(0.0332751934642001 * omega + 0.5))
-Expression('BAXm_0', sp.floor((1 - 0.999000159839911 - 0.000997752220497874) * omega + 0.5)) #BAXt - BAX - BAXmBCL2
-Expression('BCL2_0', sp.floor((0.95 - 0.0332751934642001 - 0.000997752220497874)  * omega + 0.5)) #BCL2t - BH3BCL2 -BAXmBCL2
+Parameter('Skp2_0', int(round(0.06 * 200)))
+Parameter('p21_0', int(round(0.005 * 200)))
+Parameter('p21p_0', int(round(0.08 * 200)))
+Parameter('cdh1act_0', int(round(0.03 * 200)))
+Parameter('cdh1inact_0', int(round((1-0.03) * 200))) #cdh1tot - cdh1act
+Parameter('Myc_0', int(round(0.695 * 200)))
+Parameter('CycD_0', int(round(0.235 * 200)))
+Parameter('CycDp21_0', int(round(0.005 * 200)))
+Parameter('pRb_0', int(round(0.025 * 200)))
+Parameter('pRbp_0', int(round(1.21 * 200)))
+Parameter('E2F_0', int(round(0.62 * 200)))
+Parameter('pRbE2F_0', int(round(0.095 * 200)))
+Parameter('CycE_0', int(round(0.815 * 200)))
+Parameter('CycEp21_0', int(round(0.015 * 200)))
+Parameter('CycA_0', int(round(0.51 * 200)))
+Parameter('CycAp21_0', int(round(0.01  * 200)))
+Parameter('CycB_0', int(round(0.085 * 200)))
+Parameter('CycBp21_0', int(round(0.01 * 200)))
+Parameter('Cdc20_0', int(round(0.03  * 200)))
+Parameter('BAX_0', int(round(0.999000159839911  * 200)))
+Parameter('BAXmBCL2_0', int(round(0.000997752220497874  * 200)))
+Parameter('BH3_0', int(round(5.81398691338436e-05 * 200)))
+Parameter('BH3BCL2_0', int(round(0.0332751934642001 * 200)))
+Parameter('BAXm_0', int(round((1 - 0.999000159839911 - 0.000997752220497874) * 200))) #BAXt - BAX - BAXmBCL2
+Parameter('BCL2_0', int(round((0.95 - 0.0332751934642001 - 0.000997752220497874)  * 200))) #BCL2t - BH3BCL2 -BAXmBCL2
 
-Initial(model.monomers['Skp2'], Skp2_0)
-Initial(model.monomers['p21'](b=None, S='u'), p21_0)
-Initial(model.monomers['p21'](b=None, S='p'), p21p_0)
-Initial(model.monomers['cdh1'](A='yes'), cdh1act_0)
-Initial(model.monomers['cdh1'](A='no'), cdh1inact_0)
-Initial(model.monomers['Myc'](), Myc_0)
-Initial(model.monomers['CycD'](b=None), CycD_0)
-Initial(model.monomers['CycD'](b=1)%model.monomers['p21'](b=1, S='u'), CycDp21_0)
-Initial(model.monomers['pRb'](b=None, S='u'), pRb_0)
-Initial(model.monomers['pRb'](b=None, S='p'), pRbp_0)
-Initial(model.monomers['E2F'](b=None), E2F_0)
-Initial(model.monomers['pRb'](b=1, S='u')%model.monomers['E2F'](b=1), pRbE2F_0)
-Initial(model.monomers['CycE'](b=None), CycE_0)
-Initial(model.monomers['CycE'](b=1)%model.monomers['p21'](b=1, S='u'), CycEp21_0)
-Initial(model.monomers['CycA'](b=None), CycA_0)
-Initial(model.monomers['CycA'](b=1)%model.monomers['p21'](b=1, S='u'), CycAp21_0)
-Initial(model.monomers['CycB'](b=None), CycB_0)
-Initial(model.monomers['CycB'](b=1)%model.monomers['p21'](b=1, S='u'), CycBp21_0)
-Initial(model.monomers['Cdc20'](), Cdc20_0)
-Initial(model.monomers['BAX'](m='no', b=None), BAX_0)
-Initial(model.monomers['BAX'](m='yes', b=1)%model.monomers['BCL2'](b=1), BAXmBCL2_0)
-Initial(model.monomers['BH3'](b=None), BH3_0)
-Initial(model.monomers['BH3'](b=1)%model.monomers['BCL2'](b=1), BH3BCL2_0)
-Initial(model.monomers['BAX'](m='yes', b=None), BAXm_0)
-Initial(model.monomers['BCL2'](b=None), BCL2_0)
+
+
+Initial(Skp2, Skp2_0)
+Initial(p21(b=None, S='u'), p21_0)
+Initial(p21(b=None, S='p'), p21p_0)
+Initial(cdh1(A='yes'), cdh1act_0)
+Initial(cdh1(A='no'), cdh1inact_0)
+Initial(Myc(), Myc_0)
+Initial(CycD(b=None), CycD_0)
+Initial(CycD(b=1)%p21(b=1, S='u'), CycDp21_0)
+Initial(pRb(b=None, S='u'), pRb_0)
+Initial(pRb(b=None, S='p'), pRbp_0)
+Initial(E2F(b=None), E2F_0)
+Initial(pRb(b=1, S='u')%E2F(b=1), pRbE2F_0)
+Initial(CycE(b=None), CycE_0)
+Initial(CycE(b=1)%p21(b=1, S='u'), CycEp21_0)
+Initial(CycA(b=None), CycA_0)
+Initial(CycA(b=1)%p21(b=1, S='u'), CycAp21_0)
+Initial(CycB(b=None), CycB_0)
+Initial(CycB(b=1)%p21(b=1, S='u'), CycBp21_0)
+Initial(Cdc20(), Cdc20_0)
+Initial(BAX(m='no', b=None), BAX_0)
+Initial(BAX(m='yes', b=1)%BCL2(b=1), BAXmBCL2_0)
+Initial(BH3(b=None), BH3_0)
+Initial(BH3(b=1)%BCL2(b=1), BH3BCL2_0)
+Initial(BAX(m='yes', b=None), BAXm_0)
+Initial(BCL2(b=None), BCL2_0)
 
 
 
@@ -470,7 +476,7 @@ Rule('BH3_degradation', BH3(b=None) >> None, kd_BH3) #Degradation of BH3
 Rule('BH3mBCL2_association_dissociation', BH3(b=None) + BCL2(b=None) | BH3(b=1)%BCL2(b=1), kasso_BH3_BCL2, kdiss_BH3BCL2) #BH3 and BCL2 association and dissociation
 Rule('BH3BCL2_degradation', BH3(b=1)%BCL2(b=1) >> BCL2(b=None) , kd_BH3) #bh3 degradation in bh3bcl2
 
-
+alias_model_components()
 
 
 if __name__ == '__main__':
