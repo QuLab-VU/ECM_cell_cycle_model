@@ -18,10 +18,8 @@ sys.path.insert(0, os.path.dirname(__file__) + "/../fit")
 #sys.path.insert(0, os.getcwd() + "/cellular_cycle")
 
 
-from Austin_proliferation_model_concentration_6 import model
-model_concentration=model
-from Austin_proliferation_model_population_6 import model
-model_population=model
+from Austin_proliferation_model_6 import model
+
 #os.environ["PYOPENCL_CTX"] ="0"
 
 
@@ -43,10 +41,10 @@ from scipy.stats import multivariate_normal
 # Model run check
 
 tmp_t=np.linspace(0, 10, 100)
-sim = BngSimulator(model_population, tspan=tmp_t, verbose=True)
+sim = BngSimulator(model, tspan=tmp_t, verbose=True)
 traj = sim.run()
 
-sim = ScipyOdeSimulator(model_concentration, tspan=tmp_t, verbose=True)
+sim = ScipyOdeSimulator(model, tspan=tmp_t, verbose=True)
 traj = sim.run()
 
 ###############################################################################
@@ -188,20 +186,14 @@ def log_likelihood_single_condition(init, run_time, condition, chain, iteration,
     cost = {}
     
     # FAK, ERK and AKT inputs
+
     cond_split = condition.split(' ')
-    model_population.parameters['ERK'].value = inputs['ERK'][condition] * omega
-    model_population.parameters['FAK'].value = inputs['FAK'][condition] * omega
-    model_population.parameters['AKT'].value = inputs['AKT'][condition] * omega
-    
     cond_split_DMSO = condition.split(' ')
     cond_split_DMSO[-1] = 'DMSO'
-    model_concentration.parameters['ERK'].value = inputs['ERK'][' '.join(cond_split_DMSO)] * 1
-    model_concentration.parameters['FAK'].value = inputs['FAK'][' '.join(cond_split_DMSO)] * 1
-    model_concentration.parameters['AKT'].value = inputs['AKT'][' '.join(cond_split_DMSO)] * 1
-    
+
     
     ###########################################################################
-    (cells, cell_count) = runAKTERK(init, run_time, run_time, model_concentration, model_population, chain, condition);
+    (cells, cell_count) = runAKTERK(init, run_time, run_time, model, chain, inputs, condition, cond_split_DMSO);
     
     ###########################################################################
     print('Cell count')
@@ -308,16 +300,15 @@ def log_likelihood(parameter_vector, chain, pysb_sampled_parameter_names, condit
     print(parameter_vector)
     # np.save(os.path.dirname(__file__) + "/../fit_data/pso/particle_position/parameter_vector_particle_" + str(chain) + "_iteration_" + str(iteration) + ".npy", parameter_vector)
     
-    global model_concentration, model_population, t, means
+    global model, t, means
     
     print(iteration)
     
     param_dict = {pname: pvalue for pname, pvalue in zip(pysb_sampled_parameter_names, parameter_vector)}
-    
+
+    # Change model parameter values to current location in parameter space
     for pname, pvalue in param_dict.items():
-        #Change model parameter values to current location in parameter space
-        model_population.parameters[pname].value = (pvalue)
-        model_concentration.parameters[pname].value = (pvalue)
+        model.parameters[pname].value = (pvalue)
         
     parameters_sim={} 
     cost = {}
@@ -332,7 +323,7 @@ def log_likelihood(parameter_vector, chain, pysb_sampled_parameter_names, condit
         cost[condition] = cost_tmp
         
         
-    #Save cost summary
+    # Save cost summary
     parameters_sim = {param + ' ' + cond_tmp: [val_tmp] for cond_tmp in parameters_sim.keys() for param, val_tmp in parameters_sim[cond_tmp].items()}
     cost = {param + ' ' + cond_tmp: [val_tmp] for cond_tmp in cost.keys() for param, val_tmp in cost[cond_tmp].items()}
     

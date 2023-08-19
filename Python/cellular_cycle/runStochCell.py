@@ -16,13 +16,12 @@ from pysb.simulator import BngSimulator
 import numpy as np
 import scipy.stats as ss
 
-def runStochcell(model_population, model_concentration, index, condition, thr):
+def runStochcell(model, index, condition, thr):
     """
     Run a stochastic simulation and perform multiple checks on the simulation results.
 
     Args:
-        model_population: the PySB population model.
-        model_concentration: the PySB concentration model.
+        model: the PySB model.
         index: the index of the sets of tested parameters.
         condition: treated with ERL or untreated (DMSO) and the stiffness of the media (to be removed?, no use here).
         thr: the threshold value for the peakfinder algorithm.
@@ -35,21 +34,21 @@ def runStochcell(model_population, model_concentration, index, condition, thr):
     
     # Run deterministic simulation with ScipyOdeSimulator
     t_ode = np.linspace(0, 1000, 1000)  # Time points for ODE simulation
-    simres = ScipyOdeSimulator(model_concentration, t_ode, verbose=False).run()
+    simres = ScipyOdeSimulator(model, t_ode, verbose=False).run()
     yout = simres.all  # get simulation results
     
     # Run stochastic simulation with BngSimulator
     t = np.linspace(0, 1000, 1000)  # Time points for stochastic simulation
-    simres_2 = BngSimulator(model_population, t, verbose=False).run()  
+    simres_2 = BngSimulator(model, t, verbose=False).run()
     
     
     ######################################
     # Check 1: The system doesn't explode
-    for obs in model_concentration.observables: 
-        print(np.any(yout[obs.name] > 15))  # Check if any concentration exceeds the threshold
+    for obs in model.observables:
+        print(np.any(yout[obs.name]/model.parameters['omega'] > 15))  # Check if any concentration exceeds the threshold
         
         # If any concentration exceeds the threshold, return False and error code 1
-        if np.any(yout[obs.name] > 15):
+        if np.any(yout[obs.name]/model.parameters['omega'] > 15):
             return {}, False, 1
     
     ######################################
@@ -58,9 +57,9 @@ def runStochcell(model_population, model_concentration, index, condition, thr):
     N = yout['obsCycD'][600:].size  # Number of sample points for FFT
     f = np.linspace(0, 1 / T, N)  # Frequency axis for FFT
     
-    fft_Cdc20 = np.fft.fft(yout['obsCdc20'][600:])
-    fft_CycD = np.fft.fft(yout['obsCycD'][600:])
-    fft_CycE = np.fft.fft(yout['obsCycE'][600:])
+    fft_Cdc20 = np.fft.fft(yout['obsCdc20'][600:]/model.parameters['omega'])
+    fft_CycD = np.fft.fft(yout['obsCycD'][600:]/model.parameters['omega'])
+    fft_CycE = np.fft.fft(yout['obsCycE'][600:]/model.parameters['omega'])
     
     # Find frequency corresponding to max amplitude of FFT
     arg_freq_max_Cdc20 = np.argmax(np.abs(fft_Cdc20[(f > 0.005) * (f < 0.1)]) * 1 / N)
@@ -97,8 +96,8 @@ def runStochcell(model_population, model_concentration, index, condition, thr):
         tmp_score = tmp_score/len(Z)
         
         if len(a)>=2 and len(b)>=2:
-            for k in range(len(model_concentration.observables)) :
-                variable_range[model_concentration.observables[k].name]=[yout[model_concentration.observables[k].name][i] for i in range(max_tmp_cdc[-2], max_tmp_cdc[-1])]
+            for k in range(len(model.observables)) :
+                variable_range[model.observables[k].name]=[yout[model.observables[k].name][i]/model.parameters['omega'] for i in range(max_tmp_cdc[-2], max_tmp_cdc[-1])]
     
     return variable_range, check, tmp_score
 
