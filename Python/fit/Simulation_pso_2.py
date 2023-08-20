@@ -12,8 +12,8 @@ path = os.getcwd()
 
 
 import sys
-sys.path.insert(0, path+"/Python/cellular_cycle") #add a pathway to the model
-sys.path.insert(0, path+"/Python/fit") #add a pathway to the model
+sys.path.insert(0, path + "/../cellular_cycle") #add a pathway to the model
+sys.path.insert(0, path + "/../fit") #add a pathway to the model
 
 from Austin_proliferation_model_6 import model
 
@@ -27,11 +27,18 @@ from scipy.stats import multivariate_normal
 
 pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2", 'v_s1p21', 'F_n', 'K_p21fak', 'a_stress', 'b_stress_AKT', 'b_stress_ERK']
 
+file_path = path + "/../model_data/sampled_parameter_names.txt"
+
+# Open the file in write mode and write each string to a new line
+with open(file_path, "w") as file:
+    for item in pysb_sampled_parameter_names:
+        file.write("%s\n" % item)
+
 ###############################################################################
 #Changing the parameters:
 
 import pandas as pd
-new_param = pd.read_csv(path + "/Matlab/v2/parameters.csv")
+new_param = pd.read_csv(path + "/../../Matlab/v2/parameters.csv")
 del new_param['Stress']
 for key in new_param.keys():
     try:
