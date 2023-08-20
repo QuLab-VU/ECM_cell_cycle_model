@@ -6,43 +6,21 @@ Created on Wed Feb  5 11:52:01 2020
 Title: Austin_proliferation_model_simulation
 """
 ###############################################################################
-
-# path="/home/jeremie"
-# path=r"C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model"
-#
-# import sys
-# sys.path.insert(0, path+"/Python/cellular_cycle") #add a pathway to the model
-# sys.path.insert(0, path+"/Python/fit") #add a pathway to the model
-# Get current path
 import os
 path = os.getcwd()
-
-# from Python.obsolete.Austin_proliferation_model_concentration_6 import model
-# model_concentration = model
+import sys
+sys.path.insert(0, path + "/../cellular_cycle") #add a pathway to the model
+sys.path.insert(0, path + "/../fit") #add a pathway to the model
 
 from Austin_proliferation_model_6 import model
-model_population = model
-
+import numpy as np
+from scipy.stats import multivariate_normal
 import pandas as pd
-pass
-#model_population = model
-#del model
-"""
-import copy
-
-from Austin_proliferation_model_population_6 import model
-model_concentration = copy.deepcopy(model)
-
-del model
-from Austin_proliferation_model_population_6 import model
-model_population = copy.deepcopy(model)
-"""
 
 from pysb.simulator import ScipyOdeSimulator
 from pysb.simulator import BngSimulator
 from pysb.simulator import StochKitSimulator
 from pysb.bng import generate_equations
-
 from pysb.logging import EXTENDED_DEBUG
 
 import numpy as np
@@ -67,76 +45,25 @@ import matplotlib.pyplot as plt
 #
 # plt.plot(stoch_run['55 kPa DMSO'][3, :10000])
 
+###############################################################################
 
+# import pysb sampled names
+pysb_sampled_parameter_names = np.loadtxt(path + "/../model_data/sampled_parameter_names.txt", dtype=str)
 
-###############################################################################
-###############################################################################
-###############################################################################
-###############################################################################
-#3rd version, changing the parameters:
-
-import pandas as pd
-#change the model parameters of the model if needed
-omega = 200
-#new_param = pd.read_csv(path + "/umap_window/parameters.csv")
-new_param = pd.read_csv(path + "/../../Matlab/v2/parameters.csv")
+# Importing the parameters:
+new_param = pd.read_csv(path + "/../model_data/parameters.csv")
 del new_param['Stress']
 for key in new_param.keys():
     try:
-        if model_population.parameters[key].value != new_param[key][0]:
-            model_population.parameters[key].value = new_param[key]
-        if model_concentration.parameters[key].value != new_param[key][0]:
-            model_concentration.parameters[key].value = new_param[key]
-
-#        if model.parameters[key].value != new_param[key][0]:
-#            model.parameters[key].value = new_param[key]
-
+        if model.parameters[key].value != new_param[key][0]:
+            model.parameters[key].value = new_param[key]
     except: print(key)
+model.parameters['omega'].value = 200
 
-
-
-model_population.parameters['omega'].value = 200
-# model_concentration.parameters['omega'].value = 1
-# model.parameters['omega'].value = 1
-
-
-#model_concentration.parameters['v_s1p21'].value = 0.3
-#model_population.parameters['v_s1p21'].value = 0.8
-#model_population.parameters['F_n'].value = 8
-
-
-###############################################################################
-# Setting initial concentrations
-species_initials = ['Skp2_0', 'p21_0', 'p21p_0', 'cdh1act_0', 'cdh1inact_0', 'Myc_0', 'CycD_0', 'CycDp21_0', 'pRb_0', 'pRbp_0', 'E2F_0', 'pRbE2F_0', 'CycE_0', 'CycEp21_0', 'CycA_0', 'CycAp21_0', 'CycB_0', 'CycBp21_0', 'Cdc20_0', 'BAX_0', 'BAXmBCL2_0', 'BH3_0', 'BH3BCL2_0', 'BAXm_0', 'BCL2_0']
-
-#creat a pandas dataframe to store the initial concentrations
-species_initials_df = pd.DataFrame(columns=species_initials)
-for species_initial in species_initials:
-    species_initials_df[species_initial] = [model_population.parameters[species_initial].value]
-
-#Save the initial concentrations in a csv file
-species_initials_df.to_csv(path + '/../../Matlab/v2/initial_concentrations.csv', index=False)
-
-
-
-species_initials = ['Skp2_0', 'p21_0', 'p21p_0', 'cdh1act_0', 'cdh1inact_0', 'Myc_0', 'CycD_0', 'CycDp21_0', 'pRb_0', 'pRbp_0', 'E2F_0', 'pRbE2F_0', 'CycE_0', 'CycEp21_0', 'CycA_0', 'CycAp21_0', 'CycB_0', 'CycBp21_0', 'Cdc20_0', 'BAX_0', 'BAXmBCL2_0', 'BH3_0', 'BH3BCL2_0', 'BAXm_0', 'BCL2_0']
-species_initials_values = [0.0199387776457489, 0.0212324326339528, 0.104907517295920, 0.970596980815461, 1-0.970596980815461, 0.321067821067829, 0.175953608509162, 0.0138939800293163, 0.301757475166483, 0.545620559818762, 0.0403080965235495, 0.554487916752975, 0.0640517424993558, 0.00487528808175496, 0.0182005140710040, 0.00234453838504852, 0.0234757871244827, 0.00435874152378834, 0.0204771947463057, 0.999000159839911, 0.000997752220497874, 5.81398691338436e-05, 0.0332751934642001, 1 - 0.999000159839911 - 0.000997752220497874, 0.95 - 0.0332751934642001 - 0.000997752220497874]
-
-for species_initial, species_initials_value in zip(species_initials, species_initials_values):
-    model_concentration.parameters[species_initial].value = species_initials_value
-    model_population.parameters[species_initial].value = int(round(species_initials_value * model_population.parameters['omega'].value))
-
-
-#
-#model_concentration.initials[0].value.name
-#
-#
-#for parameter in model.parameters:
-#    print(parameter.name)
-#    print(model.parameters[parameter.name].value==model_concentration.parameters[parameter.name].value)
-#    if not model.parameters[parameter.name].value==model_concentration.parameters[parameter.name].value:
-#        print(' AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-
+# Setting initial concentrations '/../model_data/initial_concentrations.csv'
+initial_concentrations = pd.read_csv(path + '/../model_data/initial_concentrations.csv')
+for key in initial_concentrations.keys():
+    model.parameters[key].value = initial_concentrations[key][0]
 
 ###############################################################################
 ###############################################################################
@@ -159,13 +86,11 @@ condition = '0.6 kPa DMSO'
 condition = '55 kPa ERL'
 
 for input_signal in inputs.keys():
-    model_concentration.parameters[input_signal].value = inputs[input_signal][condition]
-    model_population.parameters[input_signal].value = inputs[input_signal][condition] * model_population.parameters['omega'].value
-    # model.parameters[input_signal].value = inputs[input_signal][condition]
+    model.parameters[input_signal].value = inputs[input_signal][condition] * model.parameters["omega"].value
 
 t = np.linspace(0, 1000, 100001)
 t = np.linspace(0, 100, 10001)
-simres = ScipyOdeSimulator(model_concentration, t).run()
+simres = ScipyOdeSimulator(model, t).run()
 yout = simres.all
 
 observables=['obsCycE','obsCdc20', 'obsCycA', 'obsCycB', 'obsp21']
@@ -176,23 +101,11 @@ plt.legend(loc=0)
 plt.show()
 
 
-simres = ScipyOdeSimulator(model_population, t).run()
-yout_pop = simres.all
-
-observables=['obsCycE','obsCdc20', 'obsCycA', 'obsCycB', 'obsp21']
-for obs in range(4) :
-    plt.plot(t, yout_pop[observables[obs]]/model_population.parameters['omega'].value, label=observables[obs], lw=2)
-    print(yout_pop[observables[obs]][0])
-plt.legend(loc=0)
-plt.show()
-
-
 ####Comparison with Matlab deterministic simulation
 
 nmax = 10000
 from pathlib import Path
 fn = Path(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle\comparison_pysb_matlab_6_'+ condition.replace(' ', '_') +'_0-'+ str(t[nmax]) + '.pdf').expanduser()
-
 obs = ['obsSkp2', 'obsp21', 'obsp21p', 'obscdh1act', 'obsMyc', 'obsCycD', 'obsCycDp21', 'obspRb', 'obspRbp', 'obsE2F', 'obspRbE2F', 'obsCycE', 'obsCycEp21', 'obsCycA', 'obsCycAp21', 'obsCycB', 'obsCycBp21', 'obsCdc20', 'obsBAX', 'obsBAXmBCL2', 'obsBH3','obsBH3BCL2','obsBAXm','obsBCL2']
 
 fig, axs = plt.subplots(6, 4)

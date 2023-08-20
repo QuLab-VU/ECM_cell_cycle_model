@@ -16,13 +16,9 @@ import glob
 sys.path.insert(0, os.path.dirname(__file__) + "/../cellular_cycle")
 sys.path.insert(0, os.path.dirname(__file__) + "/../fit")
 #sys.path.insert(0, os.getcwd() + "/cellular_cycle")
-
-
 from Austin_proliferation_model_6 import model
 
 #os.environ["PYOPENCL_CTX"] ="0"
-
-
 #from runAKTERK_2_starting_at_mitosis import runAKTERK
 from runAKTERK_2 import runAKTERK
 from retrieve_cellState_dw_2 import retrieve_cellState
@@ -34,7 +30,6 @@ from pysb.simulator import ScipyOdeSimulator
 import fracprolif as fp
 from rbf_mmd import mmd_rbf
 from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
-
 from scipy.stats import multivariate_normal
 
 ###############################################################################
@@ -353,5 +348,25 @@ def log_posterior(parameter_vector, chain, pysb_sampled_parameter_names, conditi
 
 
 ###############################################################################
+# Test the cost function:
 
+if __name__=="__main__":
+    # import pysb sampled names
+    pysb_sampled_parameter_names = np.loadtxt(path + "/../model_data/sampled_parameter_names.txt", dtype=str)
+
+    # Importing the parameters:
+    new_param = pd.read_csv(path + "/../model_data/parameters.csv")
+    del new_param['Stress']
+    for key in new_param.keys():
+        try:
+            if model.parameters[key].value != new_param[key][0]:
+                model.parameters[key].value = new_param[key]
+        except:
+            print(key)
+    model.parameters['omega'].value = 200
+
+    # Setting initial concentrations '/../model_data/initial_concentrations.csv'
+    initial_concentrations = pd.read_csv(path + '/../model_data/initial_concentrations.csv')
+    for key in initial_concentrations.keys():
+        model.parameters[key].value = initial_concentrations[key][0]
 
