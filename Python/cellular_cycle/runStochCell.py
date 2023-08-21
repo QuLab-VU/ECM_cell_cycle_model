@@ -7,7 +7,8 @@ Title: runStochCell
 """
 
 import sys
-sys.path.insert(0, "../cellular_cycle") # add a pathway to the model
+import os
+sys.path.insert(0, os.path.dirname(__file__) + "/../cellular_cycle")
 
 # import necessary packages
 from peakfinder import peakfinder
@@ -16,14 +17,12 @@ from pysb.simulator import BngSimulator
 import numpy as np
 import scipy.stats as ss
 
-def runStochcell(model, index, condition, thr):
+def runStochcell(model, thr = 0.26):
     """
     Run a stochastic simulation and perform multiple checks on the simulation results.
 
     Args:
         model: the PySB model.
-        index: the index of the sets of tested parameters.
-        condition: treated with ERL or untreated (DMSO) and the stiffness of the media (to be removed?, no use here).
         thr: the threshold value for the peakfinder algorithm.
 
     Returns:
@@ -101,3 +100,33 @@ def runStochcell(model, index, condition, thr):
     
     return variable_range, check, tmp_score
 
+###############################################################################
+# Test runStochcell
+
+if __name__=="__main__":
+    # import model
+    from Austin_proliferation_model_6 import model
+
+    # Importing the parameters:
+    import pandas as pd
+    new_param = pd.read_csv(os.path.dirname(__file__) + "/../model_data/parameters.csv")
+    del new_param['Stress']
+    for key in new_param.keys():
+        try:
+            if model.parameters[key].value != new_param[key][0]:
+                model.parameters[key].value = new_param[key]
+        except:
+            print(key)
+    model.parameters['omega'].value = 200
+    model.parameters['ERK'].value
+
+    # Setting initial concentrations '/../model_data/initial_concentrations.csv'
+    initial_concentrations = pd.read_csv(os.path.dirname(__file__) + '/../model_data/initial_concentrations.csv')
+    for key in initial_concentrations.keys():
+        model.parameters[key].value = initial_concentrations[key][0]
+
+    variable_range, check, tmp_score = runStochcell(model)
+
+    print(variable_range)
+    print(check)
+    print(tmp_score)

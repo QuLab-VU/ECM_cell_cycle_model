@@ -15,7 +15,6 @@ import glob
 
 sys.path.insert(0, os.path.dirname(__file__) + "/../cellular_cycle")
 sys.path.insert(0, os.path.dirname(__file__) + "/../fit")
-#sys.path.insert(0, os.getcwd() + "/cellular_cycle")
 from Austin_proliferation_model_6 import model
 
 #os.environ["PYOPENCL_CTX"] ="0"
@@ -370,3 +369,11 @@ if __name__=="__main__":
     for key in initial_concentrations.keys():
         model.parameters[key].value = initial_concentrations[key][0]
 
+    original_parameters = []
+    for name in pysb_sampled_parameter_names:
+        original_parameters += [np.log10(model.parameters[name].value)]
+    parameter_vector = 10 ** np.array(original_parameters)
+    idx = 'original_parameters'
+    mean = 10 ** np.array(original_parameters)
+
+    c = posterior(parameter_vector, 0, pysb_sampled_parameter_names, save=False)

@@ -314,76 +314,74 @@ def death_rate_without_delay(Time_h, card_total, v) :
 ###############################################################################
 ###############################################################################
 
-#test
-"""
-mitotic_lifespans = [17.0, 21.7, 21.7, 23.0, 22.5, 20.0, 20.0, 24.2, 19.2, 55.3, 20.7, 29.0, 21.0, 23.7, 34.5, 34.5, 35.3, 35.3, 29.0, 28.3, 57.5, 30.3, 31.2, 23.2, 28.7, 32.8, 21.7, 25.8, 21.3, 61.8, 28.0, 28.7, 22.2, 22.2, 34.0, 27.7, 21.7, 21.7, 28.0, 31.8, 25.0, 20.7, 28.8, 31.7, 45.0, 25.2, 23.2, 42.5, 23.0, 31.8, 18.2, 37.2, 22.2, 22.2, 17.8, 17.8, 41.0, 45.0, 24.2, 60.0]
+# Test
 
-censored_lifespans = [92.2, 91.5, 91.5, 90.8, 90.8, 90.8, 90.3, 90.3, 90.3, 89.7, 89.7, 89.3, 89.3, 88.2, 87.5, 87.5, 87.3, 86.8, 85.8, 85.8, 84.8, 84.8, 84.2, 84.2, 82.5, 82.3, 82.3, 82.2, 82.2, 82.0, 82.0, 81.5, 81.3, 81.3, 81.5, 80.5, 79.8, 79.8, 79.8, 79.8, 78.7, 78.7, 78.5, 78.0, 77.8, 77.8, 77.8, 77.8, 77.7, 77.7, 77.5, 77.5, 77.5, 77.2, 77.2, 76.7, 76.7, 75.8, 75.8, 75.7, 75.7, 75.2, 74.8, 74.7, 74.3, 74.3, 73.8, 73.8, 73.2, 72.7, 72.7, 72.7, 72.7, 72.2, 72.2, 71.3, 71.3, 71.3, 71.3, 71.3, 71.3, 71.2, 71.2, 71.0, 71.0, 69.7, 69.7]
+if __name__ == "__main__":
+    mitotic_lifespans = [17.0, 21.7, 21.7, 23.0, 22.5, 20.0, 20.0, 24.2, 19.2, 55.3, 20.7, 29.0, 21.0, 23.7, 34.5, 34.5, 35.3, 35.3, 29.0, 28.3, 57.5, 30.3, 31.2, 23.2, 28.7, 32.8, 21.7, 25.8, 21.3, 61.8, 28.0, 28.7, 22.2, 22.2, 34.0, 27.7, 21.7, 21.7, 28.0, 31.8, 25.0, 20.7, 28.8, 31.7, 45.0, 25.2, 23.2, 42.5, 23.0, 31.8, 18.2, 37.2, 22.2, 22.2, 17.8, 17.8, 41.0, 45.0, 24.2, 60.0]
 
-card_total = [7.73, 7.83, 7.84, 7.94, 7.99, 8.00, 8.09, 8.14, 8.16, 8.22, 8.22, 8.35, 8.36, 8.43, 8.49, 8.55, 8.65, 8.73, 8.80, 8.85, 8.89, 8.94, 8.99, 9.04, 9.09, 9.16, 9.18, 9.29, 9.38, 9.43, 9.51, 9.60, 9.63, 9.69, 9.72, 9.77, 9.80, 9.86, 9.88, 9.92, 9.98, 10.01, 10.07, 10.12, 10.18, 10.23, 10.30, 10.38, 10.43, 10.49, 10.53, 10.57, 10.62, 10.64, 10.68, 10.72, 10.76, 10.81, 10.88, 10.92, 10.96, 11.02, 11.09, 11.14, 11.19, 11.24, 11.30, 11.36, 11.41, 11.47, 11.51, 11.55, 11.59]
+    censored_lifespans = [92.2, 91.5, 91.5, 90.8, 90.8, 90.8, 90.3, 90.3, 90.3, 89.7, 89.7, 89.3, 89.3, 88.2, 87.5, 87.5, 87.3, 86.8, 85.8, 85.8, 84.8, 84.8, 84.2, 84.2, 82.5, 82.3, 82.3, 82.2, 82.2, 82.0, 82.0, 81.5, 81.3, 81.3, 81.5, 80.5, 79.8, 79.8, 79.8, 79.8, 78.7, 78.7, 78.5, 78.0, 77.8, 77.8, 77.8, 77.8, 77.7, 77.7, 77.5, 77.5, 77.5, 77.2, 77.2, 76.7, 76.7, 75.8, 75.8, 75.7, 75.7, 75.2, 74.8, 74.7, 74.3, 74.3, 73.8, 73.8, 73.2, 72.7, 72.7, 72.7, 72.7, 72.2, 72.2, 71.3, 71.3, 71.3, 71.3, 71.3, 71.3, 71.2, 71.2, 71.0, 71.0, 69.7, 69.7]
 
-card_total_e16000 = [6.86, 6.92, 6.99, 7.00, 7.15, 7.15, 7.23, 7.28, 7.29, 7.27, 7.35, 7.32, 7.38, 7.35, 7.36, 7.48, 7.48, 7.53, 7.53, 7.57, 7.58, 7.54, 7.56, 7.60, 7.69, 7.72, 7.73, 7.75, 7.75, 7.79, 7.79, 7.85, 7.84, 7.83, 7.85, 7.88, 7.89, 7.89, 7.94, 7.91, 7.92, 7.94, 7.95, 7.97, 7.98, 7.95, 7.97, 7.97, 7.97, 7.98, 8.00, 7.97, 8.01, 7.98, 7.97, 8.01, 8.02, 8.04, 8.04, 8.06, 8.07, 8.06, 7.99, 8.03, 8.07, 8.06, 8.03, 8.02, 8.01, 8.04, 8.02, 8.04, 8.05]
+    card_total = [7.73, 7.83, 7.84, 7.94, 7.99, 8.00, 8.09, 8.14, 8.16, 8.22, 8.22, 8.35, 8.36, 8.43, 8.49, 8.55, 8.65, 8.73, 8.80, 8.85, 8.89, 8.94, 8.99, 9.04, 9.09, 9.16, 9.18, 9.29, 9.38, 9.43, 9.51, 9.60, 9.63, 9.69, 9.72, 9.77, 9.80, 9.86, 9.88, 9.92, 9.98, 10.01, 10.07, 10.12, 10.18, 10.23, 10.30, 10.38, 10.43, 10.49, 10.53, 10.57, 10.62, 10.64, 10.68, 10.72, 10.76, 10.81, 10.88, 10.92, 10.96, 11.02, 11.09, 11.14, 11.19, 11.24, 11.30, 11.36, 11.41, 11.47, 11.51, 11.55, 11.59]
 
-Time_h = range(len(card_total))
+    card_total_e16000 = [6.86, 6.92, 6.99, 7.00, 7.15, 7.15, 7.23, 7.28, 7.29, 7.27, 7.35, 7.32, 7.38, 7.35, 7.36, 7.48, 7.48, 7.53, 7.53, 7.57, 7.58, 7.54, 7.56, 7.60, 7.69, 7.72, 7.73, 7.75, 7.75, 7.79, 7.79, 7.85, 7.84, 7.83, 7.85, 7.88, 7.89, 7.89, 7.94, 7.91, 7.92, 7.94, 7.95, 7.97, 7.98, 7.95, 7.97, 7.97, 7.97, 7.98, 8.00, 7.97, 8.01, 7.98, 7.97, 8.01, 8.02, 8.04, 8.04, 8.06, 8.07, 8.06, 7.99, 8.03, 8.07, 8.06, 8.03, 8.02, 8.01, 8.04, 8.02, 8.04, 8.05]
 
-plt.plot(Time_h, card_total)
+    Time_h = range(len(card_total))
 
-
-
-Q=0.5
-
-m = mle(mitotic_lifespans, censored_lifespans)
-m['x']
-
-#         mu       sigma      lambda           Q 
-#18.89452189  1.67126329  0.09735639  0.59049561 
+    plt.plot(Time_h, card_total)
+    plt.show()
 
 
-v = q_rates(m)
+    Q=0.5
 
-#         d          q
-#0.02475328 0.03569364 
+    m = mle(mitotic_lifespans, censored_lifespans)
+    m['x']
 
-half_imt, untreated_division_rate, a = death_rate(Time_h, card_total, card_total_e16000, v)
-
-#          a 
-#0.004111099 
+    #         mu       sigma      lambda           Q
+    #18.89452189  1.67126329  0.09735639  0.59049561
 
 
-y = np.array(card_total_e16000) - card_total_e16000[0]
+    v = q_rates(m)
 
- 
-model_total = np.array([np.log2(split_tot(t, untreated_division_rate, v['d'], 0.0, v['q'], 0, 0, a, a, 1, 0, half_imt))[0][0] for t in Time_h])
+    #         d          q
+    #0.02475328 0.03569364
 
-model_fq = np.array([split_fq(t, untreated_division_rate, v['d'], 0.0, v['q'], 0, 0, a, a, 1, 0, half_imt)[0][0] for t in Time_h]) * model_total
+    half_imt, untreated_division_rate, a = death_rate(Time_h, card_total, card_total_e16000, v)
 
-model_fd = np.array([split_fd(t, untreated_division_rate, v['d'], 0.0, v['q'], 0, 0, a, a, 1, 0, half_imt)[0][0] for t in Time_h]) * model_total
+    #          a
+    #0.004111099
+
+
+    y = np.array(card_total_e16000) - card_total_e16000[0]
+
+
+    model_total = np.array([np.log2(split_tot(t, untreated_division_rate, v['d'], 0.0, v['q'], 0, 0, a, a, 1, 0, half_imt))[0][0] for t in Time_h])
+
+    model_fq = np.array([split_fq(t, untreated_division_rate, v['d'], 0.0, v['q'], 0, 0, a, a, 1, 0, half_imt)[0][0] for t in Time_h]) * model_total
+
+    model_fd = np.array([split_fd(t, untreated_division_rate, v['d'], 0.0, v['q'], 0, 0, a, a, 1, 0, half_imt)[0][0] for t in Time_h]) * model_total
 
 
 
-plt.scatter(Time_h, y, s=40, facecolors='none', edgecolors='black')
-plt.plot(Time_h, model_total, c="green")
-plt.plot(Time_h, model_fq, c="red")
-plt.plot(Time_h, model_fd, c="blue")
-"""
-"""
+    plt.scatter(Time_h, y, s=40, facecolors='none', edgecolors='black')
+    plt.plot(Time_h, model_total, c="green")
+    plt.plot(Time_h, model_fq, c="red")
+    plt.plot(Time_h, model_fd, c="blue")
+    plt.show()
 
-x0 = np.array([np.median(mitotic_lifespans), np.std(mitotic_lifespans), 1/np.mean(mitotic_lifespans), 0.5])
+    x0 = np.array([np.median(mitotic_lifespans), np.std(mitotic_lifespans), 1/np.mean(mitotic_lifespans), 0.5])
 
-def qsurvival_nllik(x0):
-    mu, sigma, lambd, Q = x0   
-    #global mitotic_lifespans, censored_lifespans
-    return - sum([np.log(1-Q) + np.log(demg(i, mu = mu, sigma = sigma, lambd = lambd)) for i in  mitotic_lifespans]) - sum([np.log(Q+(1-Q)*pemg(i,  mu = mu, sigma = sigma, lambd = lambd, lower_tail = False)) for i in censored_lifespans])
+    def qsurvival_nllik(x0):
+        mu, sigma, lambd, Q = x0
+        #global mitotic_lifespans, censored_lifespans
+        return - sum([np.log(1-Q) + np.log(demg(i, mu = mu, sigma = sigma, lambd = lambd)) for i in  mitotic_lifespans]) - sum([np.log(Q+(1-Q)*pemg(i,  mu = mu, sigma = sigma, lambd = lambd, lower_tail = False)) for i in censored_lifespans])
 
-bounds = [(1,60), (0.1, (max(mitotic_lifespans) - min(mitotic_lifespans))), (0.01, 10), (1e-31, 0.9999999)]
-#
-#m = minimize(qsurvival_nllik, x0, method='nelder-mead', bounds=bounds) #Change the method to minimize
-#x: array([18.89482881,  1.67120341,  0.09735528,  0.59049594])
-#x0: array([25.5       , 10.35847627,  0.03450854,  0.5       ])
+    bounds = [(1,60), (0.1, (max(mitotic_lifespans) - min(mitotic_lifespans))), (0.01, 10), (1e-31, 0.9999999)]
+    #
+    #m = minimize(qsurvival_nllik, x0, method='nelder-mead', bounds=bounds) #Change the method to minimize
+    #x: array([18.89482881,  1.67120341,  0.09735528,  0.59049594])
+    #x0: array([25.5       , 10.35847627,  0.03450854,  0.5       ])
 
-#m = minimize(qsurvival_nllik, x0, method="L-BFGS-B", bounds=bounds)
+    #m = minimize(qsurvival_nllik, x0, method="L-BFGS-B", bounds=bounds)
 
-#m = minimize(qsurvival_nllik, x0, method="TNC", bounds=bounds)
-m = minimize(qsurvival_nllik, x0, method="SLSQP", bounds=bounds)
-""" 
-    
+    # m = minimize(qsurvival_nllik, x0, method="TNC", bounds=bounds)
+    # m = minimize(qsurvival_nllik, x0, method="SLSQP", bounds=bounds)

@@ -38,7 +38,7 @@ def runAKTERK(init, run_time, observed_cells_time, model, chain, inputs, conditi
     model.parameters['AKT'].value = inputs['AKT'][' '.join(cond_split_DMSO)] * 1
 
     try:
-        variable_range, check, tmp_score = runStochcell(model, idx, condition, thr);
+        variable_range, check, tmp_score = runStochcell(model, thr);
     except :
         print("check didn't pass");
         return (0, 0)

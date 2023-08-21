@@ -12,7 +12,7 @@ sys.path.insert(0, path + "/../cellular_cycle") #add a pathway to the model
 sys.path.insert(0, path + "/../fit") #add a pathway to the model
 
 from Austin_proliferation_model_6 import model
-# from cost_function_BngSimulator_low_medium_stiffness_pso import log_likelihood, log_prior, log_posterior
+from cost_function_BngSimulator_low_medium_stiffness_pso import log_likelihood, log_prior, log_posterior
 import numpy as np
 from scipy.stats import multivariate_normal
 import pandas as pd
@@ -45,10 +45,8 @@ for key in initial_concentrations.keys():
 original_parameters = []
 for name in pysb_sampled_parameter_names:
     original_parameters += [np.log10(model.parameters[name].value)]
-
 parameter_vector = 10**np.array(original_parameters)
 idx = 'original_parameters'
-
 mean = 10**np.array(original_parameters)
 
 ###############################################################################
