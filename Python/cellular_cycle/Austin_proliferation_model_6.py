@@ -37,9 +37,9 @@ Monomer('ERK', )
 
 ###Parameter
 
-Parameter('AKT',200)
-Parameter('ERK',200)
-Parameter('FAK',200)
+Parameter('AKT', 200)
+Parameter('ERK', 200)
+Parameter('FAK', 200)
 
 Parameter('m', 3)
 Parameter('BCL2t', 0.95)

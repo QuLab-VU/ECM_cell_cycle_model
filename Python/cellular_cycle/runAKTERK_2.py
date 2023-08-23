@@ -18,7 +18,7 @@ from peakfinder import peakfinder
 
 #######################################################################
 
-def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_population, idx, condition):
+def runAKTERK(init, run_time, observed_cells_time, model, chain, inputs, condition, cond_split_DMSO):
     
     
     
@@ -26,20 +26,31 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     parameter_vector_original=[]
     for pname in pysb_sampled_parameter_names:
         #Change model parameter values to current location in parameter space
-        parameter_vector_original+=[model_population.parameters[pname].value]
+        parameter_vector_original+=[model.parameters[pname].value]
     
     v = 0.05;     
     sys_size=200; #cell size
     thr = 0.26
-    
+
+    #Set initial condition to DMSO treatment
+    model.parameters['ERK'].value = inputs['ERK'][' '.join(cond_split_DMSO)] * 1
+    model.parameters['FAK'].value = inputs['FAK'][' '.join(cond_split_DMSO)] * 1
+    model.parameters['AKT'].value = inputs['AKT'][' '.join(cond_split_DMSO)] * 1
+
     try:
-        variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx, condition, thr);
+        variable_range, check, tmp_score = runStochcell(model, thr);
     except :
+        print("check didn't pass");
         return (0, 0)
-    
+
     if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.2: #the model doesn't oscillate or the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
-        #print("check didn't pass");
+        print("check didn't pass");
         return (0,0)
+
+    #Set the experiment to real condition
+    model.parameters['ERK'].value = inputs['ERK'][condition] * model.parameters['omega']
+    model.parameters['FAK'].value = inputs['FAK'][condition] * model.parameters['omega']
+    model.parameters['AKT'].value = inputs['AKT'][condition] * model.parameters['omega']
     
     
     cells={}
