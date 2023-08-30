@@ -48,10 +48,10 @@ import matplotlib.pyplot as plt
 ###############################################################################
 
 # import pysb sampled names
-pysb_sampled_parameter_names = np.loadtxt(path + "/../model_data/sampled_parameter_names.txt", dtype=str)
+pysb_sampled_parameter_names = np.loadtxt(path + "/Python/model_data/sampled_parameter_names.txt", dtype=str)
 
 # Importing the parameters:
-new_param = pd.read_csv(path + "/../model_data/parameters.csv")
+new_param = pd.read_csv(path + "/Python/model_data/parameters.csv")
 del new_param['Stress']
 for key in new_param.keys():
     try:
@@ -61,7 +61,7 @@ for key in new_param.keys():
 model.parameters['omega'].value = 200
 
 # Setting initial concentrations '/../model_data/initial_concentrations.csv'
-initial_concentrations = pd.read_csv(path + '/../model_data/initial_concentrations.csv')
+initial_concentrations = pd.read_csv(path + '/Python/model_data/initial_concentrations.csv')
 for key in initial_concentrations.keys():
     model.parameters[key].value = initial_concentrations[key][0]
 
@@ -119,7 +119,7 @@ for i in range(4):
 for ax in axs.flat:
     ax.label_outer()
 
-plt.savefig(fn, bbox_inches = 'tight')
+# plt.savefig(fn, bbox_inches = 'tight')
 
 ###############################################################################
 ###############################################################################
@@ -130,7 +130,7 @@ condition = '55 kPa DMSO'
 
 
 for input_signal in inputs.keys():
-    model_population.parameters[input_signal].value = inputs[input_signal][condition] * 200
+    model.parameters[input_signal].value = inputs[input_signal][condition] * 200
 
 
 t = np.linspace(0, 500, 50001)
