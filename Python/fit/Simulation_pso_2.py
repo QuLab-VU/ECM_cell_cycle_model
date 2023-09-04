@@ -11,16 +11,17 @@ import sys
 sys.path.insert(0, path + "/../cellular_cycle") #add a pathway to the model
 sys.path.insert(0, path + "/../fit") #add a pathway to the model
 
-from Austin_proliferation_model_6 import model
+from cell_cycle_death_model import model
 from cost_function_BngSimulator_low_medium_stiffness_pso import log_likelihood, log_prior, log_posterior
 import numpy as np
 from scipy.stats import multivariate_normal
 import pandas as pd
-
+from pysb.simulator import ScipyOdeSimulator, BngSimulator
+import matplotlib.pyplot as plt
 
 ###############################################################################
 
-# import pysb sampled names
+# import pysb sampled parameters
 pysb_sampled_parameter_names = np.loadtxt(path + "/../model_data/sampled_parameter_names.txt", dtype=str)
 
 # Importing the parameters:
@@ -36,7 +37,9 @@ model.parameters['omega'].value = 200
 # Setting initial concentrations '/../model_data/initial_concentrations.csv'
 initial_concentrations = pd.read_csv(path + '/../model_data/initial_concentrations.csv')
 for key in initial_concentrations.keys():
-    model.parameters[key].value = initial_concentrations[key][0]
+    try:
+        model.parameters[key].value = initial_concentrations[key][0]/model.parameters['omega'].value
+    except: print(key)
 
 
 ###############################################################################
@@ -49,6 +52,29 @@ parameter_vector = 10**np.array(original_parameters)
 idx = 'original_parameters'
 mean = 10**np.array(original_parameters)
 
+
+# Test simulation with original parameters
+time = np.linspace(0, 100, 10001)
+sim_result_ODE = ScipyOdeSimulator(model, time, verbose=True).run()
+sim_result_SSA = BngSimulator(model, time, verbose=True).run(seed=33)
+
+observables=['obsCycE','obsCdc20', 'obsCycA', 'obsCycB', 'obsp21']
+for i, obs in enumerate(observables):
+    print(sim_result_ODE.observables[obs])
+    print(len(sim_result_ODE.observables[obs]))
+    print(time.shape)
+    plt.plot(time, sim_result_ODE.observables['obsCdc20'])
+    # plt.plot(time, sim_result_ODE.observables[i], label=obs)
+plt.legend()
+plt.show()
+
+for i, obs in enumerate(observables):
+    plt.plot(time, sim_result_SSA.observables[obs], label=obs)
+plt.legend()
+plt.show()
+
+
+
 ###############################################################################
 
 conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
@@ -56,20 +82,20 @@ run_times = [120, 120, 120, 120, 60, 60]
 init_cells = range(1, 11)
 
 
-for condition, run_time_tmp in zip(conditions, run_times):
-    for init_cell_tmp in init_cells:
-        name = condition.replace(' ', '_') + "_" + str(init_cell_tmp) + "_initial_cells"
-        print(name)
-                
-        for iteration in range(10):
-            c = posterior(parameter_vector, 'test_initial_cell_number_' + name , pysb_sampled_parameter_names, [condition], [run_time_tmp], [init_cell_tmp],  [10], True, iteration)
+# for condition, run_time_tmp in zip(conditions, run_times):
+#     for init_cell_tmp in init_cells:
+#         name = condition.replace(' ', '_') + "_" + str(init_cell_tmp) + "_initial_cells"
+#         print(name)
+#
+#         for iteration in range(10):
+#             c = posterior(parameter_vector, 'test_initial_cell_number_' + name , pysb_sampled_parameter_names, [condition], [run_time_tmp], [init_cell_tmp],  [10], True, iteration)
 
 
 
 
 ###############################################################################
 
-mean = np.log10(np.array([1.000e-02, 1.500e+00, 2.700e-01, 3.700e-01, 2.100e-01, 2.500e-01, 2.000e-01, 8.000e-01, 1.000e-01, 8.000e-01, 1.500e+00, 1.800e+01, 1.800e+01, 5.500e-01, 4.000e-01, 2.000e-01, 5.500e-01, 7.000e-01, 5.000e-01, 1.800e+02, 1.000e-02, 2.400e+00, 1.400e-01, 7.500e+01, 5.000e-02, 1.000e-03, 2.500e-02, 3.000e-02, 2.500e+01, 1.000e-02, 7.000e-01, 8.000e+00, 5.000e+00, 6.815e-01, 1.120e-01, 1.110e-02]))
+mean = np.log10(parameter_vector)
 variance = 0.005 * np.ones(len(mean))
 # Create a multivariate normal distribution with the given mean and variance
 mvn = multivariate_normal(mean, np.diag(variance))
@@ -77,32 +103,31 @@ mvn = multivariate_normal(mean, np.diag(variance))
 # Generate a random sample from the distribution
 sample = mvn.rvs(size=10)
 
-log_prior(np.log10(parameter_vector))
-[log_prior(sample[i]) for i in range(sample.shape[0])]
+log_prior(parameter_vector, mean, variance)
+[log_prior(sample[i], mean, variance) for i in range(sample.shape[0])]
 
 parameter_vector
 10**sample
 ###############################################################################
 
-pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2", 'v_s1p21', 'F_n', 'K_p21fak', 'a_stress', 'b_stress_AKT', 'b_stress_ERK']
 conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
 run_times = [120, 120, 120, 120, 60, 60]
 init_cells = (5*np.ones(6)).astype(int)
 chain = 0
-save=True
+save=False
 
 
-cost = log_posterior(np.log10(np.array(parameter_vector)), 'original_parameters', pysb_sampled_parameter_names, conditions, run_times, init_cells, save, 'original_parameters')
+cost = log_posterior(np.log10(np.array(parameter_vector)), 'original_parameters', pysb_sampled_parameter_names, mean, variance, conditions, run_times, init_cells, save, 'original_parameters')
 
 ###############################################################################
 
 def cost_function(parameter_vectors):
-    pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2", 'v_s1p21', 'F_n', 'K_p21fak', 'a_stress', 'b_stress_AKT', 'b_stress_ERK']
+    global mean, variance, pysb_sampled_parameter_names
     conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
     run_times = [120, 120, 120, 120, 60, 60]
     init_cells = (5*np.ones(6)).astype(int)
     chain = 0
-    save=True
+    save=False
     
     global iteration_swarm
     iteration_swarm += 1
@@ -113,7 +138,7 @@ def cost_function(parameter_vectors):
         parameter_vector = parameter_vectors[chain]
         print(parameter_vector) 
         
-        cost[chain] =+ log_posterior(parameter_vector, chain+1, pysb_sampled_parameter_names, conditions, run_times, init_cells, save, iteration_swarm)
+        cost[chain] =+ log_posterior(parameter_vector, chain+1, pysb_sampled_parameter_names, mean, variance, conditions, run_times, init_cells, save, iteration_swarm)
         
     return cost
 
@@ -121,31 +146,31 @@ iteration_swarm = 0
 c = cost_function(sample)
 
 import time
-
-start = time.time()
-c_original = cost_function(np.log10(np.array([parameter_vector])))
-end = time.time()
-
-duration_one_cell = end - start
-
-
-###############################################################################
-
-import pyswarms as ps
-options = {'c1': 0.1, 'c2': 0.1, 'w': 0.1, 'k': 4, 'p': 2} #hyperparameters 4
-
-n_particles = len(pysb_sampled_parameter_names)
-dimensions = len(pysb_sampled_parameter_names)
-initial_positions = mvn.rvs(size=n_particles)
-
-
-max_bound = np.array(mean)+2
-min_bound = np.array(mean)-2
-bounds = (min_bound, max_bound)
-iteration_swarm = 0
-
-optimizer = ps.single.LocalBestPSO(n_particles=n_particles, dimensions=dimensions, options=options, bounds=bounds, init_pos = initial_positions)
-
-cost, pos = optimizer.optimize(cost_function, iters=80)
-
-
+#
+# start = time.time()
+# c_original = cost_function(np.log10(np.array([parameter_vector])))
+# end = time.time()
+#
+# duration_one_cell = end - start
+#
+#
+# ###############################################################################
+#
+# import pyswarms as ps
+# options = {'c1': 0.1, 'c2': 0.1, 'w': 0.1, 'k': 4, 'p': 2} #hyperparameters 4
+#
+# n_particles = len(pysb_sampled_parameter_names)
+# dimensions = len(pysb_sampled_parameter_names)
+# initial_positions = mvn.rvs(size=n_particles)
+#
+#
+# max_bound = np.array(mean)+2
+# min_bound = np.array(mean)-2
+# bounds = (min_bound, max_bound)
+# iteration_swarm = 0
+#
+# optimizer = ps.single.LocalBestPSO(n_particles=n_particles, dimensions=dimensions, options=options, bounds=bounds, init_pos = initial_positions)
+#
+# cost, pos = optimizer.optimize(cost_function, iters=80)
+#
+#

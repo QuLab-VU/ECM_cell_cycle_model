@@ -142,11 +142,10 @@ def RBS(x, x0, sigma = 5) :
 
 ##############################################################################
 
-def log_prior(parameter_vector):   
-    mean = np.log10(np.array([1.000e-02, 1.500e+00, 2.700e-01, 3.700e-01, 2.100e-01, 2.500e-01, 2.000e-01, 8.000e-01, 1.000e-01, 8.000e-01, 1.500e+00, 1.800e+01, 1.800e+01, 5.500e-01, 4.000e-01, 2.000e-01, 5.500e-01, 7.000e-01, 5.000e-01, 1.800e+02, 1.000e-02, 2.400e+00, 1.400e-01, 7.500e+01, 5.000e-02, 1.000e-03, 2.500e-02, 3.000e-02, 2.500e+01, 1.000e-02, 7.000e-01, 8.000e+00, 5.000e+00, 6.815e-01, 1.120e-01, 1.110e-02]))
-    variance = 10 * np.ones(len(mean))
+def log_prior(parameter_vector, mean, variance):
+    # Create a multivariate normal distribution object
     mvn = multivariate_normal(mean, np.diag(variance))
-    
+
     # Calculate the log likelihood for each data point
     log_likelihoods = mvn.logpdf(parameter_vector)
     
@@ -322,6 +321,10 @@ def log_likelihood(parameter_vector, chain, pysb_sampled_parameter_names, condit
     cost = {param + ' ' + cond_tmp: [val_tmp] for cond_tmp in cost.keys() for param, val_tmp in cost[cond_tmp].items()}
     
     frac_prolif_parameters_temp = {"chain":[chain], "iteration":[iteration], **parameters_sim, **cost}
+    print(parameter_vector)
+    print(len(parameter_vector))
+    print(pysb_sampled_parameter_names)
+    print(len(pysb_sampled_parameter_names))
     vect = pd.DataFrame(np.array([parameter_vector]), columns = pysb_sampled_parameter_names)
     frac_prolif_parameters_temp = pd.DataFrame(data=frac_prolif_parameters_temp)   
     frac_prolif_parameters_temp = pd.concat([frac_prolif_parameters_temp, vect], axis=1)
@@ -335,9 +338,9 @@ def log_likelihood(parameter_vector, chain, pysb_sampled_parameter_names, condit
     return frac_prolif_parameters_temp['cost'].sum(axis=1).values[0], frac_prolif_parameters_temp
 
 
-def log_posterior(parameter_vector, chain, pysb_sampled_parameter_names, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=True, iteration = 0): 
+def log_posterior(parameter_vector, chain, pysb_sampled_parameter_names, mean, variance, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=False, iteration = 0):
     
-    prior = - log_prior(parameter_vector)
+    prior = - log_prior(parameter_vector, mean, variance)
     ll, frac_prolif_parameters_temp = log_likelihood(10**parameter_vector, chain, pysb_sampled_parameter_names, conditions, run_times, init_cells, save, iteration)
     frac_prolif_parameters_temp[('cost', '- log prior')] = prior
     if save:

@@ -1,13 +1,11 @@
 V_s2skp
-V_Fp
+K_p21fak
 k_M
 k_EMY
-k_CDF
 k_CDS
 k_ED
 K_S
 K_MY
-K_DF
 d_CD
 k_P1
 k_P2
