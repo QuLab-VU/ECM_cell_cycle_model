@@ -405,7 +405,7 @@ def plot_distributions_cost_pso(conditions, time_dict_pso, frac_prolif_parameter
     bins = {}
 
     bins['G1'] = np.linspace(g1_min, g1_max, int((g1_max - g1_min)/2))
-    bins['SM'] = np.linspace(sm_min, sm_max, int((sm_max - sm_min)/2))
+    bins['S-M'] = np.linspace(sm_min, sm_max, int((sm_max - sm_min)/2))
     bins['IMT'] = np.linspace(imt_min, imt_max, int((imt_max - imt_min)/2))
     
     colormap = cm.RdYlBu
@@ -431,7 +431,7 @@ def plot_distributions_cost_pso(conditions, time_dict_pso, frac_prolif_parameter
                 ax.hist(time, bins=bins[cell_phase], alpha=0.4, histtype='step', color=colormap(normalize(cost_tmp)), density=True)
                 ax.set_title(cell_phase + f' - {condition}')
                 
-            ax.hist(time_dict_original[cell_phase][condition], bins=bins[cell_phase], alpha=0.6, histtype='step', color=colormap(normalize(frac_prolif_parameters_original[('cost', 'cost ' + cell_phase + ' distributions ' + condition)])), density=True, linewidth=2)
+            ax.hist(time_dict_original[cell_phase][condition], bins=bins[cell_phase], alpha=0.6, histtype='step', color=colormap(normalize(frac_prolif_parameters_original[('cost', 'cost ' + cell_phase + ' distributions ' + condition)])), density=True, linewidth=4)
             ax.hist(experimental, bins=bins[cell_phase], alpha=0.6, histtype='step', color='black', density=True, linewidth=2)
             
     cax = fig.add_axes([1.02, 0.1, 0.02, 0.8])
@@ -511,5 +511,5 @@ frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(by=[('cost',
 
 #for condition in conditions: frac_prolif_parameters_pso[('cost', 'cost IMT distributions '+condition)]=0
 
-plot_distributions_cost_pso(conditions, time_dict_pso, frac_prolif_parameters_pso.iloc[0:40], all_IMTs, frac_prolif_parameters_original, time_dict_original)
+plot_distributions_cost_pso(conditions, time_dict_pso, frac_prolif_parameters_pso.iloc[0:60], all_IMTs, frac_prolif_parameters_original, time_dict_original)
 
