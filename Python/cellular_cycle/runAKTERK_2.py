@@ -18,40 +18,39 @@ from peakfinder import peakfinder
 
 #######################################################################
 
-def runAKTERK(init, run_time, observed_cells_time, model, chain, inputs, condition, cond_split_DMSO):
-    
-    
-    
-    pysb_sampled_parameter_names = ["V_s2skp","V_Fp","k_M","k_EMY","k_CDF","k_CDS","k_ED","K_S","K_MY","K_DF","d_CD","k_P1", "k_P2", "K_CD", "k_E", "K_M", "K_CE", "V_2E2F", "K_2E2F", "k_RE", "kf1", "kf2", "kb", "kasbaxmbcl2", "kdsbaxmbcl2", "k1sbh3", "k2sbh3", "kdbh3", "kasbh3bcl2", "kdsbh3bcl2"]
+def runAKTERK(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr = 0.26):
+    """
+    init: number of initial cells
+    run_time: time of the experiment
+    observed_cells_time: time of observation
+    model: pysb model
+    ECM_conditions: inputs for FAK, ERK, AKT signaling pathways related to the condition (stiffness and drug treatment)
+    condition: condition (stiffness and drug treatment)
+    cond_split_DMSO: condition for determinstic simulation, using DMSO treatment (initially, cells are untreated)
+    """
+
     parameter_vector_original=[]
-    for pname in pysb_sampled_parameter_names:
+    for pname in sampled_parameter_names:
         #Change model parameter values to current location in parameter space
         parameter_vector_original+=[model.parameters[pname].value]
-    
-    v = 0.05;     
-    sys_size=200; #cell size
-    thr = 0.26
 
+    cond_split_DMSO = condition.split(' ')
+    condition_untreated = ' '.join(cond_split_DMSO)
+    print(condition_untreated)
     #Set initial condition to DMSO treatment
-    model.parameters['ERK'].value = inputs['ERK'][' '.join(cond_split_DMSO)] * 1
-    model.parameters['FAK'].value = inputs['FAK'][' '.join(cond_split_DMSO)] * 1
-    model.parameters['AKT'].value = inputs['AKT'][' '.join(cond_split_DMSO)] * 1
+    for signal_tmp in ['ERK', 'FAK', 'AKT'] :
+        # ECM_conditions has col condition to be matched with the input splt DMSO, for each species from species col, and value col
+        model.parameters[signal_tmp].value = ECM_conditions[(ECM_conditions["condition"] == condition_untreated) & (ECM_conditions["species"] == signal_tmp)]["value"]
 
-    try:
-        variable_range, check, tmp_score = runStochcell(model, thr);
-    except :
-        print("check didn't pass");
-        return (0, 0)
+    variable_range, check, tmp_score = runStochcell(model, thr = 0.26, return_plot = True)
 
     if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.2: #the model doesn't oscillate or the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
         print("check didn't pass");
         return (0,0)
 
     #Set the experiment to real condition
-    model.parameters['ERK'].value = inputs['ERK'][condition] * model.parameters['omega']
-    model.parameters['FAK'].value = inputs['FAK'][condition] * model.parameters['omega']
-    model.parameters['AKT'].value = inputs['AKT'][condition] * model.parameters['omega']
-    
+    for signal_tmp in ['ERK', 'FAK', 'AKT'] :
+        model.parameters[signal_tmp].value = ECM_conditions[(ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == signal_tmp)]["value"]
     
     cells={}
     cells['molecules']=[]; #Number of molecules taken randomly at one point during the cell cycle
@@ -491,3 +490,57 @@ def runAKTERK(init, run_time, observed_cells_time, model, chain, inputs, conditi
             print("Cell population simulation error")
 
     return (cells, cell_count)
+
+
+
+
+if __name__=="__main__":
+    # import model
+    from cell_cycle_death_model import model
+    import pandas as pd
+    import os
+
+    # import pysb sampled parameters
+    sampled_parameter_names = np.loadtxt(os.path.dirname(__file__) + '/../model_data/sampled_parameter_names.txt',
+                                         dtype=str)
+
+    # Importing the parameters:
+    new_param = pd.read_csv(os.path.dirname(__file__) + '/../model_data/parameters.csv')
+    del new_param['Stress']
+    for key in new_param.keys():
+        try:
+            if model.parameters[key].value != new_param[key][0]:
+                model.parameters[key].value = new_param[key]
+        except:
+            print(key)
+    model.parameters['omega'].value = 200
+
+    # Setting initial concentrations '/../model_data/initial_concentrations.csv'
+    initial_concentrations = pd.read_csv(os.path.dirname(__file__) + '/../model_data/initial_concentrations.csv')
+    for key in initial_concentrations.keys():
+        try:
+            model.parameters[key].value = initial_concentrations[key][0] / model.parameters['omega'].value
+        except:
+            print(key)
+
+    # # Import ECM_conditions.csv
+    ECM_conditions = pd.read_csv(os.path.dirname(__file__) + '/../model_data/ECM_conditions_2.csv')
+    condition = '4 kPa erlotinib'
+
+    # Set the species AKT, ERK, FAK with species and value col
+    # for input in ["AKT", "ERK", "FAK"]:
+    #     model.parameters[input].value = ECM_conditions[
+    #         (ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == input)].value
+
+    # Set inputs for runAKTERK function
+    init = 1
+    run_time = 40
+    observed_cells_time = 40
+
+    # Run the model
+    # Simulate runStochcell
+    # (variable_range, check, tmp_score) = runStochcell(model, thr=0.26, return_plot=True)
+
+    (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names)
+    # print(cells)
+    # print(cell_count)

@@ -45,7 +45,7 @@ import matplotlib.pyplot as plt
 ###############################################################################
 
 # import pysb sampled parameters
-pysb_sampled_parameter_names = np.loadtxt(path + "/../model_data/sampled_parameter_names.txt", dtype=str)
+sampled_parameter_names = np.loadtxt(path + "/../model_data/sampled_parameter_names.txt", dtype=str)
 
 # Importing the parameters:
 new_param = pd.read_csv(path + "/../model_data/parameters.csv")

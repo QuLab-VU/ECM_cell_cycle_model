@@ -186,7 +186,7 @@ def log_likelihood_single_condition(init, run_time, condition, chain, iteration,
 
     
     ###########################################################################
-    (cells, cell_count) = runAKTERK(init, run_time, run_time, model, chain, inputs, condition, cond_split_DMSO);
+    (cells, cell_count) = runAKTERK(init, run_time, run_time, model, inputs, condition, cond_split_DMSO);
     
     ###########################################################################
     print('Cell count')
@@ -287,7 +287,7 @@ def log_likelihood_single_condition(init, run_time, condition, chain, iteration,
 
 
 
-def log_likelihood(parameter_vector, chain, pysb_sampled_parameter_names, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=True, iteration=0):
+def log_likelihood(parameter_vector, chain, sampled_parameter_names, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=True, iteration=0):
     
     print("The parameters are ")
     print(parameter_vector)
@@ -297,7 +297,7 @@ def log_likelihood(parameter_vector, chain, pysb_sampled_parameter_names, condit
     
     print(iteration)
     
-    param_dict = {pname: pvalue for pname, pvalue in zip(pysb_sampled_parameter_names, parameter_vector)}
+    param_dict = {pname: pvalue for pname, pvalue in zip(sampled_parameter_names, parameter_vector)}
 
     # Change model parameter values to current location in parameter space
     for pname, pvalue in param_dict.items():
@@ -321,16 +321,13 @@ def log_likelihood(parameter_vector, chain, pysb_sampled_parameter_names, condit
     cost = {param + ' ' + cond_tmp: [val_tmp] for cond_tmp in cost.keys() for param, val_tmp in cost[cond_tmp].items()}
     
     frac_prolif_parameters_temp = {"chain":[chain], "iteration":[iteration], **parameters_sim, **cost}
-    print(parameter_vector)
-    print(len(parameter_vector))
-    print(pysb_sampled_parameter_names)
-    print(len(pysb_sampled_parameter_names))
-    vect = pd.DataFrame(np.array([parameter_vector]), columns = pysb_sampled_parameter_names)
+
+    vect = pd.DataFrame(np.array([parameter_vector]), columns = sampled_parameter_names)
     frac_prolif_parameters_temp = pd.DataFrame(data=frac_prolif_parameters_temp)   
     frac_prolif_parameters_temp = pd.concat([frac_prolif_parameters_temp, vect], axis=1)
     
     
-    frac_prolif_parameters_temp.columns = pd.MultiIndex.from_tuples([("pso", "chain"), ("pso", "iteration")] + [("fractional proliferation model", param_name) for param_name in parameters_sim.keys()] + [("cost", cost_tmp_name) for cost_tmp_name in cost.keys()] + [("model parameters", parameter_name) for parameter_name in pysb_sampled_parameter_names])
+    frac_prolif_parameters_temp.columns = pd.MultiIndex.from_tuples([("pso", "chain"), ("pso", "iteration")] + [("fractional proliferation model", param_name) for param_name in parameters_sim.keys()] + [("cost", cost_tmp_name) for cost_tmp_name in cost.keys()] + [("model parameters", parameter_name) for parameter_name in sampled_parameter_names])
     
           
     
@@ -338,10 +335,10 @@ def log_likelihood(parameter_vector, chain, pysb_sampled_parameter_names, condit
     return frac_prolif_parameters_temp['cost'].sum(axis=1).values[0], frac_prolif_parameters_temp
 
 
-def log_posterior(parameter_vector, chain, pysb_sampled_parameter_names, mean, variance, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=False, iteration = 0):
+def log_posterior(parameter_vector, chain, sampled_parameter_names, mean, variance, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=False, iteration = 0):
     
     prior = - log_prior(parameter_vector, mean, variance)
-    ll, frac_prolif_parameters_temp = log_likelihood(10**parameter_vector, chain, pysb_sampled_parameter_names, conditions, run_times, init_cells, save, iteration)
+    ll, frac_prolif_parameters_temp = log_likelihood(10**parameter_vector, chain, sampled_parameter_names, conditions, run_times, init_cells, save, iteration)
     frac_prolif_parameters_temp[('cost', '- log prior')] = prior
     if save:
         frac_prolif_parameters_temp.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/cost/parameters_particle_" + str(chain) + "_iteration_" + str(iteration) + "_pso.pkl") 
@@ -354,10 +351,10 @@ def log_posterior(parameter_vector, chain, pysb_sampled_parameter_names, mean, v
 
 if __name__=="__main__":
     # import pysb sampled names
-    pysb_sampled_parameter_names = np.loadtxt(path + "/../model_data/sampled_parameter_names.txt", dtype=str)
+    sampled_parameter_names = np.loadtxt(os.path.dirname(__file__) + "/../model_data/sampled_parameter_names.txt", dtype=str, delimiter=',')
 
     # Importing the parameters:
-    new_param = pd.read_csv(path + "/../model_data/parameters.csv")
+    new_param = pd.read_csv(os.path.dirname(__file__) + "/../model_data/parameters.csv")
     del new_param['Stress']
     for key in new_param.keys():
         try:
@@ -368,15 +365,23 @@ if __name__=="__main__":
     model.parameters['omega'].value = 200
 
     # Setting initial concentrations '/../model_data/initial_concentrations.csv'
-    initial_concentrations = pd.read_csv(path + '/../model_data/initial_concentrations.csv')
+    initial_concentrations = pd.read_csv(os.path.dirname(__file__) + "/../model_data/initial_concentrations.csv")
     for key in initial_concentrations.keys():
         model.parameters[key].value = initial_concentrations[key][0]
 
     original_parameters = []
-    for name in pysb_sampled_parameter_names:
+    for name in sampled_parameter_names:
         original_parameters += [np.log10(model.parameters[name].value)]
     parameter_vector = 10 ** np.array(original_parameters)
     idx = 'original_parameters'
     mean = 10 ** np.array(original_parameters)
 
-    c = posterior(parameter_vector, 0, pysb_sampled_parameter_names, save=False)
+    # Calculate prior
+    prior = log_prior(parameter_vector, mean, np.diag(np.ones(len(sampled_parameter_names))))
+
+    # Calculate likelihood
+    ll, frac_prolif_parameters_temp = log_likelihood(10 ** parameter_vector, 0, sampled_parameter_names, save=False)
+
+    print("The prior is " + str(prior))
+    print("The likelihood is " + str(ll))
+    print("The posterior is " + str(prior + ll))
