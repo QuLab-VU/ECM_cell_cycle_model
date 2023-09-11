@@ -145,7 +145,7 @@ traj = sim.run(tspan=t, number_sim=n_sim)
 # test w cell cycle
 
 
-from runStochCell import runStochcell
+from Check_Model_Consistency import Check_Model_Consistency
 from peakfinder import peakfinder
 
 from pysb.simulator import OpenCLSSASimulator  # from gpu_ssa branch in Pysb github repos
@@ -168,7 +168,7 @@ observed_cells_time = run_time
 idx = 1
 condition = ''
 
-variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx, condition, thr);
+variable_range, check, tmp_score = Check_Model_Consistency(model_population, model_concentration, idx, condition, thr);
 
 check_ode = check == False or np.any(np.array([variable_range[key] for key in
                                                variable_range.keys()]) < 0) or tmp_score > 0.2  # the model doesn't oscillate or the

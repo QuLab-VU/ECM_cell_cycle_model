@@ -19,7 +19,7 @@ import scipy.stats as ss
 
 import matplotlib.pyplot as plt
 
-def runStochcell(model, thr = 0.26, return_plot = False):
+def Check_Model_Consistency(model, thr = 0.26, return_plot = False):
     """
     Run a stochastic simulation and perform multiple checks on the simulation results.
 

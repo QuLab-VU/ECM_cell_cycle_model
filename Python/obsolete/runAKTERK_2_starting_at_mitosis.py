@@ -13,7 +13,7 @@ from pysb import *
 import numpy as np
 import pylab as pl
 
-from runStochCell import runStochcell
+from Check_Model_Consistency import Check_Model_Consistency
 from pysb.simulator import BngSimulator
 from pysb.simulator import StochKitSimulator
 from peakfinder import peakfinder
@@ -35,7 +35,7 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     v = 0.05;
     sys_size=200; #cell size
     
-    variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx, condition);
+    variable_range, check, tmp_score = Check_Model_Consistency(model_population, model_concentration, idx, condition);
     #print(tmp_score);
     #print(check);
     

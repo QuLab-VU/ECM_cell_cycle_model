@@ -11,7 +11,7 @@ sys.path.insert(0, __file__ + "/../cellular_cycle")
 from pysb import * 
 import numpy as np
 
-from runStochCell import runStochcell
+from Check_Model_Consistency import Check_Model_Consistency
 from peakfinder import peakfinder
 
 from pysb.simulator import OpenCLSSASimulator #from gpu_ssa branch in Pysb github repos
@@ -34,7 +34,7 @@ def runAKTERK(init, run_time, observed_cells_time, model_concentration, model_po
     thr = 0.26
     
     try:
-        variable_range, check, tmp_score = runStochcell(model_population, model_concentration, idx, condition, thr);
+        variable_range, check, tmp_score = Check_Model_Consistency(model_population, model_concentration, idx, condition, thr);
     except :
         return (0, 0)
     

@@ -11,14 +11,14 @@ sys.path.insert(0, __file__ + "/../cellular_cycle")
 from pysb import * 
 import numpy as np
 
-from runStochCell import runStochcell
+from Check_Model_Consistency import CheckModelConsistency
 from pysb.simulator import BngSimulator
 from peakfinder import peakfinder
 
 
 #######################################################################
 
-def runAKTERK(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr = 0.26):
+def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr = 0.26):
     """
     init: number of initial cells
     run_time: time of the experiment
@@ -42,7 +42,7 @@ def runAKTERK(init, run_time, observed_cells_time, model, ECM_conditions, condit
         # ECM_conditions has col condition to be matched with the input splt DMSO, for each species from species col, and value col
         model.parameters[signal_tmp].value = ECM_conditions[(ECM_conditions["condition"] == condition_untreated) & (ECM_conditions["species"] == signal_tmp)]["value"]
 
-    variable_range, check, tmp_score = runStochcell(model, thr = 0.26, return_plot = True)
+    variable_range, check, tmp_score = CheckModelConsistency(model, thr = 0.26, return_plot = True)
 
     if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.2: #the model doesn't oscillate or the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
         print("check didn't pass");
@@ -538,8 +538,8 @@ if __name__=="__main__":
     observed_cells_time = 40
 
     # Run the model
-    # Simulate runStochcell
-    # (variable_range, check, tmp_score) = runStochcell(model, thr=0.26, return_plot=True)
+    # Simulate CheckModelConsistency
+    # (variable_range, check, tmp_score) = CheckModelConsistency(model, thr=0.26, return_plot=True)
 
     (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names)
     # print(cells)

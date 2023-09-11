@@ -18,8 +18,7 @@ sys.path.insert(0, os.path.dirname(__file__) + "/../fit")
 from Austin_proliferation_model_6 import model
 
 #os.environ["PYOPENCL_CTX"] ="0"
-#from runAKTERK_2_starting_at_mitosis import runAKTERK
-from runAKTERK_2 import runAKTERK
+from Cell_Population_Simulation import Cell_Population_Simulation
 from retrieve_cellState_dw_2 import retrieve_cellState
 from call_cell_events import call_events #
 import numpy as np
@@ -186,7 +185,7 @@ def log_likelihood_single_condition(init, run_time, condition, chain, iteration,
 
     
     ###########################################################################
-    (cells, cell_count) = runAKTERK(init, run_time, run_time, model, inputs, condition, cond_split_DMSO);
+    (cells, cell_count) = Cell_Population_Simulation(init, run_time, run_time, model, inputs, condition, cond_split_DMSO);
     
     ###########################################################################
     print('Cell count')
