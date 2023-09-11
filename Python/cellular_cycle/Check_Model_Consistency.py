@@ -151,7 +151,7 @@ def Check_Model_Consistency(model, thr = 0.26, return_plot = False):
         
         if len(a)>=2 and len(b)>=2:
             for k in range(len(model.observables)) :
-                variable_range[model.observables[k].name]=[yout[model.observables[k].name][i]/model.parameters['omega'] for i in range(max_tmp_cdc[-2], max_tmp_cdc[-1])]
+                variable_range[model.observables[k].name]=[yout[model.observables[k].name][i] for i in range(max_tmp_cdc[-2], max_tmp_cdc[-1])]
 
     # Plot on a first plot the trajectory of Cdc20 and CycE, with scatter plots on peaks of each with different colors. On a lower plots the scatter aligned on a line showing alternance between Cdc20 and CycE, and show the score
     if return_plot:
@@ -188,7 +188,7 @@ def Check_Model_Consistency(model, thr = 0.26, return_plot = False):
     return variable_range, check, tmp_score
 
 ###############################################################################
-# Test runStochcell
+# Test Check_Model_Consistency
 
 if __name__=="__main__":
     # import model
@@ -225,7 +225,7 @@ if __name__=="__main__":
     for input in ["AKT", "ERK", "FAK"]:
         model.parameters[input].value = ECM_conditions[(ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == input)].value
 
-    variable_range, check, tmp_score = runStochcell(model, return_plot=True)
+    variable_range, check, tmp_score = Check_Model_Consistency(model, return_plot=True)
 
     print(variable_range)
     print(check)

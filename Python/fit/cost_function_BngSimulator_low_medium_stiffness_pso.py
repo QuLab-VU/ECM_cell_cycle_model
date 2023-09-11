@@ -158,13 +158,7 @@ def log_prior(parameter_vector, mean, variance):
 
 ##############################################################################
 
-def log_likelihood_single_condition(init, run_time, condition, chain, iteration, save=True):
-        
-    inputs = {}
-    inputs['FAK'] = {'4 kPa DMSO': 0.6, '4 kPa ERL': 0.6, '0.6 kPa DMSO': 0.4, '0.6 kPa ERL': 0.4, '55 kPa DMSO': 1.0, '55 kPa ERL': 1.0}
-    inputs['ERK'] = {'4 kPa DMSO': 1.0, '4 kPa ERL': 0.2, '0.6 kPa DMSO': 1.0, '0.6 kPa ERL': 0.2, '55 kPa DMSO': 1.0, '55 kPa ERL': 0.2}
-    inputs['AKT'] = {'4 kPa DMSO': 1.0, '4 kPa ERL': 0.6, '0.6 kPa DMSO': 0.6, '0.6 kPa ERL': 0.3, '55 kPa DMSO': 1.0, '55 kPa ERL': 0.6}
-    
+def log_likelihood_single_condition(init, run_time, inputs, condition, chain, iteration, save=True):
     
     stiffness, _, treatment = condition.split(maxsplit=2)  # split the string into two parts
     stiffness = float(stiffness)  # convert the stiffness from string to float
@@ -185,8 +179,9 @@ def log_likelihood_single_condition(init, run_time, condition, chain, iteration,
 
     
     ###########################################################################
-    (cells, cell_count) = Cell_Population_Simulation(init, run_time, run_time, model, inputs, condition, cond_split_DMSO);
-    
+    print(condition)
+    (cells, cell_count) = Cell_Population_Simulation(init, run_time, run_time, model, inputs, condition, sampled_parameter_names);
+
     ###########################################################################
     print('Cell count')
     print(cell_count)
@@ -286,7 +281,7 @@ def log_likelihood_single_condition(init, run_time, condition, chain, iteration,
 
 
 
-def log_likelihood(parameter_vector, chain, sampled_parameter_names, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=True, iteration=0):
+def log_likelihood(parameter_vector, chain, sampled_parameter_names, inputs, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=True, iteration=0):
     
     print("The parameters are ")
     print(parameter_vector)
@@ -309,7 +304,7 @@ def log_likelihood(parameter_vector, chain, sampled_parameter_names, conditions 
     
     for init, run_time, condition in zip(init_cells, run_times, conditions):
         print(condition)
-        parameters_sim_tmp, cost_tmp = log_likelihood_single_condition(init, run_time, condition, chain, iteration, save)
+        parameters_sim_tmp, cost_tmp = log_likelihood_single_condition(init, run_time, inputs, condition, chain, iteration, save)
         
         parameters_sim[condition] = parameters_sim_tmp
         cost[condition] = cost_tmp
@@ -337,7 +332,7 @@ def log_likelihood(parameter_vector, chain, sampled_parameter_names, conditions 
 def log_posterior(parameter_vector, chain, sampled_parameter_names, mean, variance, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=False, iteration = 0):
     
     prior = - log_prior(parameter_vector, mean, variance)
-    ll, frac_prolif_parameters_temp = log_likelihood(10**parameter_vector, chain, sampled_parameter_names, conditions, run_times, init_cells, save, iteration)
+    ll, frac_prolif_parameters_temp = log_likelihood(10**parameter_vector, chain, sampled_parameter_names, inputs, conditions, run_times, init_cells, save, iteration)
     frac_prolif_parameters_temp[('cost', '- log prior')] = prior
     if save:
         frac_prolif_parameters_temp.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/cost/parameters_particle_" + str(chain) + "_iteration_" + str(iteration) + "_pso.pkl") 
@@ -375,11 +370,13 @@ if __name__=="__main__":
     idx = 'original_parameters'
     mean = 10 ** np.array(original_parameters)
 
+    ECM_conditions = pd.read_csv(os.path.dirname(__file__) + '/../model_data/ECM_conditions_2.csv')
+
     # Calculate prior
     prior = log_prior(parameter_vector, mean, np.diag(np.ones(len(sampled_parameter_names))))
 
     # Calculate likelihood
-    ll, frac_prolif_parameters_temp = log_likelihood(10 ** parameter_vector, 0, sampled_parameter_names, save=False)
+    ll, frac_prolif_parameters_temp = log_likelihood(10 ** parameter_vector, 0, sampled_parameter_names, ECM_conditions, save=False)
 
     print("The prior is " + str(prior))
     print("The likelihood is " + str(ll))

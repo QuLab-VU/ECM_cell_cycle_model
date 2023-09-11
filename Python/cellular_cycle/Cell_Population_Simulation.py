@@ -7,13 +7,17 @@ Title: runAKTERK
 """
 
 import sys
-sys.path.insert(0, __file__ + "/../cellular_cycle")
-from pysb import * 
+import os
+
 import numpy as np
 
-from Check_Model_Consistency import CheckModelConsistency
+sys.path.insert(0, __file__ + "/../cellular_cycle")
+from Check_Model_Consistency import Check_Model_Consistency
 from pysb.simulator import BngSimulator
 from peakfinder import peakfinder
+
+sys.path.insert(0, os.getcwd() + "/../figures")
+from plots_cell_population_simulation import plot_cell_count
 
 
 #######################################################################
@@ -28,6 +32,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
     condition: condition (stiffness and drug treatment)
     cond_split_DMSO: condition for determinstic simulation, using DMSO treatment (initially, cells are untreated)
     """
+    print(condition)
 
     parameter_vector_original=[]
     for pname in sampled_parameter_names:
@@ -36,13 +41,13 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
 
     cond_split_DMSO = condition.split(' ')
     condition_untreated = ' '.join(cond_split_DMSO)
-    print(condition_untreated)
     #Set initial condition to DMSO treatment
     for signal_tmp in ['ERK', 'FAK', 'AKT'] :
+        print(ECM_conditions)
         # ECM_conditions has col condition to be matched with the input splt DMSO, for each species from species col, and value col
         model.parameters[signal_tmp].value = ECM_conditions[(ECM_conditions["condition"] == condition_untreated) & (ECM_conditions["species"] == signal_tmp)]["value"]
 
-    variable_range, check, tmp_score = CheckModelConsistency(model, thr = 0.26, return_plot = True)
+    variable_range, check, tmp_score = Check_Model_Consistency(model, thr = 0.26, return_plot = False)
 
     if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.2: #the model doesn't oscillate or the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
         print("check didn't pass");
@@ -65,7 +70,8 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
         cells['molecules']=cells['molecules']+[{}]
         a=np.random.randint(len(variable_range['obsSkp2']))
         for var in list(variable_range.keys()) :
-            cells['molecules'][i][var] = [round(variable_range[var][a]*200)]
+            print(variable_range[var][a])
+            cells['molecules'][i][var] = [variable_range[var][a]]
         cells['time']=cells['time'] + [[0]]
         cells['division']=cells['division'] + [0]
         cells['living_cell']=cells['living_cell'] + [True] #living cell = True
@@ -74,7 +80,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
     cell_count=np.array([[0., len(cells['molecules'])]]);   #start the cell counter at time zero and with number of initial cells
     current_time=np.transpose(np.concatenate([np.zeros((1,len(cells['molecules']))), np.ones((1,len(cells['molecules'])))])); #keeps track of the current time of each cell and whether it's dead or not 
     
-    sim = BngSimulator(model_population, verbose=False);
+    sim = BngSimulator(model, verbose=False);
     
     while any(cells['recording']) : #run the code only if there are cells that are recorded
         #print('while loop is starting')
@@ -97,7 +103,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                 
                 
                 
-                if len(model_population.species)>0 :
+                if len(model.species)>0 :
                     Initial=[]
                     for j in cells['molecules'][ii] :
                         Initial=Initial+[cells['molecules'][ii][j][-1]]
@@ -127,9 +133,9 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                 current_ind_length=len(cells['molecules'][ii]['obsCdc20']);
                 
                 
-                a, max_tmp_cdc = peakfinder(cells['molecules'][ii]['obsCdc20'], thr*model_population.parameters['omega'].value, thr*model_population.parameters['omega'].value, 1, includeEndpoints=1);      #cdc20
+                a, max_tmp_cdc = peakfinder(cells['molecules'][ii]['obsCdc20'], thr*model.parameters['omega'].value, thr*model.parameters['omega'].value, 1, includeEndpoints=1);      #cdc20
                 
-                a, max_tmp_cycE = peakfinder((cells['molecules'][ii]['obsCycE']), thr*model_population.parameters['omega'].value, thr*model_population.parameters['omega'].value, 1, includeEndpoints=1);  #cycE
+                a, max_tmp_cycE = peakfinder((cells['molecules'][ii]['obsCycE']), thr*model.parameters['omega'].value, thr*model.parameters['omega'].value, 1, includeEndpoints=1);  #cycE
                 
                 death = np.array([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 20]) if len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])>20 else np.array([])
                 
@@ -273,7 +279,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                 tmp_t = np.linspace(0, T, max(3,int(T*10)))
                 
                 
-                if len(model_population.species)>0 :
+                if len(model.species)>0 :
                     Initial=[]
                     for j in cells['molecules'][ii] :
                         Initial=Initial+[cells['molecules'][ii][j][-1]]
@@ -498,11 +504,10 @@ if __name__=="__main__":
     # import model
     from cell_cycle_death_model import model
     import pandas as pd
-    import os
+    import matplotlib.pyplot as plt
 
     # import pysb sampled parameters
-    sampled_parameter_names = np.loadtxt(os.path.dirname(__file__) + '/../model_data/sampled_parameter_names.txt',
-                                         dtype=str)
+    sampled_parameter_names = np.loadtxt(os.path.dirname(__file__) + '/../model_data/sampled_parameter_names.txt', dtype=str)
 
     # Importing the parameters:
     new_param = pd.read_csv(os.path.dirname(__file__) + '/../model_data/parameters.csv')
@@ -523,24 +528,25 @@ if __name__=="__main__":
         except:
             print(key)
 
-    # # Import ECM_conditions.csv
+    # Import ECM_conditions.csv
     ECM_conditions = pd.read_csv(os.path.dirname(__file__) + '/../model_data/ECM_conditions_2.csv')
-    condition = '4 kPa erlotinib'
+    condition = "4 kPa erlotinib"
 
     # Set the species AKT, ERK, FAK with species and value col
     # for input in ["AKT", "ERK", "FAK"]:
     #     model.parameters[input].value = ECM_conditions[
     #         (ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == input)].value
 
-    # Set inputs for runAKTERK function
-    init = 1
-    run_time = 40
-    observed_cells_time = 40
+    # Set inputs for Cell_Population_Simulation function
+    init = 2
+    run_time = 120
+    observed_cells_time = 120
 
     # Run the model
-    # Simulate CheckModelConsistency
-    # (variable_range, check, tmp_score) = CheckModelConsistency(model, thr=0.26, return_plot=True)
+    # Simulate Check_Model_Consistency
+    # (variable_range, check, tmp_score) = Check_Model_Consistency(model, thr=0.26, return_plot=True)
 
-    (cells, cell_count) = runAKTERK(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names)
+    (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names)
     # print(cells)
-    # print(cell_count)
+    print(cell_count)
+    plot_cell_count(cell_count, run_time)
