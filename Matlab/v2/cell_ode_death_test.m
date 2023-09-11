@@ -38,7 +38,7 @@ dydt(1) = p.s*((p.V_sskp2)... %Basal skp2 synthesis
     - (p.k_ddskp2*Skp2)); %skp2 degradation
  
 %p21
-dydt(2) = p.s*((p.v_s1p21/(1+p.K_p21fak*FAK^p.F_n))... %p21 synthesis
+dydt(2) = p.s*((p.v_s1p21^p.F_n/(p.K_p21fak^p.F_n+FAK^p.F_n))... %p21 synthesis
     -(p.k_c1*CycD*p21)... %p21 cycD association
     +(p.k_c2*CycDp21)... %p21 cycD dis
     -(p.k_c3*CycE*p21)... %p21 cycE association
