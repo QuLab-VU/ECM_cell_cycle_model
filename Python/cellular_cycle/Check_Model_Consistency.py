@@ -220,7 +220,6 @@ if __name__=="__main__":
     # # Import ECM_conditions.csv
     ECM_conditions = pd.read_csv(os.path.dirname(__file__) + '/../model_data/ECM_conditions_2.csv')
     condition = "4 kPa erlotinib"
-
     # Set the species AKT, ERK, FAK with species and value col
     for input in ["AKT", "ERK", "FAK"]:
         model.parameters[input].value = ECM_conditions[(ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == input)].value
@@ -230,3 +229,51 @@ if __name__=="__main__":
     print(variable_range)
     print(check)
     print(tmp_score)
+
+    condition = "4 kPa DMSO"
+    # Set the species AKT, ERK, FAK with species and value col
+    for input in ["AKT", "ERK", "FAK"]:
+        model.parameters[input].value = ECM_conditions[(ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == input)].value
+
+    variable_range, check, tmp_score = Check_Model_Consistency(model, return_plot=True)
+    print(condition)
+    print(check)
+
+    condition = "55 kPa erlotinib"
+    # Set the species AKT, ERK, FAK with species and value col
+    for input in ["AKT", "ERK", "FAK"]:
+        model.parameters[input].value = ECM_conditions[(ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == input)].value
+
+    variable_range, check, tmp_score = Check_Model_Consistency(model, return_plot=True)
+    print(condition)
+    print(check)
+
+    
+    condition = "55 kPa DMSO"
+    # Set the species AKT, ERK, FAK with species and value col
+    for input in ["AKT", "ERK", "FAK"]:
+        model.parameters[input].value = ECM_conditions[(ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == input)].value
+
+    variable_range, check, tmp_score = Check_Model_Consistency(model, return_plot=True)
+    print(condition)
+    print(check)
+
+
+    condition = "0.6 kPa erlotinib"
+    # Set the species AKT, ERK, FAK with species and value col
+    for input in ["AKT", "ERK", "FAK"]:
+        model.parameters[input].value = ECM_conditions[(ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == input)].value
+
+    variable_range, check, tmp_score = Check_Model_Consistency(model, return_plot=True)
+    print(condition)
+    print(check)
+
+
+    condition = "0.6 kPa DMSO"
+    # Set the species AKT, ERK, FAK with species and value col
+    for input in ["AKT", "ERK", "FAK"]:
+        model.parameters[input].value = ECM_conditions[(ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == input)].value
+
+    variable_range, check, tmp_score = Check_Model_Consistency(model, return_plot=True)
+    print(condition)
+    print(check)

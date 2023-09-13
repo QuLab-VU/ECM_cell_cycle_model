@@ -538,7 +538,7 @@ if __name__=="__main__":
     #         (ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == input)].value
 
     # Set inputs for Cell_Population_Simulation function
-    init = 2
+    init = 1
     run_time = 120
     observed_cells_time = 120
 
@@ -550,3 +550,18 @@ if __name__=="__main__":
     # print(cells)
     print(cell_count)
     plot_cell_count(cell_count, run_time)
+
+    condition = "0.6 kPa DMSO"
+    (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names)
+
+    condition = "0.6 kPa erlotinib"
+    (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names)
+
+    condition = "4 kPa DMSO"
+    (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names)
+
+    condition = "55 kPa DMSO"
+    (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names)
+
+    condition = "55 kPa erlotinib"
+    (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names)
