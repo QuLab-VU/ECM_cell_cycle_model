@@ -433,7 +433,7 @@ Rule('BAXmBCL2_association_dissociation', BAX(m='yes', b=None) + BCL2(b=None) | 
 
 Parameter('k1sbh3', 0.001)  # uM/h
 Parameter('k2sbh3', 0.025)  # 0.0095 # 0.012 # 0.025 # 1/h
-Parameter('a_stress', 0.6815)  # uM
+Parameter('a_stress', 0.71)  # uM updated 20230914
 Parameter('b_stress_AKT', 0.112)  # unitless
 Parameter('b_stress_ERK', 0.0111)  # unitless
 Expression('ks_BH3', m * ((k1sbh3 * omega) +
