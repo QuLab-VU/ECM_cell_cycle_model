@@ -1,4 +1,4 @@
-function [cells, cell_count] = runStochCell_death(AKT,ERK,FAK,stress,init,dt)
+function [cells, cell_count] = runStochCell_death(AKT,ERK,FAK,init,dt,stress)
 SAVEDIR = strcat(matlabroot, "\ECM_UMAP_output");
 if ~isdir(SAVEDIR)
     mkdir(SAVEDIR)
@@ -47,7 +47,7 @@ variable_range=y(maxima(6):maxima(7),:);
 %disp('Finished ODE')
 p.AKT=AKT;
 p.ERK=ERK;
-p.Stress=stress;
+%p.Stress=stress;
 %p.v_s1p21 = p21_s;
 
 runAKTERK_death

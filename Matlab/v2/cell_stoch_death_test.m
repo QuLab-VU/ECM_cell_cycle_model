@@ -109,7 +109,7 @@ BH3BCL2 = x(22);
 BAXm=x(23);
 BCL2=x(24);
 %Stress = p.Stress;
-Stress=0.6815-0.112*p.AKT-0.0111*p.ERK; %1-0.7*p.AKT+0.3*p.ERK;
+Stress=0.71-0.112*p.AKT-0.0111*p.ERK; %1-0.7*p.AKT+0.3*p.ERK;
 
 %skp2
 w1=p.s*(p.V_sskp2*p.omega); %Basal skp2 synthesis
@@ -118,7 +118,7 @@ w3=p.s*((p.V_dskp2*p.omega*(Skp2/(p.K_dskp2*p.omega+Skp2))*(Cdh1/(p.K_cdh1*p.ome
 w4=p.s*(p.k_ddskp2*Skp2);%skp2 degradation
 
 %p21 and p21p
-w5=p.s*((p.v_s1p21*p.omega)*(p.omega^p.F_n)/(1*p.omega^p.F_n+p.K_p21fak*FAK^p.F_n)); 
+w5=p.s*(p.v_s1p21^p.F_n * p.omega / (p.K_p21fak^p.F_n + FAK^p.F_n));
 %w5=p.s*((p.v_s1p21*p.omega));%p21 synthesis
 w6=p.s*((p.k_c1/p.omega)*CycD*p21);%p21 cycD association
 w7=p.s*(p.k_c2*CycDp21);%p21 cycD dis
