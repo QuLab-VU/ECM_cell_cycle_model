@@ -24,7 +24,7 @@ import numpy as np
 from pysb.export import export
 import matplotlib.pyplot as plt
 
-
+from Austin_proliferation_model_6 import model as model_previous
 
 ###############################################################################
 #Compare with matlab simulations
@@ -54,14 +54,17 @@ for key in new_param.keys():
     try:
         if model.parameters[key].value != new_param[key][0]:
             model.parameters[key].value = new_param[key]
+            model_previous.parameters[key].value = new_param[key]
     except: print(key)
 model.parameters['omega'].value = 200
+model_previous.parameters['omega'].value = 200
 
 # Setting initial concentrations '/../model_data/initial_concentrations.csv'
 initial_concentrations = pd.read_csv(path + '/../model_data/initial_concentrations.csv')
 for key in initial_concentrations.keys():
     try:
-        model.parameters[key].value = initial_concentrations[key][0]/model.parameters['omega'].value
+        model.parameters[key].value = initial_concentrations[key][0] / model.parameters['omega'].value
+        model_previous.parameters[key].value = initial_concentrations[key][0]
     except: print(key)
 
 ###############################################################################
@@ -83,9 +86,12 @@ inputs['AKT'] = {'4 kPa DMSO': 1.0, '4 kPa ERL': 0.6, '0.6 kPa DMSO': 0.6, '0.6 
 condition = '55 kPa DMSO'
 condition = '0.6 kPa DMSO'
 condition = '55 kPa ERL'
+condition = '55 kPa DMSO'
+condition = '0.6 kPa ERL'
 
 for input_signal in inputs.keys():
     model.parameters[input_signal].value = inputs[input_signal][condition]
+    model_previous.parameters[input_signal].value = inputs[input_signal][condition] * 200
 
 t = np.linspace(0, 1000, 100001)
 t = np.linspace(0, 100, 10001)
@@ -98,6 +104,11 @@ for obs in range(4) :
     print(yout[observables[obs]][0])
 plt.legend(loc=0)
 plt.show()
+
+# Simulation with previous model
+t = np.linspace(0, 100, 10001)
+simres = ScipyOdeSimulator(model_previous, t).run()
+yout_previous = simres.all
 
 
 ####Comparison with Matlab deterministic simulation
@@ -120,6 +131,28 @@ def comparaison_Matlab_Pysb_plot():
         ax.label_outer()
 
     plt.savefig(fn, bbox_inches = 'tight')
+
+def comparison_two_simulations(sim1, sim2):
+    nmax = 10000
+
+
+    obs = ['obsSkp2', 'obsp21', 'obsp21p', 'obscdh1act', 'obsMyc', 'obsCycD', 'obsCycDp21', 'obspRb', 'obspRbp', 'obsE2F', 'obspRbE2F', 'obsCycE', 'obsCycEp21', 'obsCycA', 'obsCycAp21', 'obsCycB', 'obsCycBp21', 'obsCdc20', 'obsBAX', 'obsBAXmBCL2', 'obsBH3','obsBH3BCL2','obsBAXm','obsBCL2']
+    fig, axs = plt.subplots(6, 4)
+
+    for i in range(4):
+        for j in range(6):
+            axs[j, i].plot(t[0:nmax], sim1[obs[j+i*6]][0:nmax], label=obs[j+i*6] +' sim new', lw=0.1)
+            axs[j, i].plot(t[0:nmax], sim2[obs[j+i*6]][0:nmax], label=obs[j+i*6] +' sim old', lw=0.1)
+            axs[j, i].legend(fontsize=2)
+
+    for ax in axs.flat:
+        ax.label_outer()
+
+    return fig, axs
+
+fig, axs = comparison_two_simulations(yout, yout_previous)
+plt.show()
+# fig.savefig('/Users/jeremie/Downloads/comparison_two_simulations.pdf', bbox_inches = 'tight')
 
 ###############################################################################
 ###############################################################################

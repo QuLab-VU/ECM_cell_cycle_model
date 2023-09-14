@@ -158,7 +158,7 @@ def log_prior(parameter_vector, mean, variance):
 
 ##############################################################################
 
-def log_likelihood_single_condition(init, run_time, inputs, condition, chain, iteration, save=True):
+def log_likelihood_single_condition(init, run_time, inputs, condition, sampled_parameter_names, chain, iteration, save=True):
     
     stiffness, _, treatment = condition.split(maxsplit=2)  # split the string into two parts
     stiffness = float(stiffness)  # convert the stiffness from string to float
@@ -304,7 +304,7 @@ def log_likelihood(parameter_vector, chain, sampled_parameter_names, inputs, con
     
     for init, run_time, condition in zip(init_cells, run_times, conditions):
         print(condition)
-        parameters_sim_tmp, cost_tmp = log_likelihood_single_condition(init, run_time, inputs, condition, chain, iteration, save)
+        parameters_sim_tmp, cost_tmp = log_likelihood_single_condition(init, run_time, inputs, condition, sampled_parameter_names, chain, iteration, save)
         
         parameters_sim[condition] = parameters_sim_tmp
         cost[condition] = cost_tmp
@@ -329,7 +329,7 @@ def log_likelihood(parameter_vector, chain, sampled_parameter_names, inputs, con
     return frac_prolif_parameters_temp['cost'].sum(axis=1).values[0], frac_prolif_parameters_temp
 
 
-def log_posterior(parameter_vector, chain, sampled_parameter_names, mean, variance, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=False, iteration = 0):
+def log_posterior(parameter_vector, chain, sampled_parameter_names, mean, variance, inputs, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=False, iteration = 0):
     
     prior = - log_prior(parameter_vector, mean, variance)
     ll, frac_prolif_parameters_temp = log_likelihood(10**parameter_vector, chain, sampled_parameter_names, inputs, conditions, run_times, init_cells, save, iteration)

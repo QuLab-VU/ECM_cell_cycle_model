@@ -6,10 +6,12 @@ Created on Sat May 13 16:35:22 2023
 """
 
 import os
-path = os.getcwd()
 import sys
-sys.path.insert(0, path + "/../cellular_cycle") #add a pathway to the model
-sys.path.insert(0, path + "/../fit") #add a pathway to the model
+path = os.path.dirname(os.path.abspath(__file__)) #add a pathway to the model
+sys.path.insert(0, path + '/../') #add a pathway to the model
+sys.path.insert(0, path + '/../model_data') #add a pathway to the model
+# import model
+sys.path.insert(0, path + '/../cellular_cycle') #add a pathway to the model
 
 from cell_cycle_death_model import model
 from cost_function_BngSimulator_low_medium_stiffness_pso import log_likelihood, log_prior, log_posterior
