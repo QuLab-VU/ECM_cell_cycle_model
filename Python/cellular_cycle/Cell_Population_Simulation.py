@@ -14,13 +14,7 @@ import numpy as np
 sys.path.insert(0, __file__ + "/../cellular_cycle")
 from Check_Model_Consistency import Check_Model_Consistency
 from pysb.simulator import BngSimulator
-<<<<<<< HEAD
 from peakfinder import peakfinde
-=======
-from peakfinder import peakfinder
-
-
->>>>>>> 7e49881e50c439e32abc0576702311e718fee434
 
 #######################################################################
 
@@ -511,8 +505,6 @@ if __name__=="__main__":
     from plots_cell_population_simulation import plot_cell_count
 
     # import model
-    sys.path.insert(0, os.getcwd() + "/../figures")
-    from plots_cell_population_simulation import plot_cell_count
     from cell_cycle_death_model import model
     import pandas as pd
     import matplotlib.pyplot as plt
