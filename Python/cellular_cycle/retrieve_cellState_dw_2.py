@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from tempfile import TemporaryDirectory
 
-def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_starting_at_mitosis=True, thr = 0.4, omega=200):
+def retrieve_cellState(run_time, cells, return_all_prot=False, cells_starting_at_mitosis=True, thr = 0.4, omega=200):
     
     all_prot = np.empty((0,len(cells['molecules'][0])+6)) #cell ind, time, relative time, protein time courses
     index_cell=0 #cell identification nber
@@ -51,10 +51,15 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
             div_ind = max_tmp_cdc
             
             if cells['time'][ii][-1]<run_time : # if we didn't record the time until the end of the experiment (so it ends with mitosis or death)
-                
+                # print(len(cells['time']))
+                # print(ii)
+                # print(len(cells['time'][ii]))
+                # print(div_ind)
                 if cells['time'][ii][0]==0 and div_ind[0]>0: # start at a mitosis (cdc20 peak) and ends at next peak or death 
                     tmp_counts = {'Starting cell' : True, 'End_of_Expt' : False, 'Death' : False, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : (cells['time'][ii][div_ind[0]] - cells['time'][ii][0])} #add first event = from start of experiment to first mitosis
-                    IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
+                    print(IMT_eoe_counts)
+                    print(tmp_counts)
+                    IMT_eoe_counts = pd.concat([IMT_eoe_counts, pd.DataFrame(tmp_counts, index=[0])], ignore_index=True)
                     if return_all_prot:
                         cell_info_tmp = np.array(
    [[True for i in range(div_ind[0] -  0)]] +
@@ -75,7 +80,7 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
                     'Death' : False, 
                     'Birthtime' : cells['time'][ii][div_ind[jj]], 
                     'Lifespan' : (cells['time'][ii][div_ind[jj+1]] - cells['time'][ii][div_ind[jj]])}
-                    IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
+                    IMT_eoe_counts = pd.concat([IMT_eoe_counts, pd.DataFrame(tmp_counts, index=[0])], ignore_index=True)
                     
                     if return_all_prot:
                         cell_info_tmp = np.array(
@@ -92,7 +97,7 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
                 if cells['living_cell'][ii]==False :# ends with death
                     start = 0 if len(div_ind)==0 else div_ind[-1]
                     tmp_counts = {'Starting cell' : False, 'End_of_Expt' : False, 'Death' : True, 'Birthtime' : cells['time'][ii][start], 'Lifespan' : (cells['time'][ii][-1] - cells['time'][ii][start])}
-                    IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
+                    IMT_eoe_counts = pd.concat([IMT_eoe_counts, pd.DataFrame(tmp_counts, index=[0])], ignore_index=True)
                     
                     if return_all_prot:
 #                            print(cells['time'][ii][0])
@@ -111,12 +116,12 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
             else: # record until the end of experiment
                 if cells['time'][ii][0]==0 and (len(div_ind)==0 or (div_ind[0]==0 and len(div_ind)==1)): # No mitosis at all during the whole experiment
                     tmp_counts = {'Starting cell' : True, 'End_of_Expt' : True, 'Death' : False, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : run_time} #add first event = from start of experiment to first mitosis
-                    IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
+                    IMT_eoe_counts = pd.concat([IMT_eoe_counts, pd.DataFrame(tmp_counts, index=[0])], ignore_index=True)
                     
                 else:
                     if cells['time'][ii][0]==0 and div_ind[0]>0: # doesn't start at a mitosis (cdc20 peak) and ends at next peak or death 
                         tmp_counts = {'Starting cell' : True, 'End_of_Expt' : False, 'Death' : False, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : (cells['time'][ii][div_ind[0]] - cells['time'][ii][0])} #add first event = from start of experiment to first mitosis
-                        IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
+                        IMT_eoe_counts = pd.concat([IMT_eoe_counts, pd.DataFrame(tmp_counts, index=[0])], ignore_index=True)
                         
                     
                     for jj in range(len(div_ind)-1) :
@@ -127,7 +132,7 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
                         'Death' : False, 
                         'Birthtime' : cells['time'][ii][div_ind[jj]], 
                         'Lifespan' : (cells['time'][ii][div_ind[jj+1]] - cells['time'][ii][div_ind[jj]])}
-                        IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
+                        IMT_eoe_counts = pd.concat([IMT_eoe_counts, pd.DataFrame(tmp_counts, index=[0])], ignore_index=True)
                         if return_all_prot:
                             cell_info_tmp = np.array(
        [[True if jj==0 else False for i in range(div_ind[jj+1] -  div_ind[jj])]] +
@@ -143,7 +148,7 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
                     if cells['living_cell'][ii]==True :# end of experiment
                         start = 0 if len(div_ind)==0 else div_ind[-1]
                         tmp_counts = {'Starting cell' : False, 'End_of_Expt' : True, 'Death' : False, 'Birthtime' : cells['time'][ii][start], 'Lifespan' : (cells['time'][ii][end_index[-1]] - cells['time'][ii][start])}
-                        IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
+                        IMT_eoe_counts = pd.concat([IMT_eoe_counts, pd.DataFrame(tmp_counts, index=[0])], ignore_index=True)
                         if return_all_prot:
     #                            print(cells['time'][ii][0])
     #                            print(cells['time'][ii][div_ind[0]])
@@ -161,7 +166,7 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
                     else: #ends with apoptosis
                         start = 0 if len(div_ind)==0 else div_ind[-1]
                         tmp_counts = {'Starting cell' : False, 'End_of_Expt' : False, 'Death' : True, 'Birthtime' : cells['time'][ii][start], 'Lifespan' : (cells['time'][ii][end_index[-1]] - cells['time'][ii][start])}
-                        IMT_eoe_counts = IMT_eoe_counts.append(tmp_counts, ignore_index=True)
+                        IMT_eoe_counts = pd.concat([IMT_eoe_counts, pd.DataFrame(tmp_counts, index=[0])], ignore_index=True)
                         if return_all_prot:
     #                            print(cells['time'][ii][0])
     #                            print(cells['time'][ii][div_ind[0]])
@@ -183,4 +188,16 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False, cells_
         return IMT_eoe_counts, pd.DataFrame(all_prot, columns=['Starting cell', 'End of experiment', 'Apoptosis', 'index', 'relative time', 'experiment time'] + [obs.replace('obs','') for obs in cells['molecules'][0].keys()])
     else :
         return IMT_eoe_counts
+
+
+if __name__=="__main__":
+    run_time = 120
+    IMT_eoe_counts = pd.DataFrame(columns=['Starting cell', 'End_of_Expt', 'Death' ,'Birthtime','Lifespan'])
+    tmp_counts = {'Starting cell' : True, 'End_of_Expt' : False, 'Death' : False, 'Birthtime' : 0, 'Lifespan' : 10}
+    IMT_eoe_counts = pd.concat([IMT_eoe_counts, pd.DataFrame(tmp_counts, index=[0])], ignore_index=True)
+    tmp_counts = {'Starting cell' : False, 'End_of_Expt' : False, 'Death' : False, 'Birthtime' : 10, 'Lifespan' : 10}
+    IMT_eoe_counts = pd.concat([IMT_eoe_counts, pd.DataFrame(tmp_counts, index=[0])], ignore_index=True)
+
+    print(IMT_eoe_counts)
+
 

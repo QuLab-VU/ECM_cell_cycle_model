@@ -6,15 +6,21 @@ Created on Tue Feb 11 18:19:31 2020
 Title: runAKTERK
 """
 
+# Import the basic libraries
 import sys
 import os
-
 import numpy as np
 
+# Import functions related to the model
 sys.path.insert(0, __file__ + "/../cellular_cycle")
 from Check_Model_Consistency import Check_Model_Consistency
 from pysb.simulator import BngSimulator
-from peakfinder import peakfinde
+from peakfinder import peakfinder
+
+# Import functions related to the plots
+sys.path.insert(0, os.getcwd() + "/../figures")
+from plots_cell_population_simulation import plot_cell_count
+
 
 #######################################################################
 
@@ -501,9 +507,6 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
 
 
 if __name__=="__main__":
-    sys.path.insert(0, os.getcwd() + "/../figures")
-    from plots_cell_population_simulation import plot_cell_count
-
     # import model
     from cell_cycle_death_model import model
     import pandas as pd
@@ -522,44 +525,45 @@ if __name__=="__main__":
         except:
             print(key)
     model.parameters['omega'].value = 200
-    #
-    # # Setting initial concentrations '/../model_data/initial_concentrations.csv'
-    # initial_concentrations = pd.read_csv(os.path.dirname(__file__) + '/../model_data/initial_concentrations.csv')
-    # for key in initial_concentrations.keys():
-    #     try:
-    #         model.parameters[key].value = initial_concentrations[key][0] / model.parameters['omega'].value
-    #     except:
-    #         print(key)
-    #
-    # # Import ECM_conditions.csv
-    # ECM_conditions = pd.read_csv(os.path.dirname(__file__) + '/../model_data/ECM_conditions_2.csv')
-    # condition = "4 kPa erlotinib"
-    #
-    # # Set the species AKT, ERK, FAK with species and value col
-    # # for input in ["AKT", "ERK", "FAK"]:
-    # #     model.parameters[input].value = ECM_conditions[
-    # #         (ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == input)].value
-    #
-    # # Set inputs for Cell_Population_Simulation function
-    # init = 1
-    # run_time = 120
-    # observed_cells_time = 120
-    #
-    # # Run the model
-    # # Simulate Check_Model_Consistency
-    # # (variable_range, check, tmp_score) = Check_Model_Consistency(model, thr=0.26, return_plot=True)
-    #
-    # (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
-    # # print(cells)
-    # print(cell_count)
-    # plot_cell_count(cell_count, run_time)
-    #
-    # condition = "0.6 kPa DMSO"
-    # (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
-    #
-    # condition = "0.6 kPa erlotinib"
-    # (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
-    #
+
+    # Setting initial concentrations '/../model_data/initial_concentrations.csv'
+    initial_concentrations = pd.read_csv(os.path.dirname(__file__) + '/../model_data/initial_concentrations.csv')
+    for key in initial_concentrations.keys():
+        try:
+            model.parameters[key].value = initial_concentrations[key][0] / model.parameters['omega'].value
+        except:
+            print(key)
+
+    # Import ECM_conditions.csv
+    ECM_conditions = pd.read_csv(os.path.dirname(__file__) + '/../model_data/ECM_conditions_2.csv')
+    condition = "4 kPa erlotinib"
+
+    # Set the species AKT, ERK, FAK with species and value col
+    for input in ["AKT", "ERK", "FAK"]:
+        model.parameters[input].value = ECM_conditions[
+            (ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == input)].value
+
+    # Set inputs for Cell_Population_Simulation function
+    init = 1
+    run_time = 30
+    observed_cells_time = 30
+
+    # Run the model
+    # Simulate Check_Model_Consistency
+    (variable_range, check, tmp_score) = Check_Model_Consistency(model, thr=0.26, return_plot=True)
+
+    (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
+    # print(cells)
+    print(cell_count)
+
+
+
+    condition = "0.6 kPa DMSO"
+    (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
+
+    condition = "0.6 kPa erlotinib"
+    (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
+
     # condition = "4 kPa DMSO"
     # (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
     #

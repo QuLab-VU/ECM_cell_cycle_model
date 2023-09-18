@@ -157,7 +157,7 @@ def log_prior(parameter_vector, mean, variance):
 
 ##############################################################################
 
-def log_likelihood_single_condition(init, run_time, inputs, condition, sampled_parameter_names ,chain, iteration, save=True):
+def log_likelihood_single_condition(model, init, run_time, inputs, condition, sampled_parameter_names ,chain, iteration, save=True):
     
     stiffness, _, treatment = condition.split(maxsplit=2)  # split the string into two parts
     stiffness = float(stiffness)  # convert the stiffness from string to float
@@ -180,6 +180,7 @@ def log_likelihood_single_condition(init, run_time, inputs, condition, sampled_p
     print(condition)
     (cells, cell_count) = Cell_Population_Simulation(init, run_time, run_time, model, inputs, condition, sampled_parameter_names, return_plot=True);
 
+    print(cells)
     ###########################################################################
     print('Cell count')
     print(cell_count)
@@ -187,7 +188,7 @@ def log_likelihood_single_condition(init, run_time, inputs, condition, sampled_p
     if type(cell_count)==np.ndarray and save:
         np.save(os.path.dirname(__file__) + "/../fit_data/pso/cell_count/cell_count_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", cell_count)
     
-    IMT_eoe_counts = retrieve_cellState(run_time, init, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
+    IMT_eoe_counts = retrieve_cellState(run_time, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
     all_events_simulated = call_events(run_time, IMT_eoe_counts);
     all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
     all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
@@ -278,13 +279,13 @@ def log_likelihood_single_condition(init, run_time, inputs, condition, sampled_p
 
 
 
-def log_likelihood(parameter_vector, chain, sampled_parameter_names, inputs, conditions = ['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO', '55 kPa erlotinib'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=True, iteration=0):
+def log_likelihood(model, parameter_vector, chain, sampled_parameter_names, inputs, conditions = ['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO', '55 kPa erlotinib'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=True, iteration=0):
     
     print("The parameters are ")
     print(parameter_vector)
     # np.save(os.path.dirname(__file__) + "/../fit_data/pso/particle_position/parameter_vector_particle_" + str(chain) + "_iteration_" + str(iteration) + ".npy", parameter_vector)
     
-    global model, t, means
+    global t, means
     
     print(iteration)
     
@@ -301,8 +302,7 @@ def log_likelihood(parameter_vector, chain, sampled_parameter_names, inputs, con
     
     for init, run_time, condition in zip(init_cells, run_times, conditions):
         print(condition)
-        parameters_sim_tmp, cost_tmp = log_likelihood_single_condition(init, run_time, inputs, condition, sampled_parameter_names, iteration, save)
-        
+        parameters_sim_tmp, cost_tmp = log_likelihood_single_condition(model, init, run_time, inputs, condition, sampled_parameter_names, chain, iteration, save)
         parameters_sim[condition] = parameters_sim_tmp
         cost[condition] = cost_tmp
         
@@ -326,10 +326,10 @@ def log_likelihood(parameter_vector, chain, sampled_parameter_names, inputs, con
     return frac_prolif_parameters_temp['cost'].sum(axis=1).values[0], frac_prolif_parameters_temp
 
 
-def log_posterior(parameter_vector, chain, sampled_parameter_names, mean, variance, inputs, conditions = ['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO', '55 kPa erlotinib'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=False, iteration = 0):
+def log_posterior(model, parameter_vector, chain, sampled_parameter_names, mean, variance, inputs, conditions = ['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO', '55 kPa erlotinib'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=False, iteration = 0):
     
     prior = - log_prior(parameter_vector, mean, variance)
-    ll, frac_prolif_parameters_temp = log_likelihood(parameter_vector, chain, sampled_parameter_names, inputs, conditions, run_times, init_cells, save, iteration)
+    ll, frac_prolif_parameters_temp = log_likelihood(model, parameter_vector, chain, sampled_parameter_names, inputs, conditions, run_times, init_cells, save, iteration)
     frac_prolif_parameters_temp[('cost', '- log prior')] = prior
     if save:
         frac_prolif_parameters_temp.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/cost/parameters_particle_" + str(chain) + "_iteration_" + str(iteration) + "_pso.pkl") 
@@ -344,7 +344,6 @@ if __name__=="__main__":
     # import model
     from cell_cycle_death_model import model
     import pandas as pd
-    import matplotlib.pyplot as plt
 
     # import pysb sampled parameters
     sampled_parameter_names = np.loadtxt(os.path.dirname(__file__) + '/../model_data/sampled_parameter_names.txt',
@@ -385,8 +384,9 @@ if __name__=="__main__":
     # Calculate prior
     prior = log_prior(parameter_vector, mean, np.diag(np.ones(len(sampled_parameter_names))))
 
+    init = [2, 2, 2, 2, 2, 2]
     # # Calculate likelihood
-    ll, frac_prolif_parameters = log_likelihood(parameter_vector, 0, sampled_parameter_names, ECM_conditions, save=False)
+    ll, frac_prolif_parameters = log_likelihood(model, parameter_vector, 0, sampled_parameter_names, ECM_conditions, init_cells=init, save=False)
     #
     # print("The prior is " + str(prior))
     # print("The likelihood is " + str(ll))
