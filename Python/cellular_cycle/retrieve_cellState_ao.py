@@ -196,3 +196,6 @@ def retrieve_cellState(run_time, init_cell, cells, return_all_prot=False):
     else :
         return IMT_eoe_counts
 
+
+if __name__=="__main__":
+    print("test")

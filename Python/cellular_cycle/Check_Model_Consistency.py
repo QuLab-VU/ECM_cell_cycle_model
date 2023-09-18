@@ -32,7 +32,16 @@ def Check_Model_Consistency(model, thr = 0.26, return_plot = False):
         check: a boolean value that indicates if the simulation is successful.
         tmp_score: score for the alternance between Cdc20 and Cyclin E
     """
-    
+
+    # # print Skp2_0 * omega
+    # print("Cdc20_0 * omega: ")
+    # print(model.parameters['Cdc20_0'].value * model.parameters['omega'].value)
+    # print("\n")
+    # # Print initial concentration for Cdc20
+    # print("Cdc20_0: ")
+    # print(model.initial_conditions[18])
+    # # model.expressions['Cdc20_0_expr']
+
     # Run deterministic simulation with ScipyOdeSimulator
     t_ode = np.linspace(0, 1000, 1000)  # Time points for ODE simulation
     simres = ScipyOdeSimulator(model, t_ode, verbose=False).run()
@@ -41,7 +50,7 @@ def Check_Model_Consistency(model, thr = 0.26, return_plot = False):
     if return_plot:
         plt.figure()
         plt.plot(t_ode, yout['obsCdc20']/model.parameters['omega'].value, label='Cdc20')
-        # plt.plot(t_ode, yout['obsCycD']/model.parameters['omega'].value, label='CycD')
+        plt.plot(t_ode, yout['obsCycD']/model.parameters['omega'].value, label='CycD')
         # plt.plot(t_ode, yout['obsCycE']/model.parameters['omega'].value, label='CycE')
         # plt.plot(t_ode, yout['obsCycA']/model.parameters['omega'].value, label='CycA')
         # plt.plot(t_ode, yout['obsCycB']/model.parameters['omega'].value, label='CycB')
@@ -131,7 +140,7 @@ def Check_Model_Consistency(model, thr = 0.26, return_plot = False):
     # Check 4: Biological significance of the cycle, cdc20 and Cyclin E should alternate
     # Run stochastic simulation with BngSimulator
 
-    sys_size = 200  # System size
+    sys_size = model.parameters['omega'].value
     # Find the maximum of the oscillation peaks in Cdc20 and CyeE
     (a,max_tmp_cdc) = peakfinder(simres_2.observables['obsCdc20'], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);
     (b,max_tmp_cyce) = peakfinder(simres_2.observables['obsCycE'], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);

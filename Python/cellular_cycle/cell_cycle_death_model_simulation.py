@@ -4,10 +4,12 @@ Created on Wed Feb  5 11:52:01 2020
 """
 ###############################################################################
 import os
-path = os.getcwd()
 import sys
-sys.path.insert(0, path + "/../cellular_cycle") #add a pathway to the model
-sys.path.insert(0, path + "/../fit") #add a pathway to the model
+path = os.path.dirname(os.path.abspath(__file__)) #add a pathway to the model
+sys.path.insert(0, path + '/../') #add a pathway to the model
+sys.path.insert(0, path + '/../model_data') #add a pathway to the model
+# import model
+sys.path.insert(0, path + '/../cellular_cycle') #add a pathway to the model
 
 from cell_cycle_death_model import model
 import numpy as np
