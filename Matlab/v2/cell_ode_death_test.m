@@ -1,9 +1,9 @@
-function [dydt]=cell_ode_death_test(t,y,p)
+function [dydt]=cell_ode_death_test(t,y,p,AKT,ERK,FAK)
  
 dydt = zeros(size(y));
-FAK=p.FAK;
-AKT=p.AKT;
-ERK=p.ERK;
+% FAK=p.FAK;
+% AKT=p.AKT;
+% ERK=p.ERK;
 Skp2=y(1);
 p21=y(2);
 p21p=y(3);  
@@ -28,7 +28,7 @@ BH3 = y(21);
 BH3BCL2 = y(22);
 BAXm=p.BAXt-BAX-BAXmBCL2;
 BCL2=p.BCL2t-BH3BCL2-BAXmBCL2;
-Stress=0.6815-0.112*p.AKT-0.0111*p.ERK;
+Stress=0.71-0.112*AKT-0.0111*ERK;
 %Stress=1-0.8*AKT-0.2*ERK;
  
 %Skp2 
