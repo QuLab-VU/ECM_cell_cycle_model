@@ -15,7 +15,6 @@ import glob
 
 sys.path.insert(0, os.path.dirname(__file__) + "/../cellular_cycle")
 sys.path.insert(0, os.path.dirname(__file__) + "/../fit")
-from Austin_proliferation_model_6 import model
 
 #os.environ["PYOPENCL_CTX"] ="0"
 from Cell_Population_Simulation import Cell_Population_Simulation
@@ -33,16 +32,16 @@ from scipy.stats import multivariate_normal
 ###############################################################################
 # Model run check
 
-tmp_t=np.linspace(0, 10, 100)
-sim = BngSimulator(model, tspan=tmp_t, verbose=True)
-traj = sim.run()
-
-sim = ScipyOdeSimulator(model, tspan=tmp_t, verbose=True)
-traj = sim.run()
+# tmp_t=np.linspace(0, 10, 100)
+# sim = BngSimulator(model, tspan=tmp_t, verbose=True)
+# traj = sim.run()
+#
+# sim = ScipyOdeSimulator(model, tspan=tmp_t, verbose=True)
+# traj = sim.run()
 
 ###############################################################################
 
-omega=200
+# omega=200
 
 ###############################################################################
 # Importing data
@@ -111,7 +110,7 @@ for df in IMTs:
     if ii % 2 == 0:
         df["Drug"] = "DMSO"
     else:
-        df["Drug"] = "ERL"    
+        df["Drug"] = "erlotinib"    
     ii+=1
 
 all_IMTs = pd.concat(IMTs, ignore_index=True, sort=False)
@@ -158,13 +157,12 @@ def log_prior(parameter_vector, mean, variance):
 
 ##############################################################################
 
-def log_likelihood_single_condition(init, run_time, inputs, condition, sampled_parameter_names, chain, iteration, save=True):
+def log_likelihood_single_condition(model, init, run_time, inputs, condition, sampled_parameter_names ,chain, iteration, save=True):
     
     stiffness, _, treatment = condition.split(maxsplit=2)  # split the string into two parts
     stiffness = float(stiffness)  # convert the stiffness from string to float
     treatment = treatment.strip()  # remove any leading or trailing white spaces
         
-    omega=200
     t_sim = np.arange(0,run_time,1/3)
     observed_cells_time = run_time
 
@@ -180,8 +178,9 @@ def log_likelihood_single_condition(init, run_time, inputs, condition, sampled_p
     
     ###########################################################################
     print(condition)
-    (cells, cell_count) = Cell_Population_Simulation(init, run_time, run_time, model, inputs, condition, sampled_parameter_names);
+    (cells, cell_count) = Cell_Population_Simulation(init, run_time, run_time, model, inputs, condition, sampled_parameter_names, return_plot=True);
 
+    print(cells)
     ###########################################################################
     print('Cell count')
     print(cell_count)
@@ -189,52 +188,50 @@ def log_likelihood_single_condition(init, run_time, inputs, condition, sampled_p
     if type(cell_count)==np.ndarray and save:
         np.save(os.path.dirname(__file__) + "/../fit_data/pso/cell_count/cell_count_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", cell_count)
     
-    try:
-        IMT_eoe_counts = retrieve_cellState(run_time, init, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
-        all_events_simulated = call_events(run_time, IMT_eoe_counts); 
-        all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
-        all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
-        mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
-        censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
-        if save:
-            all_events_simulated.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/distribution/Events_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".pkl") #doesn't save all imts, only the cells that are born before 30 hours
-    except:
-        pass
+    IMT_eoe_counts = retrieve_cellState(run_time, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
+    all_events_simulated = call_events(run_time, IMT_eoe_counts);
+    all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
+    all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
+    mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
+    censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
+    if save:
+        all_events_simulated.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/distribution/Events_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".pkl") #doesn't save all imts, only the cells that are born before 30 hours
+
 
     ###########################################################################
     #Extract useful information from the simulations:
-    try:
-        simulated_IMTs, simulated_SMs, simulated_G1s = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
-        
-        if save:
-            np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/G1_distribution_particle_"  + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_G1s))
-            np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/SM_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_SMs))
-            np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_IMTs))
-            #save density estimation
-            # x=np.linspace(0, run_time, 360)
-            # y=[RBS(i, np.transpose([mitotic_lifespans.tolist()])) for i in x]
-           #  np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + '_' + '_'.join(cond_split) + "_kde.npy", np.array(y))
-    
-    except:
-        pass
-    
+
+    simulated_IMTs, simulated_SMs, simulated_G1s = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
+
+    if save:
+        np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/G1_distribution_particle_"  + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_G1s))
+        np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/SM_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_SMs))
+        np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_IMTs))
+        #save density estimation
+        # x=np.linspace(0, run_time, 360)
+        # y=[RBS(i, np.transpose([mitotic_lifespans.tolist()])) for i in x]
+       #  np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + '_' + '_'.join(cond_split) + "_kde.npy", np.array(y))
+
+
+
     ###########################################################################
     #compute frac prolif parameters of the simulation:
-    try: # apoptosis rate
+    # apoptosis rate
+    if len(all_events_simulated) > 0:
         number_of_deaths = len(all_events_simulated) - (all_events_simulated['event']=='apoptosis').value_counts()[0]
         cell_time_total = sum(all_events_simulated['Lifespan'])        
         parameters_sim['a'] = number_of_deaths/cell_time_total
-    except:
+    else:
         parameters_sim['a'] = np.nan
-    
-    try: # mitosis and quiescence rates
+
+    # mitosis and quiescence rates
+    if len(mitotic_lifespans) > 0:
         m = fp.mle(mitotic_lifespans, censored_lifespans)            
         parameters_sim['mu'] = m['x'][0]
         parameters_sim['sigma'] = m['x'][1]
         parameters_sim['lambda'] = m['x'][2]
         parameters_sim.update(fp.q_rates(m))
-    
-    except:
+    else:
         parameters_sim['d'] = np.nan
         parameters_sim['q'] = np.nan
         parameters_sim['mu'] = np.nan
@@ -243,22 +240,23 @@ def log_likelihood_single_condition(init, run_time, inputs, condition, sampled_p
 
     ###########################################################################      
     # Compare distributions
-    
-    try:
-        experimental_G1s = all_IMTs[(all_IMTs['Drug']==treatment) & (all_IMTs['Stiffness']==stiffness)]['G1_t']
-        experimental_SMs = all_IMTs[(all_IMTs['Drug']==treatment) & (all_IMTs['Stiffness']==stiffness)]['S-M_t']
-        
+
+    experimental_G1s = all_IMTs[(all_IMTs['Drug']==treatment) & (all_IMTs['Stiffness']==stiffness)]['G1_t']
+    experimental_SMs = all_IMTs[(all_IMTs['Drug']==treatment) & (all_IMTs['Stiffness']==stiffness)]['S-M_t']
+
+    if len(experimental_G1s) > 0 and len(experimental_SMs) > 0:
         cost['cost G1 distributions'] = mmd_rbf(np.array([simulated_G1s]).transpose(), np.array([experimental_G1s]).transpose(), 1) #difference between IMT distribution
         cost['cost S-M distributions'] = mmd_rbf(np.array([simulated_SMs]).transpose(), np.array([experimental_SMs]).transpose(), 1) #difference between IMT distribution
     
-    except:
+    else:
         cost['cost G1 distributions'] = np.inf
         cost['cost S-M distributions'] = np.inf
     
     ###########################################################################
     # Cost computation: rmse dip rates
-    
-    try:
+
+    # if cell_count is not None:
+    if type(cell_count)==np.ndarray:
         cell_count_t = np.zeros(len(t_sim))
         time_tmp_m = 0
         
@@ -266,12 +264,12 @@ def log_likelihood_single_condition(init, run_time, inputs, condition, sampled_p
             cell_count_t[(time_tmp_m <= t_sim) & (t_sim < time_tmp_p)] = cell_count_time_tmp
             time_tmp_m = time_tmp_p
         
-        num_condition = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'].index(condition)
+        num_condition = ['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO', '55 kPa erlotinib'].index(condition)
         
         DIP_sim = np.log2(cell_count_t/cell_count_t[0])
         cost['cost population dynamics'] = np.sqrt(np.sum((DIP_sim[1:len(t_sim)] - means[num_condition][1:len(t_sim)])**2 / stdevs[num_condition][1:len(t_sim)]**2))/len(t_sim)
     
-    except:
+    else:
         cost['cost population dynamics'] = np.inf
         
     return parameters_sim, cost
@@ -281,13 +279,13 @@ def log_likelihood_single_condition(init, run_time, inputs, condition, sampled_p
 
 
 
-def log_likelihood(parameter_vector, chain, sampled_parameter_names, inputs, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=True, iteration=0):
+def log_likelihood(model, parameter_vector, chain, sampled_parameter_names, inputs, conditions = ['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO', '55 kPa erlotinib'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=True, iteration=0):
     
     print("The parameters are ")
     print(parameter_vector)
     # np.save(os.path.dirname(__file__) + "/../fit_data/pso/particle_position/parameter_vector_particle_" + str(chain) + "_iteration_" + str(iteration) + ".npy", parameter_vector)
     
-    global model, t, means
+    global t, means
     
     print(iteration)
     
@@ -304,8 +302,7 @@ def log_likelihood(parameter_vector, chain, sampled_parameter_names, inputs, con
     
     for init, run_time, condition in zip(init_cells, run_times, conditions):
         print(condition)
-        parameters_sim_tmp, cost_tmp = log_likelihood_single_condition(init, run_time, inputs, condition, sampled_parameter_names, chain, iteration, save)
-        
+        parameters_sim_tmp, cost_tmp = log_likelihood_single_condition(model, init, run_time, inputs, condition, sampled_parameter_names, chain, iteration, save)
         parameters_sim[condition] = parameters_sim_tmp
         cost[condition] = cost_tmp
         
@@ -329,10 +326,10 @@ def log_likelihood(parameter_vector, chain, sampled_parameter_names, inputs, con
     return frac_prolif_parameters_temp['cost'].sum(axis=1).values[0], frac_prolif_parameters_temp
 
 
-def log_posterior(parameter_vector, chain, sampled_parameter_names, mean, variance, inputs, conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=False, iteration = 0):
+def log_posterior(model, parameter_vector, chain, sampled_parameter_names, mean, variance, inputs, conditions = ['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO', '55 kPa erlotinib'], run_times = [120, 120, 120, 120, 60, 60], init_cells = [4,6,3,3,2,2], save=False, iteration = 0):
     
     prior = - log_prior(parameter_vector, mean, variance)
-    ll, frac_prolif_parameters_temp = log_likelihood(10**parameter_vector, chain, sampled_parameter_names, inputs, conditions, run_times, init_cells, save, iteration)
+    ll, frac_prolif_parameters_temp = log_likelihood(model, parameter_vector, chain, sampled_parameter_names, inputs, conditions, run_times, init_cells, save, iteration)
     frac_prolif_parameters_temp[('cost', '- log prior')] = prior
     if save:
         frac_prolif_parameters_temp.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/cost/parameters_particle_" + str(chain) + "_iteration_" + str(iteration) + "_pso.pkl") 
@@ -344,11 +341,16 @@ def log_posterior(parameter_vector, chain, sampled_parameter_names, mean, varian
 # Test the cost function:
 
 if __name__=="__main__":
-    # import pysb sampled names
-    sampled_parameter_names = np.loadtxt(os.path.dirname(__file__) + "/../model_data/sampled_parameter_names.txt", dtype=str, delimiter=',')
+    # import model
+    from cell_cycle_death_model import model
+    import pandas as pd
+
+    # import pysb sampled parameters
+    sampled_parameter_names = np.loadtxt(os.path.dirname(__file__) + '/../model_data/sampled_parameter_names.txt',
+                                         dtype=str)
 
     # Importing the parameters:
-    new_param = pd.read_csv(os.path.dirname(__file__) + "/../model_data/parameters.csv")
+    new_param = pd.read_csv(os.path.dirname(__file__) + '/../model_data/parameters.csv')
     del new_param['Stress']
     for key in new_param.keys():
         try:
@@ -359,9 +361,16 @@ if __name__=="__main__":
     model.parameters['omega'].value = 200
 
     # Setting initial concentrations '/../model_data/initial_concentrations.csv'
-    initial_concentrations = pd.read_csv(os.path.dirname(__file__) + "/../model_data/initial_concentrations.csv")
+    initial_concentrations = pd.read_csv(os.path.dirname(__file__) + '/../model_data/initial_concentrations.csv')
     for key in initial_concentrations.keys():
-        model.parameters[key].value = initial_concentrations[key][0]
+        try:
+            model.parameters[key].value = initial_concentrations[key][0] / model.parameters['omega'].value
+        except:
+            print(key)
+
+    # Import ECM_conditions.csv
+    ECM_conditions = pd.read_csv(os.path.dirname(__file__) + '/../model_data/ECM_conditions_2.csv')
+
 
     original_parameters = []
     for name in sampled_parameter_names:
@@ -375,9 +384,10 @@ if __name__=="__main__":
     # Calculate prior
     prior = log_prior(parameter_vector, mean, np.diag(np.ones(len(sampled_parameter_names))))
 
-    # Calculate likelihood
-    ll, frac_prolif_parameters_temp = log_likelihood(10 ** parameter_vector, 0, sampled_parameter_names, ECM_conditions, save=False)
-
-    print("The prior is " + str(prior))
-    print("The likelihood is " + str(ll))
-    print("The posterior is " + str(prior + ll))
+    init = [2, 2, 2, 2, 2, 2]
+    # # Calculate likelihood
+    ll, frac_prolif_parameters = log_likelihood(model, parameter_vector, 0, sampled_parameter_names, ECM_conditions, init_cells=init, save=False)
+    #
+    # print("The prior is " + str(prior))
+    # print("The likelihood is " + str(ll))
+    # print("The posterior is " + str(prior + ll))

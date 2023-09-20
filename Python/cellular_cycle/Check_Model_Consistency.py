@@ -19,7 +19,7 @@ import scipy.stats as ss
 
 import matplotlib.pyplot as plt
 
-def Check_Model_Consistency(model, thr = 0.26, return_plot = False):
+def Check_Model_Consistency(model, cycling_species = ['obsCdc20', 'obsCycE', 'obsCycD', 'obsp21'], thr = 0.26, return_plot = False):
     """
     Run a stochastic simulation and perform multiple checks on the simulation results.
 
@@ -32,7 +32,16 @@ def Check_Model_Consistency(model, thr = 0.26, return_plot = False):
         check: a boolean value that indicates if the simulation is successful.
         tmp_score: score for the alternance between Cdc20 and Cyclin E
     """
-    
+
+    # # print Skp2_0 * omega
+    # print("Cdc20_0 * omega: ")
+    # print(model.parameters['Cdc20_0'].value * model.parameters['omega'].value)
+    # print("\n")
+    # # Print initial concentration for Cdc20
+    # print("Cdc20_0: ")
+    # print(model.initial_conditions[18])
+    # # model.expressions['Cdc20_0_expr']
+
     # Run deterministic simulation with ScipyOdeSimulator
     t_ode = np.linspace(0, 1000, 1000)  # Time points for ODE simulation
     simres = ScipyOdeSimulator(model, t_ode, verbose=False).run()
@@ -40,8 +49,8 @@ def Check_Model_Consistency(model, thr = 0.26, return_plot = False):
 
     if return_plot:
         plt.figure()
-        plt.plot(t_ode, yout['obsCdc20']/model.parameters['omega'].value, label='Cdc20')
-        # plt.plot(t_ode, yout['obsCycD']/model.parameters['omega'].value, label='CycD')
+        for species in cycling_species:
+            plt.plot(t_ode, yout[species]/model.parameters['omega'].value, label=species)
         # plt.plot(t_ode, yout['obsCycE']/model.parameters['omega'].value, label='CycE')
         # plt.plot(t_ode, yout['obsCycA']/model.parameters['omega'].value, label='CycA')
         # plt.plot(t_ode, yout['obsCycB']/model.parameters['omega'].value, label='CycB')
@@ -66,26 +75,22 @@ def Check_Model_Consistency(model, thr = 0.26, return_plot = False):
     T = t_ode[1] - t_ode[0]  # Sampling interval 
     N = yout['obsCycD'][600:].size  # Number of sample points for FFT
     f = np.linspace(0, 1 / T, N)  # Frequency axis for FFT
-    
-    fft_Cdc20 = np.fft.fft(yout['obsCdc20'][600:]/model.parameters['omega'].value)
-    fft_CycD = np.fft.fft(yout['obsCycD'][600:]/model.parameters['omega'].value)
-    fft_CycE = np.fft.fft(yout['obsCycE'][600:]/model.parameters['omega'].value)
-    
+    fft = {}
+    for species in cycling_species:
+        fft[species] = np.fft.fft(yout[species][600:]/model.parameters['omega'].value)
+
     # Find frequency corresponding to max amplitude of FFT
-    arg_freq_max_Cdc20 = np.argmax(np.abs(fft_Cdc20[(f > 0.005) * (f < 0.1)]) * 1 / N)
-    arg_freq_max_CycE = np.argmax(np.abs(fft_CycE[(f > 0.005) * (f < 0.1)]) * 1 / N)
-    arg_freq_max_CycD = np.argmax(np.abs(fft_CycD[(f > 0.005) * (f < 0.1)]) * 1 / N)  # should be same as arg_freq_max_Cdc20
-    
+    arg_freq_max = {}
+    for species in cycling_species:
+        arg_freq_max[species] = np.argmax(np.abs(fft[species][(f > 0.005) * (f < 0.1)]) * 1 / N)
+
     # Plot the frequency spectrum as well as the arg with the corresponding period
     if return_plot:
         # add scatter plot for the max frequency, with x the frequency and y the amplitude
         plt.figure()
-        plt.plot(f[(f > 0.005) * (f < 0.1)], np.abs(fft_Cdc20[(f > 0.005) * (f < 0.1)]), label='Cdc20', c='b')
-        plt.plot(f[(f > 0.005) * (f < 0.1)], np.abs(fft_CycD[(f > 0.005) * (f < 0.1)]), label='CycD', c='g')
-        plt.plot(f[(f > 0.005) * (f < 0.1)], np.abs(fft_CycE[(f > 0.005) * (f < 0.1)]), label='CycE', c='r')
-        plt.scatter(f[(f > 0.005) * (f < 0.1)][arg_freq_max_Cdc20], np.abs(fft_Cdc20[(f > 0.005) * (f < 0.1)])[arg_freq_max_Cdc20], c='b', s=100)
-        plt.scatter(f[(f > 0.005) * (f < 0.1)][arg_freq_max_CycD], np.abs(fft_CycD[(f > 0.005) * (f < 0.1)])[arg_freq_max_CycD], c='g', s=100)
-        plt.scatter(f[(f > 0.005) * (f < 0.1)][arg_freq_max_CycE], np.abs(fft_CycE[(f > 0.005) * (f < 0.1)])[arg_freq_max_CycE], c='r', s=100)
+        for species in cycling_species:
+            plt.plot(f[(f > 0.005) * (f < 0.1)], np.abs(fft[species][(f > 0.005) * (f < 0.1)]), label=species)
+            plt.scatter(f[(f > 0.005) * (f < 0.1)][arg_freq_max[species]], np.abs(fft[species][(f > 0.005) * (f < 0.1)])[arg_freq_max[species]], s=100)
         plt.xlabel('Frequency ()')
         plt.ylabel('Amplitude')
         plt.legend()
@@ -103,7 +108,8 @@ def Check_Model_Consistency(model, thr = 0.26, return_plot = False):
 
     if return_plot:
         plt.figure()
-        plt.plot(t, simres_2.observables['obsCdc20'], label='Cdc20')
+        for species in cycling_species:
+            plt.plot(t, simres_2.observables[species], label=species)
         # plt.plot(t, simres_2.observables['obsCycD'], label='CycD')
         # plt.plot(t, simres_2.observables['obsCycE'], label='CycE')
         # plt.plot(t, simres_2.observables['obsCycA'], label='CycA')
@@ -115,23 +121,34 @@ def Check_Model_Consistency(model, thr = 0.26, return_plot = False):
         plt.show()
 
     check = False
-    if arg_freq_max_Cdc20>1 and \
-        arg_freq_max_CycD>1 and \
-        arg_freq_max_CycE>1 and \
-        np.abs(fft_Cdc20[(f>0.005)*(f<0.1)])[arg_freq_max_Cdc20]>np.abs(fft_Cdc20[(f>0.005)*(f<0.1)])[arg_freq_max_Cdc20-1] and \
-        np.abs(fft_Cdc20[(f>0.005)*(f<0.1)])[arg_freq_max_Cdc20]>np.abs(fft_Cdc20[(f>0.005)*(f<0.1)])[arg_freq_max_Cdc20+1] and \
-        np.abs(fft_CycD[(f>0.005)*(f<0.1)])[arg_freq_max_CycD]>np.abs(fft_CycD[(f>0.005)*(f<0.1)])[arg_freq_max_CycD-1] and \
-        np.abs(fft_CycD[(f>0.005)*(f<0.1)])[arg_freq_max_CycD]>np.abs(fft_CycD[(f>0.005)*(f<0.1)])[arg_freq_max_CycD+1] and \
-        np.abs(fft_CycE[(f>0.005)*(f<0.1)])[arg_freq_max_CycE]>np.abs(fft_CycE[(f>0.005)*(f<0.1)])[arg_freq_max_CycE-1] and \
-        np.abs(fft_CycE[(f>0.005)*(f<0.1)])[arg_freq_max_CycE]>np.abs(fft_CycE[(f>0.005)*(f<0.1)])[arg_freq_max_CycE+1] :
-        check=True
+    # All frequencies should be between 0.005 and 0.1 Hz
+
+    for species in cycling_species:
+        if arg_freq_max[species] > 1 and \
+            np.abs(fft[species][(f > 0.005) * (f < 0.1)])[arg_freq_max[species]] > np.abs(fft[species][(f > 0.005) * (f < 0.1)])[arg_freq_max[species] - 1] and \
+            np.abs(fft[species][(f > 0.005) * (f < 0.1)])[arg_freq_max[species]] > np.abs(fft[species][(f > 0.005) * (f < 0.1)])[arg_freq_max[species] + 1]:
+            check = True
+        else:
+            check = False
+            break
+
+    # if arg_freq_max_Cdc20>1 and \
+    #     arg_freq_max_CycD>1 and \
+    #     arg_freq_max_CycE>1 and \
+    #     np.abs(fft_Cdc20[(f>0.005)*(f<0.1)])[arg_freq_max_Cdc20]>np.abs(fft_Cdc20[(f>0.005)*(f<0.1)])[arg_freq_max_Cdc20-1] and \
+    #     np.abs(fft_Cdc20[(f>0.005)*(f<0.1)])[arg_freq_max_Cdc20]>np.abs(fft_Cdc20[(f>0.005)*(f<0.1)])[arg_freq_max_Cdc20+1] and \
+    #     np.abs(fft_CycD[(f>0.005)*(f<0.1)])[arg_freq_max_CycD]>np.abs(fft_CycD[(f>0.005)*(f<0.1)])[arg_freq_max_CycD-1] and \
+    #     np.abs(fft_CycD[(f>0.005)*(f<0.1)])[arg_freq_max_CycD]>np.abs(fft_CycD[(f>0.005)*(f<0.1)])[arg_freq_max_CycD+1] and \
+    #     np.abs(fft_CycE[(f>0.005)*(f<0.1)])[arg_freq_max_CycE]>np.abs(fft_CycE[(f>0.005)*(f<0.1)])[arg_freq_max_CycE-1] and \
+    #     np.abs(fft_CycE[(f>0.005)*(f<0.1)])[arg_freq_max_CycE]>np.abs(fft_CycE[(f>0.005)*(f<0.1)])[arg_freq_max_CycE+1] :
+    #     check=True
     
     
     ######################################
     # Check 4: Biological significance of the cycle, cdc20 and Cyclin E should alternate
     # Run stochastic simulation with BngSimulator
 
-    sys_size = 200  # System size
+    sys_size = model.parameters['omega'].value
     # Find the maximum of the oscillation peaks in Cdc20 and CyeE
     (a,max_tmp_cdc) = peakfinder(simres_2.observables['obsCdc20'], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);
     (b,max_tmp_cyce) = peakfinder(simres_2.observables['obsCycE'], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);

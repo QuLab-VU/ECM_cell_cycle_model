@@ -4,24 +4,24 @@ Created on Wed Feb  5 11:52:01 2020
 """
 ###############################################################################
 import os
-path = os.getcwd()
 import sys
-sys.path.insert(0, path + "/../cellular_cycle") #add a pathway to the model
-sys.path.insert(0, path + "/../fit") #add a pathway to the model
+path = os.path.dirname(os.path.abspath(__file__)) #add a pathway to the model
+sys.path.insert(0, path + '/../') #add a pathway to the model
+sys.path.insert(0, path + '/../model_data') #add a pathway to the model
+# import model
+sys.path.insert(0, path + '/../cellular_cycle') #add a pathway to the model
 
 from cell_cycle_death_model import model
-import numpy as np
-from scipy.stats import multivariate_normal
 import pandas as pd
 
 from pysb.simulator import ScipyOdeSimulator
 from pysb.simulator import BngSimulator
-from pysb.simulator import StochKitSimulator
-from pysb.bng import generate_equations
-from pysb.logging import EXTENDED_DEBUG
+# from pysb.simulator import StochKitSimulator
+# from pysb.bng import generate_equations
+# from pysb.logging import EXTENDED_DEBUG
+# from pysb.export import export
 
 import numpy as np
-from pysb.export import export
 import matplotlib.pyplot as plt
 
 from Austin_proliferation_model_6 import model as model_previous
@@ -29,8 +29,9 @@ from Austin_proliferation_model_6 import model as model_previous
 ###############################################################################
 #Compare with matlab simulations
 
-# simulation_ode_matlab = {}
-# simulation_ode_matlab['55 kPa DMSO'] = np.genfromtxt(path + '/../../Matlab/v2/ode_100_100_100.csv', delimiter=',').T
+simulation_ode_matlab = {}
+simulation_ode_matlab['55 kPa DMSO'] = np.genfromtxt('/Users/jeremie/Downloads/ode_100_100_100.csv', delimiter=',').T
+
 # simulation_ode_matlab['55 kPa ERL'] = np.genfromtxt(path + '/../../Matlab/v2/ode_060_020_100.csv', delimiter=',').T
 # simulation_ode_matlab['4 kPa DMSO'] = np.genfromtxt(path + '/../../Matlab/v2/ode_100_100_060.csv', delimiter=',').T
 # simulation_ode_matlab['0.6 kPa DMSO'] = np.genfromtxt(path + '/../../Matlab/v2/ode_060_100_040.csv', delimiter=',').T
@@ -87,7 +88,7 @@ condition = '55 kPa DMSO'
 condition = '0.6 kPa DMSO'
 condition = '55 kPa ERL'
 condition = '55 kPa DMSO'
-condition = '0.6 kPa ERL'
+# condition = '0.6 kPa ERL'
 
 for input_signal in inputs.keys():
     model.parameters[input_signal].value = inputs[input_signal][condition]
@@ -113,24 +114,23 @@ yout_previous = simres.all
 
 ####Comparison with Matlab deterministic simulation
 
-def comparaison_Matlab_Pysb_plot():
+def comparaison_Matlab_Pysb_plot(yout, sim_matlab, omega):
     nmax = 10000
-    from pathlib import Path
-    fn = Path(r'C:\Users\Grim.M\Ecole\ens\Master\S2\Stage\Code\cellular_cycle\comparison_pysb_matlab_6_'+ condition.replace(' ', '_') +'_0-'+ str(t[nmax]) + '.pdf').expanduser()
     obs = ['obsSkp2', 'obsp21', 'obsp21p', 'obscdh1act', 'obsMyc', 'obsCycD', 'obsCycDp21', 'obspRb', 'obspRbp', 'obsE2F', 'obspRbE2F', 'obsCycE', 'obsCycEp21', 'obsCycA', 'obsCycAp21', 'obsCycB', 'obsCycBp21', 'obsCdc20', 'obsBAX', 'obsBAXmBCL2', 'obsBH3','obsBH3BCL2','obsBAXm','obsBCL2']
 
     fig, axs = plt.subplots(6, 4)
 
     for i in range(4):
         for j in range(6):
-            axs[j, i].plot(t[0:nmax], yout[obs[j+i*6]][0:nmax], label=obs[j+i*6] +' PySB', lw=0.01)
-            axs[j, i].plot(t[0:nmax], simulation_ode_matlab[condition][j+i*6][0:nmax], label=obs[j+i*6] +' Matlab', lw=0.01)
+            axs[j, i].plot(t[0:nmax], yout[obs[j+i*6]][0:nmax]/omega, label=obs[j+i*6] +' PySB', lw=0.1)
+            axs[j, i].plot(t[0:nmax], sim_matlab[j+i*6][0:nmax], label=obs[j+i*6] +' Matlab', lw=0.1)
             axs[j, i].legend(fontsize=2)
 
     for ax in axs.flat:
         ax.label_outer()
 
-    plt.savefig(fn, bbox_inches = 'tight')
+    return fig, axs
+
 
 def comparison_two_simulations(sim1, sim2):
     nmax = 10000
@@ -151,8 +151,13 @@ def comparison_two_simulations(sim1, sim2):
     return fig, axs
 
 fig, axs = comparison_two_simulations(yout, yout_previous)
+plt.savefig('/Users/jeremie/Downloads/comparison_pysb_pysb_55_kPa_DMSO.pdf', bbox_inches='tight')
 plt.show()
-# fig.savefig('/Users/jeremie/Downloads/comparison_two_simulations.pdf', bbox_inches = 'tight')
+
+sim_matlab = simulation_ode_matlab["55 kPa DMSO"]
+fig, axs = comparaison_Matlab_Pysb_plot(yout, sim_matlab, model.parameters['omega'].value)
+plt.savefig('/Users/jeremie/Downloads/comparison_matlab_pysb_55_kPa_DMSO.pdf', bbox_inches='tight')
+plt.show()
 
 ###############################################################################
 ###############################################################################
