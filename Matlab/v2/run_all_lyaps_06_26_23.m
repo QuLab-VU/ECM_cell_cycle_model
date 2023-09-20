@@ -64,12 +64,14 @@ CMap=colormap(jet(100));
 
 ep = 1e-4;
 
-figure;hold on
+%figure;hold on
 c=1;
 d={};
 d1={};
 
-for ii = 1:1:100
+M=10;
+
+parfor (ii = 1:100, M)
     for kk = 1:6
         p.AKT=AKTs(ii);
         p.ERK=ERKs(1);
@@ -94,13 +96,13 @@ for ii = 1:1:100
         n=1;
         for i=1:2000:length(x)
             dists = [];
-            L1_norm = [];
+            %L1_norm = [];
             for j = 1:length(new_y_ab)
                 dists(j) = norm(new_y_ab(j,:)-x(i,:));
-                L1_norm(j) = norm(new_y_ab(j,:)-x(i,:),1);
+                %L1_norm(j) = norm(new_y_ab(j,:)-x(i,:),1);
             end
             z(n) = min(dists);
-            z1(n) = min(L1_norm);
+            %z1(n) = min(L1_norm);
             n=n+1;
             n
             kk
@@ -108,7 +110,7 @@ for ii = 1:1:100
         end
 
         d{ii,kk} = log(z);
-        d1{ii,kk} = log(z1);
+        %d1{ii,kk} = log(z1);
     end
 %             min_m=mean(d(end-50000:end));
 %             tmp = find(d<min_m);

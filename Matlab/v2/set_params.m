@@ -68,7 +68,7 @@ p.k_CD = 0.03; %0.03
 p.k_CDS = 0.25;%0.25;%0.18;%0.11;  %0.25%0.5
 p.k_ED = 0.2;%0.2; %0.23%0.08
 
-p.K_p21fak = 5; %p21 synthesis from FAK
+p.K_p21fak = 0.72; %5; %p21 synthesis from FAK
 p.F_n = 8; %Hill coefficient for p21 synthesis
 
 
