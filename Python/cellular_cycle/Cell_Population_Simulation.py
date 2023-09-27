@@ -84,6 +84,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
     
     for i in range(init) :
         cells['molecules']=cells['molecules']+[{}]
+        np.random.seed(seed)
         a=np.random.randint(len(variable_range['obsSkp2']))
         for var in list(variable_range.keys()) :
             # print(variable_range[var][a])
@@ -123,12 +124,12 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                     Initial=[]
                     for j in cells['molecules'][ii] :
                         Initial=Initial+[cells['molecules'][ii][j][-1]]
-                    simres = sim.run(initials=Initial, tspan = tmp_t);
+                    simres = sim.run(initials=Initial, tspan = tmp_t, seed=seed);
                     #print(parameter_vector_original)
                     #print("simulation done")
                     
                 else :
-                    simres = sim.run(verbose=False);
+                    simres = sim.run(verbose=False, seed=seed);
                     #print(parameter_vector_original)
                     #print("simulation done")
                     
