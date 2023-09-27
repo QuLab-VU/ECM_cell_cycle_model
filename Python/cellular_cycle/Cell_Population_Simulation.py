@@ -10,6 +10,7 @@ Title: runAKTERK
 import sys
 import os
 import numpy as np
+import pandas as pd
 
 # Import functions related to the model
 sys.path.insert(0, __file__ + "/../cellular_cycle")
@@ -24,7 +25,7 @@ from plots_cell_population_simulation import plot_cell_count
 
 #######################################################################
 
-def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr = 0.26, return_plot=False):
+def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr = 0.26, return_plot=False, seed=33):
     """
     init: number of initial cells
     run_time: time of the experiment
@@ -36,12 +37,20 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
     """
     print(condition)
 
+    initial_concentrations = pd.read_csv(os.getcwd() + '/model_data/initial_concentrations.csv')
+    for key in initial_concentrations.keys():
+        try:
+            model.parameters[key].value = initial_concentrations[key][0] / model.parameters['omega'].value
+        except:
+            print(key)
+    
     parameter_vector_original=[]
     for pname in sampled_parameter_names:
         #Change model parameter values to current location in parameter space
         parameter_vector_original+=[model.parameters[pname].value]
 
-    cond_split_DMSO = condition.split(' ')
+    cond_split_DMSO = condition.split(' ')[0:2]
+    cond_split_DMSO.append('DMSO')
     condition_untreated = ' '.join(cond_split_DMSO)
     #Set initial condition to DMSO treatment
     for signal_tmp in ['ERK', 'FAK', 'AKT'] :
@@ -55,7 +64,11 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
         print("check didn't pass");
         print("The model doesn't oscillate or the model allows too high concentrations")
         return (0,0)
-
+    #Set death module
+    death_mod={'obsBAX': 186 ,'obsBAXmBCL2': 13, 'obsBH3': 0, 'obsBH3BCL2': 7, 'obsBAXm': 0, 'obsBCL2': 149}
+    for prot in death_mod:
+        variable_range[prot] = len(variable_range['obsCdc20'])*[death_mod[prot]]
+    
     #Set the experiment to real condition
     for signal_tmp in ['ERK', 'FAK', 'AKT'] :
         model.parameters[signal_tmp].value = ECM_conditions[(ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == signal_tmp)]["value"]

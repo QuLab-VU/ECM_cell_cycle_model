@@ -161,7 +161,7 @@ Rule('Skp2_degradation_cdh1', Skp2() + cdh1(A='yes') >> cdh1(A='yes'), kd_Skp2_c
 # p21 and p21p
 # ############
 Parameter('v_s1p21', 0.7)  # uM^[(n+1)/n]/h # updated 20230808
-Parameter('K_p21fak', 5)  # uM # updated 20230808
+Parameter('K_p21fak', 0.72)  # uM # updated 20230919
 Parameter('F_n', 8)  # unitless # updated 20230808
 # TODO: Ask about the commented out equation below. I changed it to the equation on the subsequent line.
 # vv Austin's original equation vv
@@ -433,7 +433,7 @@ Rule('BAXmBCL2_association_dissociation', BAX(m='yes', b=None) + BCL2(b=None) | 
 
 Parameter('k1sbh3', 0.001)  # uM/h
 Parameter('k2sbh3', 0.025)  # 0.0095 # 0.012 # 0.025 # 1/h
-Parameter('a_stress', 0.71)  # uM updated 20230914
+Parameter('a_stress', 0.6515)  # uM updated 20230919
 Parameter('b_stress_AKT', 0.112)  # unitless
 Parameter('b_stress_ERK', 0.0111)  # unitless
 Expression('ks_BH3', m * ((k1sbh3 * omega) +

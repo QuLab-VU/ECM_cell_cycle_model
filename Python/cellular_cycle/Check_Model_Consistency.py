@@ -152,6 +152,7 @@ def Check_Model_Consistency(model, cycling_species = ['obsCdc20', 'obsCycE', 'ob
     # Find the maximum of the oscillation peaks in Cdc20 and CyeE
     (a,max_tmp_cdc) = peakfinder(simres_2.observables['obsCdc20'], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);
     (b,max_tmp_cyce) = peakfinder(simres_2.observables['obsCycE'], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);
+   
     
     tmp_score=1 #score on how good they alternate, it may not be exactly one because of the stochasticity of the network, and peakfinder mught miss one peak
     variable_range={}
@@ -167,8 +168,13 @@ def Check_Model_Consistency(model, cycling_species = ['obsCdc20', 'obsCycE', 'ob
         tmp_score = tmp_score/len(Z)
         
         if len(a)>=2 and len(b)>=2:
+            #simres = ScipyOdeSimulator(model, t_ode, verbose=False).run()
+            (a_ode,max_tmp_cdc_ode) = peakfinder(yout[model.observables['obsCdc20'].name], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);
+            (b_ode,max_tmp_cyce_ode) = peakfinder(yout[model.observables['obsCycE'].name], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);
+            
+            
             for k in range(len(model.observables)) :
-                variable_range[model.observables[k].name]=[yout[model.observables[k].name][i] for i in range(max_tmp_cdc[-2], max_tmp_cdc[-1])]
+                variable_range[model.observables[k].name]=[yout[model.observables[k].name][i] for i in range(max_tmp_cdc_ode[-3], max_tmp_cdc_ode[-2])]
 
     # Plot on a first plot the trajectory of Cdc20 and CycE, with scatter plots on peaks of each with different colors. On a lower plots the scatter aligned on a line showing alternance between Cdc20 and CycE, and show the score
     if return_plot:
