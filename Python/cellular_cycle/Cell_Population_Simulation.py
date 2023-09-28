@@ -25,7 +25,7 @@ from plots_cell_population_simulation import plot_cell_count
 
 #######################################################################
 
-def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr = 0.26, return_plot=False, seed=33):
+def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr = 0.26, return_plot=False, seed=None):
     """
     init: number of initial cells
     run_time: time of the experiment
