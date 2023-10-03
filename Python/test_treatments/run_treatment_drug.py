@@ -7,12 +7,13 @@ Created on Sat Oct 15 16:37:38 2022
 
 import os
 import sys
-sys.path.insert(0, os.getcwd() + "/../cellular_cycle") #add a pathway to the model #not sure about how to use folder dependency, to change
-sys.path.insert(0, os.getcwd() + "/../fit") #add a pathway to the fit functions #not sure about how to use folder dependency, to change
+sys.path.insert(0, os.getcwd() + "/Python/test_treatments/") #add a pathway to the model #not sure about how to use folder dependency, to change
+#sys.path.insert(0, os.getcwd() + "/../fit") #add a pathway to the fit functions #not sure about how to use folder dependency, to change
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib; matplotlib.use('Qt5Agg')
 import seaborn as sns
 import random
 import sobol_seq
@@ -38,7 +39,7 @@ plt.rcParams.update(params)
 
 #change the model parameters of the model if needed
 omega = 200
-new_param = pd.read_csv("parameters.csv") 
+new_param = pd.read_csv(os.getcwd() + "/Python/test_treatments/parameters.csv")
 del new_param['Stress']
 for key in new_param.keys():
     if model_population.parameters[key].value != new_param[key][0]:
@@ -68,7 +69,7 @@ plt.show()
 
 #change the model parameters of the model if needed
 omega = 200
-new_param = pd.read_csv("parameters_cycdi.csv") 
+new_param = pd.read_csv(os.getcwd() + "/Python/test_treatments/parameters_cycdi.csv")
 del new_param['Stress']
 for key in new_param.keys():
     if model_population.parameters[key].value != new_param[key][0]:
@@ -86,6 +87,7 @@ model_concentration.parameters['AKT'].value = 0.6 * 1
 t = np.linspace(0, 500, 50000)
 simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run()
 yout = simres.all;
+fig1=plt.figure()
 observables=['obsCycE', 'obsCdc20', 'obsCycD', 'obsCycDi']; #plot Cyclin E, Cdc20 and Cyclin A
 for obs in range(4) :
     plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)

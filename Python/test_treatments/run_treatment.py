@@ -7,74 +7,54 @@ Created on Sat Oct 15 16:37:38 2022
 
 import os
 import sys
-sys.path.insert(0, os.getcwd() + "/../cellular_cycle") #add a pathway to the model #not sure about how to use folder dependency, to change
-sys.path.insert(0, os.getcwd() + "/../fit") #add a pathway to the fit functions #not sure about how to use folder dependency, to change
+sys.path.insert(0, os.getcwd() + "/Python/test_treatments/")#add a pathway to the model #not sure about how to use folder dependency, to change
+#sys.path.insert(0, os.getcwd() + "/../fit") #add a pathway to the fit functions #not sure about how to use folder dependency, to change
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib; matplotlib.use('Qt5Agg')
 import seaborn as sns
 import random
 import sobol_seq
+from pathlib import Path
 
-##Importing the model, models differ on their initial conditions, one being a concentration and the other a protein count
-from Austin_proliferation_model_concentration_5 import model
-model_concentration=model
-from Austin_proliferation_model_population_5 import model
-model_population=model
+SAVE_DIR = Path(Path.home(),'ECM_mod_output')
+if not SAVE_DIR.exists():
+    SAVE_DIR.mkdir()
+
+#Importing the model
+from cell_cycle_death_model import model
 
 ##Import the simulator: for ODE and stochastic simulation :
 from pysb.simulator import BngSimulator
 from pysb.simulator import ScipyOdeSimulator
 
 
-params = {'axes.titley': 1,
-         'axes.titlepad': -14,
-         'axes.labelsize': 14,
-         'axes.titlesize': 14,
-         'xtick.labelsize': 12,
-         'ytick.labelsize': 12}
-plt.rcParams.update(params)
+# params = {'axes.titley': 1,
+#          'axes.titlepad': -14,
+#          'axes.labelsize': 14,
+#          'axes.titlesize': 14,
+#          'xtick.labelsize': 12,
+#          'ytick.labelsize': 12}
+# plt.rcParams.update(params)
 
 #change the model parameters of the model if needed
-omega = 200
-new_param = pd.read_csv("parameters.csv") 
-del new_param['Stress']
+
+new_param = pd.read_csv(os.getcwd() + '/Python/test_treatments/parameters.csv')
 for key in new_param.keys():
-    if model_population.parameters[key].value != new_param[key][0]:
-        model_population.parameters[key].value = new_param[key]
-    if model_concentration.parameters[key].value != new_param[key][0]:
-        model_concentration.parameters[key].value = new_param[key]
-model_concentration.parameters['omega'].value = 1
-
-model_concentration.parameters['ERK'].value = 0.2 * 1
-model_concentration.parameters['FAK'].value = 1 * 1
-model_concentration.parameters['AKT'].value = 0.6 * 1
-
-model_concentration.parameters['ERK'].value = 0.2 * 1
-model_concentration.parameters['FAK'].value = 0 * 1
-model_concentration.parameters['AKT'].value = 0.6 * 1
-
-model_concentration.parameters['V_sskp2'].value = 0
-model_concentration.parameters['V_s2skp'].value = 0
-model_concentration.parameters['V_1cdh1'].value = 0
-model_concentration.parameters['v_s1p21'].value = 0.8
-
-model_population.parameters['V_sskp2'].value = 0
-model_population.parameters['V_s2skp'].value = 0
-model_population.parameters['V_1cdh1'].value = 0
-model_population.parameters['v_s1p21'].value = 0.8
-
-model_population.parameters['ERK'].value = 0.2 * omega
-model_population.parameters['FAK'].value = 1.0 * omega * 0
-model_population.parameters['AKT'].value = 0.6 * omega
-
+    try:
+        if model.parameters[key].value != new_param[key][0]:
+            model.parameters[key].value = new_param[key]
+    except:
+        print(key)
+model.parameters['omega'].value = 200
 
 t = np.linspace(0, 500, 50000)
-simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run()
-yout = simres.all;
+simres = ScipyOdeSimulator(model, t, verbose=False).run()
+yout = simres.all
 observables=['obsCycE', 'obsCdc20', 'obsBAXm']; #plot Cyclin E, Cdc20 and Cyclin A
-for obs in range(3) :
+for obs in range(3):
     plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
 plt.legend(loc=1)
 plt.ylim(0, 1)
