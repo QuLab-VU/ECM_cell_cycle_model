@@ -37,7 +37,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
     """
     print(condition)
 
-    initial_concentrations = pd.read_csv(os.getcwd() + '/model_data/initial_concentrations.csv')
+    initial_concentrations = pd.read_csv(os.getcwd() + '/../model_data/initial_concentrations.csv')
     for key in initial_concentrations.keys():
         try:
             model.parameters[key].value = initial_concentrations[key][0] / model.parameters['omega'].value
@@ -64,6 +64,8 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
         print("check didn't pass");
         print("The model doesn't oscillate or the model allows too high concentrations")
         return (0,0)
+
+
     #Set death module
     death_mod={'obsBAX': 186 ,'obsBAXmBCL2': 13, 'obsBH3': 0, 'obsBH3BCL2': 7, 'obsBAXm': 0, 'obsBCL2': 149}
     for prot in death_mod:
@@ -87,7 +89,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
         a=np.random.randint(len(variable_range['obsSkp2']))
         for var in list(variable_range.keys()) :
             # print(variable_range[var][a])
-            cells['molecules'][i][var] = [variable_range[var][a]]
+            cells['molecules'][i][var] = [int(variable_range[var][a])]
         cells['time']=cells['time'] + [[0]]
         cells['division']=cells['division'] + [0]
         cells['living_cell']=cells['living_cell'] + [True] #living cell = True
@@ -123,7 +125,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                     Initial=[]
                     for j in cells['molecules'][ii] :
                         Initial=Initial+[cells['molecules'][ii][j][-1]]
-                    simres = sim.run(initials=Initial, tspan = tmp_t, seed=seed);
+                    simres = sim.run(initials=Initial, tspan = tmp_t); #seed removed
                     #print(parameter_vector_original)
                     #print("simulation done")
 
@@ -558,8 +560,8 @@ if __name__=="__main__":
 
     # Set inputs for Cell_Population_Simulation function
     init = 1
-    run_time = 30
-    observed_cells_time = 30
+    run_time = 100
+    observed_cells_time = 100
 
     # Run the model
     # Simulate Check_Model_Consistency
