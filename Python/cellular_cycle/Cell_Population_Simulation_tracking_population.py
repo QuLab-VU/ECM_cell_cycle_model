@@ -114,11 +114,6 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
 
         #print(cell_count_tmp)
         for ii in range(len(cells['molecules'])) :
-            # print("cell ID")
-            # print(cells["ID"][ii])
-            # print("cell time last")
-            # print(cells["time"][ii])
-            # print(cells["time"][ii][-1])
             print("Cell ID")
             print(cells["ID"][ii])
             print(cells["time"][ii][-1])
@@ -128,22 +123,14 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
             print(run_time+1-cells["time"][ii][-1])
 
             if cells["time"][ii][-1]<observed_cells_time and cells['recording'][ii] :#if there's time left and the cell has not died
-                #print('before')
-                #print(ii)
-
                 T = min(20, run_time+1-cells["time"][ii][-1])  #80
                 tmp_t = np.linspace(0, T, max(3,int(T*10)))
-
-
 
                 if len(model.species)>0 :
                     Initial=[]
                     for j in cells['molecules'][ii] :
                         Initial=Initial+[cells['molecules'][ii][j][-1]]
                     simres = sim.run(initials=Initial, tspan = tmp_t); #seed removed
-                    #print(parameter_vector_original)
-                    #print("simulation done")
-
                 else :
                     simres = sim.run(verbose=False, seed=seed);
 
@@ -154,6 +141,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                     cells['molecules'][ii][obs]=cells['molecules'][ii][obs][:-1]+yout[obs].tolist(); #evolution of different species
                 cells['time'][ii] = cells['time'][ii] + [x+cells['time'][ii][-1] for x in tmp_t[1:].tolist()]; #time step
                 current_ind_length=len(cells['molecules'][ii]['obsCdc20']);
+                print("check time 1")
                 print(cells['time'][ii][-1])
 
                 a, max_tmp_cdc = peakfinder(cells['molecules'][ii]['obsCdc20'], thr*model.parameters['omega'].value, thr*model.parameters['omega'].value, 1, includeEndpoints=1);      #cdc20
@@ -176,8 +164,10 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                     cells['time'][ii]=cells['time'][ii][0:death[0]+1];
                     cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][death[0]], -1], axis=0); #one cell to be removed to the count
                     cells["event"][ii] = "apoptosis"
-                    cells["Lifespan"][ii] = cells['time'][ii][-1] - cells["Birthtime"][ii]
+                    cells["Lifespan"][ii] = cells['time'][ii][-1] - cells["time"][ii][0]
 
+                    print("check time 2")
+                    print(cells['time'][ii][-1])
 
 ###############################################################################
                 #Dividing cell
@@ -187,9 +177,11 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                     index = 0
                     div_ind = (max_tmp_cdc[index]);
 
-
+                    print("divisions")
+                    print(max_tmp_cdc)
 
                     if cells["Birthtime"][ii] == "Initial cell" :
+                        print("First cell")
                         #first cell, there is no need to check if CycE has cycled (it can have cycled before recording), it will be checked between two mitosis
 
                         cells['division'][ii] = cells['division'][ii]+1;
@@ -235,6 +227,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                             cells["Lifespan"] = cells["Lifespan"] + [0] # Lifespan of the cell
 
                     else : # Not the first cell
+                        print("Daugther cell")
                         # Check if CycE has cycled between two mitosis
                         if np.any(np.logical_and(max_tmp_cdc[index-1] < np.array(max_tmp_cycE) ,np.array(max_tmp_cycE) < max_tmp_cdc[index])) : #just checking if Cyc2 is actully oscillating between Cdc20
                             cells["event"][ii] = "mitosis"
@@ -247,6 +240,9 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                                 cells['molecules'][ii][obs] = cells['molecules'][ii][obs][0:div_ind + 1]
                             cells['time'][ii] = cells['time'][ii][0:div_ind + 1]
                             cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][div_ind], 1], axis=0);
+
+                            print("Check recording 1")
+                            print(cells['recording'][ii])
 
                         #add a new cell : Change to the time and concentrations of the previous cell but at time = div_ind
                             if cells['time'][ii][div_ind] < observed_cells_time: #record the new cell only if the cdc20 appears after the cyc E peak
@@ -300,20 +296,22 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                     cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][-1], 0], axis=0);
 
 ###############################################################################
+                print("check time 3")
+                print(cells['time'][ii][-1])
 
+                if cells["time"][ii][-1]>=run_time:
+                    # if the cell reached the end of the experiment
+                    #print('stop cell recording')
+                    cells['recording'][ii]=False; #Stop the recording
+                    ind_tmp = np.where(np.array(cells['time'][ii])<=run_time)[-1][-1]
+                    cells['time'][ii] = cells['time'][ii][0:ind_tmp+2]
+                    for obs in list(cells['molecules'][ii].keys()) : cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:ind_tmp+2]
+                    cells["event"][ii] = "end of experiment"
+                    cells["Lifespan"][ii] = cells['time'][ii][-1] - cells["Birthtime"][ii]
+                    cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [run_time, 0], axis=0); #one cell to be removed to the count
 
-            if cells["time"][ii][-1]>=run_time:
-                # if the cell reached the end of the experiment
-                #print('stop cell recording')
-                cells['recording'][ii]=False; #Stop the recording
-                ind_tmp = np.where(np.array(cells['time'][ii])<=run_time)[-1][-1]
-                cells['time'][ii] = cells['time'][ii][0:ind_tmp+2]
-                for obs in list(cells['molecules'][ii].keys()) : cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:ind_tmp+2]
-                cells["event"][ii] = "end of experiment"
-                cells["Lifespan"][ii] = cells['time'][ii][-1] - cells["Birthtime"][ii]
-                cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [run_time, 0], axis=0); #one cell to be removed to the count
-
-            print(cells['time'][ii][-1])
+                print("check time 4")
+                print(cells['time'][ii][-1])
 
 ###############################################################################
 ###############################################################################
@@ -403,20 +401,20 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
 
 
 ###############################################################################
-            #Quiescent cell
-            else :
-                cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][-1], 0], axis=0);
+                #Quiescent cell
+                else :
+                    cell_count_tmp = np.insert(cell_count_tmp, len(cell_count_tmp), [cells['time'][ii][-1], 0], axis=0);
 
 ###############################################################################
 
-            if cells["time"][ii][-1]>=run_time:
-                ##if the cell reached the end of the experiment the record stops
+                if cells["time"][ii][-1]>=run_time:
+                    ##if the cell reached the end of the experiment the record stops
 
-                #print('stop cell recording')
-                cells['recording'][ii]=False; #Stop the recording
-                ind_tmp = np.where(np.array(cells['time'][ii])<=run_time)[-1][-1]
-                cells['time'][ii] = cells['time'][ii][0:ind_tmp+2]
-                for obs in list(cells['molecules'][ii].keys()) : cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:ind_tmp+2]
+                    #print('stop cell recording')
+                    cells['recording'][ii]=False; #Stop the recording
+                    ind_tmp = np.where(np.array(cells['time'][ii])<=run_time)[-1][-1]
+                    cells['time'][ii] = cells['time'][ii][0:ind_tmp+2]
+                    for obs in list(cells['molecules'][ii].keys()) : cells['molecules'][ii][obs]=cells['molecules'][ii][obs][0:ind_tmp+2]
 
 ###############################################################################
 ###############################################################################
