@@ -22,6 +22,10 @@ from peakfinder import peakfinder
 sys.path.insert(0, os.getcwd() + "/../figures")
 from plots_cell_population_simulation import plot_cell_count
 
+# Import functions related to the data processing
+from retrieve_cellState_dw_2 import retrieve_cellState
+from call_cell_events import call_events #
+
 
 #######################################################################
 
@@ -580,6 +584,13 @@ if __name__=="__main__":
     condition = "4 kPa DMSO"
     (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
 
+    IMT_eoe_counts = retrieve_cellState(run_time, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
+    all_events_simulated = call_events(run_time, IMT_eoe_counts);
+    all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
+    all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
+    mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
+    censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
+
     # condition = "55 kPa DMSO"
     # (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
     #
@@ -603,61 +614,3 @@ if __name__=="__main__":
     subset_dict = {key: cells[key] for key in selected_columns}
     cells_df = pd.DataFrame(subset_dict)
 
-
-def break_down_cell_life(df):
-    cell_life_breakdown = []
-    id_mapping = {}  # Maps old Cell ID to new Cell ID
-
-    for _, row in df.iterrows():
-        cell_id = row['ID']
-        lineage = row['Lineage']
-        events = row['event']
-        divisions = row['division']
-        birth_time = row['Birth time']
-        division_history = row['divisions history']
-        lineage_history = row['division lineage history']
-        end_of_recording = row['end of recording']
-
-        if cell_id not in id_mapping:
-            new_cell_id = max(id_mapping.values(), default=-1) + 1
-            id_mapping[cell_id] = new_cell_id
-        else:
-            new_cell_id = id_mapping[cell_id]
-
-        life_breakdown = []
-        start_time = birth_time  # Initialize start_time here
-
-        for i in range(len(division_history)):
-            if division_history[i]:
-                end_time = division_history[i][0]
-                life_breakdown.append({
-                    'Cell ID': new_cell_id,
-                    'Lineage': new_cell_id if i == 0 else lineage,
-                    'Event': 'Mitosis',
-                    'Start Time': start_time,
-                    'End Time': end_time
-                })
-
-                # Update Lineage for related cells
-                for cell_lineage, cell_id_list in zip(lineage_history[i], division_history[i]):
-                    if cell_id_list:
-                        for old_id in cell_id_list:
-                            id_mapping[old_id] = new_cell_id
-                start_time = end_time  # Update start_time
-
-            life_breakdown.append({
-                'Cell ID': new_cell_id,
-                'Lineage': new_cell_id,
-                'Event': events[i],
-                'Start Time': start_time,
-                'End Time': end_of_recording
-            })
-            start_time = end_of_recording  # Update start_time
-
-        cell_life_breakdown.extend(life_breakdown)
-
-    return pd.DataFrame(cell_life_breakdown)
-
-
-result = break_down_cell_life(cells_df)
-print(result)

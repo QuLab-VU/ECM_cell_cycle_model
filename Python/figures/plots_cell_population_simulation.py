@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import networkx as nx
 def plot_cell_count(cell_count, run_time):
     t_sim = np.arange(0, run_time, 1 / 3)
     cell_count_t = np.zeros(len(t_sim))
@@ -26,86 +27,159 @@ def break_down_cell_life(df): # Doesn't work yet
     ID_list = df['ID'].tolist()
     new_ID_list = []
 
-    for _, row in df.iterrows():
+    # While df is not empty
+    while len(df) > 0:
+        # Get the first row
+        row = df.iloc[0]
+        # Remove the first row from df
+        df = df.iloc[1:]
+
         cell_id = row['ID']
         lineage = row['Lineage']
-        events = row['event']
-        divisions = row['division']
+        event = row['event']
         birth_time = row['Birth time']
         division_history = row['divisions history']
         lineage_history = row['division lineage history']
         end_of_recording = row['end of recording']
 
         life_breakdown = []
-        start_time = birth_time  # Initialize start_time here
 
         if len(division_history) == 0:
             # Handle the case when division_history is empty
-            for i in range(len(events)):
-                if i == len(events) - 1:
-                    end_time = end_of_recording
-                else:
-                    end_time = end_of_recording if i == len(events) - 1 else birth_time
+            if lineage == 'Initial cell':
+                starting_cell = True
+                start_time = 0
+            else:
+                starting_cell = False
+                start_time = birth_time
 
-                life_breakdown.append({
-                    'Old ID': cell_id,
-                    'New ID': new_cell_id,
-                    'Lineage': new_cell_id,
-                    'Event': events[i],
-                    'Start Time': start_time,
-                    'End Time': end_time
-                })
-                start_time = end_time  # Update start_time
+            life_breakdown.append({
+                'Old ID': cell_id,
+                'New ID': cell_id,
+                'Lineage': lineage,
+                'Event': event,
+                'Start Time': start_time,
+                'Birth Time': birth_time,
+                'End Time': end_of_recording,
+                'Starting Cell': starting_cell
+            })
 
-        for i in range(len(division_history)):
-            if cell_id in new_ID_list:
+        else: # Handle the case when division_history is not empty
+            # From birth to first mitosis
+            new_cell_id = cell_id
+            new_ID_list.append(cell_id)
+            end_time = division_history[0]
+            event_new = 'Mitosis'
+            birth_time_new = birth_time
+            if birth_time_new == 'Initial cell':
+                start_time = 0
+                starting_cell = True
+            else:
+                start_time = birth_time_new
+                starting_cell = False
+            new_lineage = lineage
+
+            life_breakdown.append({
+                'Old ID': cell_id,
+                'New ID': new_cell_id,
+                'Lineage': new_lineage,
+                'Event': event_new,
+                'Start Time': start_time,
+                'Birth Time': birth_time_new,
+                'End Time': end_time,
+                'Starting Cell': starting_cell
+            })
+            start_time = end_time
+            new_lineage = new_cell_id
+
+            # First occurence of lineage_history[i] in df["ID"]
+            df.loc[df["ID"] == lineage_history[0], "Lineage"] = new_cell_id
+
+
+            for i in range(len(division_history)):
+                # From birth to first division
                 new_cell_id = ID_list[-1] + 1
                 ID_list.append(new_cell_id)
                 new_ID_list.append(new_cell_id)
-            else:
-                new_cell_id = cell_id
-                new_ID_list.append(cell_id)
 
-            if isinstance(division_history[i], list) and division_history[i]:  # Check if it's a non-empty list
-                end_time = division_history[i][0]
-                life_breakdown.append({
-                    'Old ID': cell_id,
-                    'New ID': new_cell_id,
-                    'Lineage': new_cell_id if i == 0 else lineage,
-                    'Event': 'Mitosis',
-                    'Start Time': start_time,
-                    'End Time': end_time
-                })
-
-                # Update Lineage for related cells
-                for cell_lineage, cell_id_list in zip(lineage_history[i], division_history[i]):
-                    if isinstance(cell_id_list, list):
-                        for old_id in cell_id_list:
-                            old_id_to_new_id[old_id] = new_cell_id
-                start_time = end_time  # Update start_time
-
-            if i < len(events):
-                if i == len(events) - 1:
+                if i == len(division_history) - 1: # From last mitosis to end of recording
                     end_time = end_of_recording
-                elif isinstance(division_history[i], list) and division_history[i]:
-                    end_time = division_history[i][0]
-                else:
-                    end_time = end_of_recording
+                    event_new = event
+                    birth_time_new = division_history[i-1]
+
+                else: # From mitosis to mitosis
+                    end_time = division_history[i+1]
+                    event_new = 'Mitosis'
+                    birth_time_new = division_history[i-1]
 
                 life_breakdown.append({
                     'Old ID': cell_id,
                     'New ID': new_cell_id,
-                    'Lineage': new_cell_id,
-                    'Event': events[i],
+                    'Lineage': new_lineage,
+                    'Event': event_new,
                     'Start Time': start_time,
-                    'End Time': end_time
+                    'Birth Time': start_time,
+                    'End Time': end_time,
+                    'Starting Cell': False
                 })
-                start_time = end_time  # Update start_time
+
+                start_time = end_time
+                new_lineage = new_cell_id
+
+                # First occurence of lineage_history[i] in df["ID"]
+                if i < len(division_history) - 1:
+                    df.loc[df["ID"] == lineage_history[i+1], "Lineage"] = new_cell_id
+
+
 
         cell_life_breakdown.extend(life_breakdown)
 
-    return pd.DataFrame(cell_life_breakdown)
+    population_history = pd.DataFrame(cell_life_breakdown)
+    population_history["Lifetime"] = population_history["End Time"] - population_history["Start Time"]
 
+
+    return population_history
+
+
+def plot_digraph_population_history(population_history):
+    # Create a directed graph
+    G = nx.DiGraph()
+
+    # Define colors for different fates
+    fate_colors = {
+        'Mitosis': 'lightblue',
+        'Apoptosis': 'lightcoral',
+        'End of experiment': 'lightgreen'
+    }
+
+    # Add nodes to the graph
+    for _, row in population_history.iterrows():
+        node_id = row['New ID']
+        node_label = f"Cell {node_id}"
+        node_color = fate_colors.get(row['Event'], 'lightgray')  # Default to lightgray for unknown events
+        node_size = row['Lifetime'] * 30  # Adjust the multiplier as needed
+        G.add_node(node_id, label=node_label, color=node_color, size=node_size)
+
+    # Add edges to represent lineage relationships
+    for _, row in population_history.iterrows():
+        lineage = row['Lineage']
+        if lineage != 'Initial cell':
+            G.add_edge(lineage, row['New ID'])
+
+    # Create a layout for the graph
+    pos = nx.kamada_kawai_layout(G)
+
+    # Extract node colors and sizes for plotting
+    node_colors = [G.nodes[node]['color'] for node in G.nodes]
+    node_sizes = [G.nodes[node]['size'] for node in G.nodes]
+
+    # Plot the lineage graph with manual markers and sizes
+    plt.figure(figsize=(12, 8))
+    nx.draw_networkx_labels(G, pos, labels=nx.get_node_attributes(G, 'label'), font_size=8, font_color='black', font_weight='bold')
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=node_sizes)
+    nx.draw_networkx_edges(G, pos)
+    plt.title('Cell Lineage Graph')
+    plt.show()
 
 if __name__=="__main__":
     # Sample data
@@ -113,7 +187,7 @@ if __name__=="__main__":
         "ID": [0, 1, 2, 3, 4, 5, 6, 7],
         "Lineage": ['Initial cell', 0, 0, 0, 1, 2, 1, 4],
         "event": ['End of experiment', 'End of experiment', 'End of experiment', 'End of experiment',
-                  'End of experiment', 'End of experiment', 'End of experiment', 'End of experiment'],
+                  'End of experiment', 'End of experiment', 'End of experiment', 'Apoptosis'],
         "division": [3, 3, 2, 1, 2, 1, 1, 1],
         "Birth time": ['Initial cell', 0, 21.67224080268, 38.138755980861, 20.86956521739, 42.96499748019,
                        43.966507177029996, 40.133779264210006],
@@ -122,11 +196,13 @@ if __name__=="__main__":
             [40.133779264210006], [], [], []],
         "division lineage history": [[1, 2, 3], [4, 6], [5], [], [7], [], [], []],
         "end of recording": [50.0956937799, 50.0956937799, 50.09606221652, 50.088573258490996, 50.066889632110005,
-                             50.084619966098, 50.082587892655994, 50.086018816616004]
+                             50.084619966098, 50.082587892655994, 47]
     }
 
     df = pd.DataFrame(data)
 
     # Break down cell life
-    cell_life_breakdown = break_down_cell_life(df)
-    print(cell_life_breakdown)
+    population_history = break_down_cell_life(df)
+    print(population_history)
+
+    plot_digraph_population_history(population_history)
