@@ -21,10 +21,14 @@ from peakfinder import peakfinder
 # Import functions related to the plots
 sys.path.insert(0, os.getcwd() + "/../figures")
 from plots_cell_population_simulation import plot_cell_count
+from plots_cell_population_simulation import break_down_cell_life
+from plots_cell_population_simulation import plot_digraph_population_history
+from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
+import fracprolif as fp
 
 # Import functions related to the data processing
 from retrieve_cellState_dw_2 import retrieve_cellState
-from call_cell_events import call_events #
+from call_cell_events import call_events
 
 
 #######################################################################
@@ -515,10 +519,19 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
         except :
             print("Cell population simulation error")
 
+    selected_columns = ['ID', 'Lineage', 'event', 'division', 'Birth time', 'divisions history',
+                        'division lineage history', "end of recording", "living_cell", "recording"]
+    subset_dict = {key: cells[key] for key in selected_columns}
+    cells_df = pd.DataFrame(subset_dict)
+
+    # Process the cell lineage
+    population_df = break_down_cell_life(cells_df)
+
     if return_plot :
         plot_cell_count(cell_count, run_time)
+        plot_digraph_population_history(population_df)
 
-    return (cells, cell_count)
+    return (population_df, cells, cell_count)
 
 
 
@@ -561,41 +574,34 @@ if __name__=="__main__":
             (ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == input)].value
 
     # Set inputs for Cell_Population_Simulation function
-    init = 1
-    run_time = 50
-    observed_cells_time = 50
+    init = 2
+    run_time = 100
+    observed_cells_time = 100
 
     # Run the model
     # Simulate Check_Model_Consistency
-    (variable_range, check, tmp_score) = Check_Model_Consistency(model, thr=0.26, return_plot=True)
+    # (variable_range, check, tmp_score) = Check_Model_Consistency(model, thr=0.26, return_plot=True)
 
-    (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
+    (population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
     # print(cells)
     print(cell_count)
 
-
-
+    #
+    #
     # condition = "0.6 kPa DMSO"
-    # (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
+    # (population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
     #
     # condition = "0.6 kPa erlotinib"
-    # (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
-
-    condition = "4 kPa DMSO"
-    (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
-
-    IMT_eoe_counts = retrieve_cellState(run_time, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
-    all_events_simulated = call_events(run_time, IMT_eoe_counts);
-    all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
-    all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
-    mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
-    censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
-
-    # condition = "55 kPa DMSO"
-    # (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
+    # (population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
     #
-    # condition = "55 kPa erlotinib"
-    # (cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
+    # condition = "4 kPa DMSO"
+    # (population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
+    #
+    # condition = "55 kPa DMSO"
+    # (population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
+    #
+    condition = "55 kPa erlotinib"
+    (population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=0.26, return_plot=True)
 
 
     print(cells["ID"])
@@ -607,10 +613,51 @@ if __name__=="__main__":
     print(cells["division lineage history"])
     print(cells["end of recording"])
 
-    # pandas dataframe of the previous categories from cells dictionnary
+    IMT_eoe_counts = retrieve_cellState(run_time, cells, return_all_prot=False,
+                                        cells_starting_at_mitosis=False)  # cell count
+    all_events_simulated = call_events(run_time, IMT_eoe_counts);
+    all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
+    all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime'] < observed_cells_time)]
+    mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event'] == 'mitosis']
+    censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event'] == 'End_of_Expt']
 
-    selected_columns = ['ID', 'Lineage', 'event', 'division', 'Birth time', 'divisions history',
-                        'division lineage history', "end of recording"]
-    subset_dict = {key: cells[key] for key in selected_columns}
-    cells_df = pd.DataFrame(subset_dict)
+    # Remove Starting cells from population_df, ie population_df['Starting Cell'] should be False
+    population_df = population_df[population_df['Starting Cell'] == False]
+    mitotic_lifespans_new = population_df['Lifetime'][population_df['Event'] == 'Mitosis']
+    censored_lifespans_new = population_df['Lifetime'][population_df['Event'] == 'End of experiment']
+
+    print("Mitotic lifespans: ", mitotic_lifespans)
+    print("Mitotic lifespans new method: ", mitotic_lifespans_new)
+    print("Censored lifespans: ", censored_lifespans)
+    print("Censored lifespans new method: ", censored_lifespans_new)
+
+
+    simulated_IMTs, simulated_SMs, simulated_G1s = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
+
+    parameters_sim = {}
+
+    if len(population_df) > 0:
+        number_of_deaths = len(population_df) - (population_df['Event']=='Apoptosis').value_counts()[0]
+        cell_time_total = sum(population_df['Lifetime'])
+        parameters_sim['a'] = number_of_deaths/cell_time_total
+    else:
+        parameters_sim['a'] = np.nan
+
+    # mitosis and quiescence rates
+    if len(mitotic_lifespans) > 0:
+        m = fp.mle(mitotic_lifespans, censored_lifespans)
+        parameters_sim['mu'] = m['x'][0]
+        parameters_sim['sigma'] = m['x'][1]
+        parameters_sim['lambda'] = m['x'][2]
+        parameters_sim.update(fp.q_rates(m))
+    else:
+        parameters_sim['d'] = np.nan
+        parameters_sim['q'] = np.nan
+        parameters_sim['mu'] = np.nan
+        parameters_sim['sigma'] = np.nan
+        parameters_sim['lambda'] = np.nan
+
+
+
+
 

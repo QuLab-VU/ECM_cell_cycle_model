@@ -178,9 +178,8 @@ def log_likelihood_single_condition(model, init, run_time, inputs, condition, sa
     
     ###########################################################################
     print(condition)
-    (cells, cell_count) = Cell_Population_Simulation(init, run_time, run_time, model, inputs, condition, sampled_parameter_names, return_plot=True);
+    (population_history, cells, cell_count) = Cell_Population_Simulation(init, run_time, run_time, model, inputs, condition, sampled_parameter_names, return_plot=True);
 
-    print(cells)
     ###########################################################################
     print('Cell count')
     print(cell_count)
@@ -188,14 +187,15 @@ def log_likelihood_single_condition(model, init, run_time, inputs, condition, sa
     if type(cell_count)==np.ndarray and save:
         np.save(os.path.dirname(__file__) + "/../fit_data/pso/cell_count/cell_count_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", cell_count)
     
-    IMT_eoe_counts = retrieve_cellState(run_time, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
-    all_events_simulated = call_events(run_time, IMT_eoe_counts);
-    all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
-    all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
-    mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
-    censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
+    # IMT_eoe_counts = retrieve_cellState(run_time, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
+    # all_events_simulated = call_events(run_time, IMT_eoe_counts);
+    # all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
+    # all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
+    # mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
+    # censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
+
     if save:
-        all_events_simulated.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/distribution/Events_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".pkl") #doesn't save all imts, only the cells that are born before 30 hours
+        population_history.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/distribution/Events_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".pkl") #doesn't save all imts, only the cells that are born before 30 hours
 
 
     ###########################################################################
@@ -217,14 +217,20 @@ def log_likelihood_single_condition(model, init, run_time, inputs, condition, sa
     ###########################################################################
     #compute frac prolif parameters of the simulation:
     # apoptosis rate
-    if len(all_events_simulated) > 0:
-        number_of_deaths = len(all_events_simulated) - (all_events_simulated['event']=='apoptosis').value_counts()[0]
-        cell_time_total = sum(all_events_simulated['Lifespan'])        
+    if len(population_history) > 0:
+        number_of_deaths = len(population_history) - (population_history['Event']=='Apoptosis').value_counts()[0]
+        cell_time_total = sum(population_history['Lifetime'])
         parameters_sim['a'] = number_of_deaths/cell_time_total
     else:
         parameters_sim['a'] = np.nan
 
+
     # mitosis and quiescence rates
+
+    population_df = population_history[population_history['Starting Cell'] == False]
+    mitotic_lifespans = population_df['Lifetime'][population_df['Event'] == 'Mitosis']
+    censored_lifespans = population_df['Lifetime'][population_df['Event'] == 'End of experiment']
+
     if len(mitotic_lifespans) > 0:
         m = fp.mle(mitotic_lifespans, censored_lifespans)            
         parameters_sim['mu'] = m['x'][0]
@@ -388,6 +394,6 @@ if __name__=="__main__":
     # # Calculate likelihood
     ll, frac_prolif_parameters = log_likelihood(model, parameter_vector, 0, sampled_parameter_names, ECM_conditions, init_cells=init, save=False)
     #
-    # print("The prior is " + str(prior))
-    # print("The likelihood is " + str(ll))
-    # print("The posterior is " + str(prior + ll))
+    print("The prior is " + str(prior))
+    print("The likelihood is " + str(ll))
+    print("The posterior is " + str(prior + ll))

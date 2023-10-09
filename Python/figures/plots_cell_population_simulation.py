@@ -141,6 +141,9 @@ def break_down_cell_life(df): # Doesn't work yet
     return population_history
 
 
+# Source: https://stackoverflow.com/questions/29586520/can-one-get-hierarchical-graphs-from-networkx-with-python-3
+
+
 def plot_digraph_population_history(population_history):
     # Create a directed graph
     G = nx.DiGraph()
@@ -152,13 +155,18 @@ def plot_digraph_population_history(population_history):
         'End of experiment': 'lightgreen'
     }
 
+    # Define shapes for starting and non-starting cells
+    shape_starting = 's'  # Square for starting cells
+    shape_non_starting = 'o'  # Circle for non-starting cells
+
     # Add nodes to the graph
     for _, row in population_history.iterrows():
         node_id = row['New ID']
         node_label = f"Cell {node_id}"
         node_color = fate_colors.get(row['Event'], 'lightgray')  # Default to lightgray for unknown events
-        node_size = row['Lifetime'] * 30  # Adjust the multiplier as needed
-        G.add_node(node_id, label=node_label, color=node_color, size=node_size)
+        node_size = row['Lifetime'] * 10  # Adjust the multiplier as needed
+        node_shape = shape_starting if row['Starting Cell'] else shape_non_starting
+        G.add_node(node_id, label=node_label, color=node_color, size=node_size, shape=node_shape)
 
     # Add edges to represent lineage relationships
     for _, row in population_history.iterrows():
@@ -167,36 +175,40 @@ def plot_digraph_population_history(population_history):
             G.add_edge(lineage, row['New ID'])
 
     # Create a layout for the graph
+    # pos = nx.planar_layout(G)
+    # pos = nx.fruchterman_reingold_layout(G)
     pos = nx.kamada_kawai_layout(G)
+    # pos = nx.shell_layout(G)
+    # pos = nx.spectral_layout(G)
 
-    # Extract node colors and sizes for plotting
+    # Extract node colors, sizes, and shapes for plotting
     node_colors = [G.nodes[node]['color'] for node in G.nodes]
     node_sizes = [G.nodes[node]['size'] for node in G.nodes]
+    node_shapes = [G.nodes[node]['shape'] for node in G.nodes]
 
-    # Plot the lineage graph with manual markers and sizes
-    plt.figure(figsize=(12, 8))
-    nx.draw_networkx_labels(G, pos, labels=nx.get_node_attributes(G, 'label'), font_size=8, font_color='black', font_weight='bold')
-    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=node_sizes)
+    # Plot the lineage graph with custom shapes and sizes
+    plt.figure(figsize=(12, 8), dpi=400)
+    labels = nx.get_node_attributes(G, 'label')
+    for i, node in enumerate(G.nodes):
+        nx.draw_networkx_labels(G, pos, labels={node: labels[node]}, font_size=8, font_color='black', font_weight='bold', verticalalignment='bottom')
+        nx.draw_networkx_nodes(G, pos, nodelist=[node], node_color=node_colors[i], node_size=node_sizes[i], node_shape=node_shapes[i])
     nx.draw_networkx_edges(G, pos)
     plt.title('Cell Lineage Graph')
     plt.show()
 
+
+
 if __name__=="__main__":
     # Sample data
     data = {
-        "ID": [0, 1, 2, 3, 4, 5, 6, 7],
-        "Lineage": ['Initial cell', 0, 0, 0, 1, 2, 1, 4],
-        "event": ['End of experiment', 'End of experiment', 'End of experiment', 'End of experiment',
-                  'End of experiment', 'End of experiment', 'End of experiment', 'Apoptosis'],
-        "division": [3, 3, 2, 1, 2, 1, 1, 1],
-        "Birth time": ['Initial cell', 0, 21.67224080268, 38.138755980861, 20.86956521739, 42.96499748019,
-                       43.966507177029996, 40.133779264210006],
-        "divisions history": [
-            [0, 21.67224080268, 38.138755980861], [20.86956521739, 43.966507177029996], [42.96499748019], [],
-            [40.133779264210006], [], [], []],
-        "division lineage history": [[1, 2, 3], [4, 6], [5], [], [7], [], [], []],
-        "end of recording": [50.0956937799, 50.0956937799, 50.09606221652, 50.088573258490996, 50.066889632110005,
-                             50.084619966098, 50.082587892655994, 47]
+        "ID": [0, 1, 2, 3, 4, 5],
+        "Lineage": ['Initial cell', 'Initial cell', 0, 1, 1, 3],
+        "event": ['End of experiment', 'End of experiment', 'End of experiment', 'End of experiment', 'Apoptosis', 'End of experiment'],
+        "division": [1, 2, 1, 2, 1, 2],
+        "Birth time": ['Initial cell', 'Initial cell', 12.84280936455, 0.1003344481605, 36.05504587156, 18.4615384615405],
+        "divisions history": [[12.84280936455], [0.1003344481605, 36.05504587156], [], [18.4615384615405], [], []],
+        "division lineage history": [[2], [3, 4], [], [5], [], []],
+        "end of recording": [40.09174311927, 40.09174311927, 40.09494744386, 40.0832057012475, 39.072821100917, 40.0944368131905]
     }
 
     df = pd.DataFrame(data)
