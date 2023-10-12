@@ -8,6 +8,8 @@ Created on Sat May 13 16:35:22 2023
 import os
 import sys
 path = os.path.dirname(os.path.abspath(__file__)) #add a pathway to the model
+# Current directory
+path = os.getcwd()
 sys.path.insert(0, path + '/../') #add a pathway to the model
 sys.path.insert(0, path + '/../model_data') #add a pathway to the model
 # import model
@@ -34,6 +36,8 @@ for key in new_param.keys():
         if model.parameters[key].value != new_param[key][0]:
             model.parameters[key].value = new_param[key]
     except: print(key)
+
+
 model.parameters['omega'].value = 200
 
 # Setting initial concentrations '/../model_data/initial_concentrations.csv'
@@ -43,6 +47,7 @@ for key in initial_concentrations.keys():
         model.parameters[key].value = initial_concentrations[key][0]/model.parameters['omega'].value
     except: print(key)
 
+ECM_conditions = pd.read_csv(path + '/../model_data/ECM_conditions_2.csv')
 
 ###############################################################################
 # Setting original parameters
@@ -50,6 +55,7 @@ for key in initial_concentrations.keys():
 original_parameters = []
 for name in pysb_sampled_parameter_names:
     original_parameters += [np.log10(model.parameters[name].value)]
+
 parameter_vector = 10**np.array(original_parameters)
 idx = 'original_parameters'
 mean = 10**np.array(original_parameters)
@@ -57,8 +63,8 @@ mean = 10**np.array(original_parameters)
 
 # Test simulation with original parameters
 time = np.linspace(0, 100, 10001)
-sim_result_ODE = ScipyOdeSimulator(model, time, verbose=True).run()
-sim_result_SSA = BngSimulator(model, time, verbose=True).run(seed=33)
+sim_result_ODE = ScipyOdeSimulator(model, time, verbose=False).run()
+sim_result_SSA = BngSimulator(model, time, verbose=False).run(seed=33)
 
 observables=['obsCycE','obsCdc20', 'obsCycA', 'obsCycB', 'obsp21']
 for i, obs in enumerate(observables):
@@ -67,11 +73,13 @@ for i, obs in enumerate(observables):
     print(time.shape)
     plt.plot(time, sim_result_ODE.observables['obsCdc20'])
     # plt.plot(time, sim_result_ODE.observables[i], label=obs)
+
 plt.legend()
 plt.show()
 
 for i, obs in enumerate(observables):
     plt.plot(time, sim_result_SSA.observables[obs], label=obs)
+
 plt.legend()
 plt.show()
 
@@ -79,7 +87,7 @@ plt.show()
 
 ###############################################################################
 
-conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
+conditions = ['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO', '55 kPa erlotinib']
 run_times = [120, 120, 120, 120, 60, 60]
 init_cells = range(1, 11)
 
@@ -112,49 +120,54 @@ parameter_vector
 10**sample
 ###############################################################################
 
-conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
+conditions = ['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO', '55 kPa erlotinib']
 run_times = [120, 120, 120, 120, 60, 60]
-init_cells = (5*np.ones(6)).astype(int)
+init_cells = 6 * [5]
 chain = 0
 save=False
 
 
-cost = log_posterior(np.log10(np.array(parameter_vector)), 'original_parameters', pysb_sampled_parameter_names, mean, variance, conditions, run_times, init_cells, save, 'original_parameters')
+cost = log_posterior(model, np.log10(10**np.array(parameter_vector)), 'original_parameters',
+                     pysb_sampled_parameter_names, mean, variance, ECM_conditions, conditions, run_times,
+                     init_cells, save, 'original_parameters')
+
+# log_posterior(model, parameter_vector, chain, sampled_parameter_names, mean, variance, inputs,
+#               conditions=['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO',
+#                           '55 kPa erlotinib'], run_times=[120, 120, 120, 120, 60, 60], init_cells=[4, 6, 3, 3, 2, 2],
+#               save=False, iteration=0):
+
 
 ###############################################################################
 
 def cost_function(parameter_vectors):
-    global mean, variance, pysb_sampled_parameter_names
-    conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
+    global mean, variance, pysb_sampled_parameter_names, ECM_conditions
+    conditions = ['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO',
+                  '55 kPa erlotinib']
     run_times = [120, 120, 120, 120, 60, 60]
-    init_cells = (5*np.ones(6)).astype(int)
-    chain = 0
-    save=False
-    
+    init_cells = (5 * np.ones(6)).astype(int)
+    save = False
     global iteration_swarm
     iteration_swarm += 1
-    
     cost = np.zeros(np.shape(parameter_vectors)[0])
-    
-    for chain in range(len(cost)) :
+    for chain in range(len(cost)):
         parameter_vector = parameter_vectors[chain]
-        print(parameter_vector) 
-        
-        cost[chain] =+ log_posterior(parameter_vector, chain+1, pysb_sampled_parameter_names, mean, variance, conditions, run_times, init_cells, save, iteration_swarm)
-        
+        print(parameter_vector)
+        cost[chain] = + log_posterior(parameter_vector, chain + 1, pysb_sampled_parameter_names, mean, variance,
+                                      ECM_conditions, conditions, run_times, init_cells, save, iteration_swarm)
     return cost
+
 
 iteration_swarm = 0
 c = cost_function(sample)
 
 import time
-#
-# start = time.time()
-# c_original = cost_function(np.log10(np.array([parameter_vector])))
-# end = time.time()
-#
-# duration_one_cell = end - start
-#
+
+start = time.time()
+c_original = cost_function(np.log10(np.array([parameter_vector])))
+end = time.time()
+
+duration_one_cell = end - start
+
 #
 # ###############################################################################
 #

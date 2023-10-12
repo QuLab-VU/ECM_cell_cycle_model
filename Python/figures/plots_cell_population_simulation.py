@@ -196,7 +196,73 @@ def plot_digraph_population_history(population_history):
     plt.title('Cell Lineage Graph')
     plt.show()
 
+import toytree  # a tree plotting library
+import toyplot  # a general plotting library
+from toyplot import svg
 
+class TreeNode:
+    def __init__(self, id, lifetime):
+        self.id = id
+        self.lifetime = lifetime
+        self.children = []
+
+def build_trees(df):
+    nodes = {row['New ID']: TreeNode(row['New ID'], row['Lifetime']) for _, row in df.iterrows()}
+    roots = []
+    for _, row in df.iterrows():
+        if row['Lineage'] == 'Initial cell':
+            roots.append(nodes[row['New ID']])
+        else:
+            nodes[row['Lineage']].children.append(nodes[row['New ID']])
+    return roots
+
+def to_newick(node):
+    if not node.children:
+        return f"{node.id}:{node.lifetime}"
+    else:
+        children_newick = ','.join([to_newick(child) for child in node.children])
+        return f"({children_newick}){node.id}:{node.lifetime}"
+
+def combine_newick_trees(trees):
+    combined_tree = ",".join(trees)
+    return f"({combined_tree})SuperRoot;"
+
+def set_colot_cell_events(tre, population_df):
+    # traverse the tree and modify nodes (add new 'color' feature)
+    for node in tre.treenode.traverse():
+        # print(node)
+        if node.is_root():
+            # This is the Initial cells
+            node.add_feature('color', toytree.colors[0])
+            # print("root")
+        elif node.is_leaf():
+            # The node is either the End of experiment or Apoptosis
+            # Check node.name on population_df to know which one
+            if population_df.loc[population_df["New ID"] == int(node.name), "Event"].values[
+                0] == "End of experiment":
+                node.add_feature('color', toytree.colors[1])
+                # print("end of experiment")
+            else:
+                node.add_feature('color', toytree.colors[2])
+                # print("apoptosis")
+        else:
+            # The node is a Mitosis
+            node.add_feature('color', toytree.colors[3])
+            # print("mitosis")
+
+    return tre.get_node_values('color', show_root=1, show_tips=1)
+
+def plot_tree_from_population_df(population_df):
+    roots = build_trees(population_df)
+    newick_trees = [to_newick(root) for root in roots]
+    combined_newick_tree = combine_newick_trees(newick_trees)
+    tre = toytree.tree(combined_newick_tree, tree_format=1)
+
+    colors = set_colot_cell_events(tre, population_df)
+    canvas, axes, mark = tre.draw(node_hover=True,
+                                  node_sizes=10, node_colors=colors,
+                                  tip_labels_align=True, tip_labels_style={"font-size": "8px"},);
+    toyplot.svg.render(canvas, "/Users/jeremie/Downloads/tree-plot.svg")
 
 if __name__=="__main__":
     # Sample data
@@ -214,7 +280,19 @@ if __name__=="__main__":
     df = pd.DataFrame(data)
 
     # Break down cell life
-    population_history = break_down_cell_life(df)
-    print(population_history)
+    population_df = break_down_cell_life(df)
+    print(population_df)
+    plot_digraph_population_history(population_df)
 
-    plot_digraph_population_history(population_history)
+    #
+    # data = {
+    #     'New ID': [0, 6, 1, 7, 8, 2, 3, 9, 4, 5],
+    #     'Lineage': ['Initial cell', 0, 'Initial cell', 1, 7, 0, 1, 3, 7, 3],
+    #     'Lifetime': [12, 27, 4, 35, 4, 27, 18, 21, 3, 21]
+    # }
+    #
+    # # ((8:4,4:3)7:35,(9:21,5:21)3:18)1:0;
+    # # (2:27,6:27))0:12;
+
+
+    plot_tree_from_population_df(population_df)

@@ -305,9 +305,10 @@ def log_likelihood(model, parameter_vector, chain, sampled_parameter_names, inpu
     cost = {}
 ###############################################################################
 ###############################################################################
-    
+
+
+
     for init, run_time, condition in zip(init_cells, run_times, conditions):
-        print(condition)
         parameters_sim_tmp, cost_tmp = log_likelihood_single_condition(model, init, run_time, inputs, condition, sampled_parameter_names, chain, iteration, save)
         parameters_sim[condition] = parameters_sim_tmp
         cost[condition] = cost_tmp

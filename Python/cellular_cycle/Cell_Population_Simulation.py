@@ -67,12 +67,10 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
         model.parameters[signal_tmp].value = ECM_conditions[(ECM_conditions["condition"] == condition_untreated) & (ECM_conditions["species"] == signal_tmp)]["value"]
 
     variable_range, check, tmp_score = Check_Model_Consistency(model, thr = 0.26, return_plot = return_plot)
-
     if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.2: #the model doesn't oscillate or the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
         print("check didn't pass");
         print("The model doesn't oscillate or the model allows too high concentrations")
         return (0,0)
-
 
     #Set death module
     death_mod={'obsBAX': 186 ,'obsBAXmBCL2': 13, 'obsBH3': 0, 'obsBH3BCL2': 7, 'obsBAXm': 0, 'obsBCL2': 149}
@@ -89,11 +87,9 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
     cells['division']=[]; #
     cells['living_cell']=[]; #living cell?
     cells['recording']=[];
-
     cells["ID"] = list(range(init))  # ID of the cell
     cells["Lineage"] = ["Initial cell"] * init  # Lineage of the cell
     cells["event"] = [None] * init  # event of the end of recording
-
     cells["Birth time"] = ["Initial cell"] * init  # time of the birth
     cells["divisions history"] = [[]] * init  # time of the divisions
     cells["division lineage history"] = [[]] * init  # daughter cells lineage
@@ -112,29 +108,19 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
 
     cell_count=np.array([[0., len(cells['molecules'])]]);   #start the cell counter at time zero and with number of initial cells
     current_time=np.transpose(np.concatenate([np.zeros((1,len(cells['molecules']))), np.ones((1,len(cells['molecules'])))])); #keeps track of the current time of each cell and whether it's dead or not
-
     sim = BngSimulator(model, verbose=False);
 
     while any(cells['recording']) : #run the code only if there are cells that are recorded
-        #print('while loop is starting')
-
         cell_count_tmp=np.zeros((1,2)); #temporary cell count with current cell time and whether a cell was added, taken away, or not
-
-        #print(cell_count_tmp)
         for ii in range(len(cells['molecules'])) :
-
             if current_time[ii,0]<observed_cells_time and cells['living_cell'][ii] :#if there's time left and the cell has not died
                 T = min(30, run_time+1-current_time[ii,0])  #80
                 tmp_t = np.linspace(0, T, max(3,int(T*10)))
 
-                if len(model.species)>0 :
-                    Initial=[]
-                    for j in cells['molecules'][ii] :
-                        Initial=Initial+[cells['molecules'][ii][j][-1]]
-                    simres = sim.run(initials=Initial, tspan = tmp_t); #seed removed
-
-                else :
-                    simres = sim.run(verbose=False, seed=seed);
+                Initial=[]
+                for j in cells['molecules'][ii] :
+                    Initial=Initial+[cells['molecules'][ii][j][-1]]
+                simres = sim.run(initials=Initial, tspan = tmp_t); #seed removed
 
                 tmp_t = simres.tout[0]
                 yout = simres.observables
@@ -142,7 +128,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                 for obs in list(cells['molecules'][ii].keys()) :
                     cells['molecules'][ii][obs]=cells['molecules'][ii][obs][:-1]+yout[obs].tolist(); #evolution of different species
                 cells['time'][ii] = cells['time'][ii] + [x+cells['time'][ii][-1] for x in tmp_t[1:].tolist()]; #time step
-                current_ind_length=len(cells['molecules'][ii]['obsCdc20']);
+                # current_ind_length=len(cells['molecules'][ii]['obsCdc20']);
                 a, max_tmp_cdc = peakfinder(cells['molecules'][ii]['obsCdc20'], thr*model.parameters['omega'].value, thr*model.parameters['omega'].value, 1, includeEndpoints=1);      #cdc20
                 a, max_tmp_cycE = peakfinder((cells['molecules'][ii]['obsCycE']), thr*model.parameters['omega'].value, thr*model.parameters['omega'].value, 1, includeEndpoints=1);  #cycE
                 death = np.array([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 20]) if len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])>20 else np.array([])
@@ -288,18 +274,10 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                 T = 41 - (current_time[ii,0]>(run_time-40))*(40 - run_time + current_time[ii,0])
                 tmp_t = np.linspace(0, T, max(3,int(T*10)))
 
-
-                if len(model.species)>0 :
-                    Initial=[]
-                    for j in cells['molecules'][ii] :
-                        Initial=Initial+[cells['molecules'][ii][j][-1]]
-                    simres = sim.run(initials=Initial, tspan=tmp_t); # stop_if = 'obsBH3>200'
-                    #print(parameter_vector_original)
-
-                else :
-                    simres = sim.run(verbose=False); # stop_if = 'obsBH3>200'
-                    #print(parameter_vector_original)
-                #print('stoch sim 2')
+                Initial=[]
+                for j in cells['molecules'][ii] :
+                    Initial=Initial+[cells['molecules'][ii][j][-1]]
+                simres = sim.run(initials=Initial, tspan=tmp_t); # stop_if = 'obsBH3>200'
 
                 tmp_t = simres.tout[0]
                 yout = simres.observables
@@ -307,21 +285,11 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                 for obs in list(cells['molecules'][ii].keys()) :
                     cells['molecules'][ii][obs]=cells['molecules'][ii][obs][:-1]+yout[obs].tolist(); #evolution of different species
 
-
-            #if type(cells['time'][ii])!=list : #if it's an array
-            #    cells['time'][ii]=cells['time'][ii].tolist()
-
-
                 cells['time'][ii] = cells['time'][ii] + [x+cells['time'][ii][-1] for x in tmp_t[1:].tolist()]; #time step
-                current_ind_length=len(cells['molecules'][ii]['obsCdc20']);
-
+                # current_ind_length=len(cells['molecules'][ii]['obsCdc20']);
                 a, max_tmp_cdc = peakfinder(cells['molecules'][ii]['obsCdc20'],0.15*200,0.15*200);      #cdc20
                 a, max_tmp_cycE = peakfinder(cells['molecules'][ii]['obsCycE'],0.15*200,0.15*200);  #cycE
-            #min_tmp=peakfinder(cells{ii,2}(:,14),[],30,-1);   #cdc20
-
                 death = np.array([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 20]) if len([i for i,x in enumerate(cells['molecules'][ii]['obsBAXm']) if x > 25])>20 else np.array([])
-
-
 
 ###############################################################################
                 #Cell apoptosis
@@ -341,18 +309,10 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
 ###############################################################################
 
                 elif len(max_tmp_cdc) > cells['division'][ii]:
-                    #print('DIVISION 2')
                     divisions_tmp = np.count_nonzero(np.min(death) > np.array(max_tmp_cdc)) if  death.size != 0 else len(max_tmp_cdc)
-
                     cells['recording'][ii]=False; #the record stops
-
                     for index in range(cells['division'][ii], divisions_tmp) :
-
                         div_ind = (max_tmp_cdc[index]);
-                        #print('index')
-
-
-
                         if index==0: #first cell, there is no need to check id CycE has cycled, it will be checked between two mitosis
                             #print('DIVISION 2 0')
                             cells['division'][ii] = cells['division'][ii]+1;
@@ -371,9 +331,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                                 cells['time']=cells['time']+[[cells['time'][ii][div_ind]]];
                                 cells['division']=cells['division']+[1];
                                 cells['living_cell']=cells['living_cell']+[True];
-
                                 cells['recording']=cells['recording']+[False];
-
                                 cells["ID"] = cells["ID"] + [cell_new_ID]  # ID of the cell
                                 cells["Lineage"] = cells["Lineage"] + [cells["ID"][ii]]  # Lineage of the cell
                                 cells["event"] = cells["event"] + [None]  # event of the end of recording
@@ -381,11 +339,8 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                                 cells["divisions history"] = cells["divisions history"] + [[]]  # time of the divisions
                                 cells["division lineage history"] = cells["division lineage history"] + [[]]  # daughter cells lineage
                                 cells["end of recording"] = cells["end of recording"] + [None]  # time of the end of recording
-
                                 cells["divisions history"][ii] = cells["divisions history"][ii] + [cells['time'][ii][div_ind]]
                                 cells["division lineage history"][ii] = cells["division lineage history"][ii] + [cell_new_ID]
-
-
                                 current_time=np.concatenate((current_time, np.array([[cells['time'][ii][div_ind], 1]])), axis=0); #changed to the real time of the division
 
                         else :
@@ -465,68 +420,64 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
 ###############################################################################
 ###############################################################################
 
-        try :
-            #print('updating cell count')
-            for ii in range(len(cell_count_tmp)) : #updating cell_count (cell population count)
+        for ii in range(len(cell_count_tmp)) : #updating cell_count (cell population count)
 
-                if cell_count_tmp[ii,1]==1 : #new cell
-                    ins_ind=[i for i,x in enumerate(cell_count[:,0]) if x < cell_count_tmp[ii,0]];
+            if cell_count_tmp[ii,1]==1 : #new cell
+                ins_ind=[i for i,x in enumerate(cell_count[:,0]) if x < cell_count_tmp[ii,0]];
 
-                    if ins_ind==[]: #the event happens at time=0
+                if ins_ind==[]: #the event happens at time=0
 
-                        current_cell_num=cell_count[0,1];
-                        #cell_count=np.insert(cell_count, 0, cell_count_tmp[ii,:], axis=0)
-                        cell_count[0,1]=current_cell_num;
-                        cell_count[0:,1]=cell_count[0:,1]+1;
+                    current_cell_num=cell_count[0,1];
+                    #cell_count=np.insert(cell_count, 0, cell_count_tmp[ii,:], axis=0)
+                    cell_count[0,1]=current_cell_num;
+                    cell_count[0:,1]=cell_count[0:,1]+1;
 
-                    else :
-                        current_cell_num = cell_count[ins_ind[-1],1];
-                        cell_count = np.insert(cell_count, ins_ind[-1]+1, cell_count_tmp[ii,:], axis=0)
-                        cell_count[ins_ind[-1]+1,1] = current_cell_num;
-                        cell_count[ins_ind[-1]+1:,1] = cell_count[ins_ind[-1]+1:,1]+1;
+                else :
+                    current_cell_num = cell_count[ins_ind[-1],1];
+                    cell_count = np.insert(cell_count, ins_ind[-1]+1, cell_count_tmp[ii,:], axis=0)
+                    cell_count[ins_ind[-1]+1,1] = current_cell_num;
+                    cell_count[ins_ind[-1]+1:,1] = cell_count[ins_ind[-1]+1:,1]+1;
 
 
-                elif cell_count_tmp[ii,1]==-1 : #apoptosis
-                    ins_ind=[i for i,x in enumerate(cell_count[:,0]) if x < cell_count_tmp[ii,0]]
-                    if ins_ind==[] : #the event happens at time=0
-                        current_cell_num = cell_count[0,1]
-                        cell_count=np.insert(cell_count, 0+1, cell_count_tmp[ii,:], axis=0)
-                        cell_count[0+1,1]=current_cell_num;
-                        cell_count[0+1:,1]=cell_count[0+1:,1]-1;
+            elif cell_count_tmp[ii,1]==-1 : #apoptosis
+                ins_ind=[i for i,x in enumerate(cell_count[:,0]) if x < cell_count_tmp[ii,0]]
+                if ins_ind==[] : #the event happens at time=0
+                    current_cell_num = cell_count[0,1]
+                    cell_count=np.insert(cell_count, 0+1, cell_count_tmp[ii,:], axis=0)
+                    cell_count[0+1,1]=current_cell_num;
+                    cell_count[0+1:,1]=cell_count[0+1:,1]-1;
 
-                    else :
-                        current_cell_num=cell_count[ins_ind[-1],1];
-                        cell_count=np.insert(cell_count, ins_ind[-1]+1, cell_count_tmp[ii,:], axis=0)
-                        cell_count[ins_ind[-1]+1,1]=current_cell_num;
-                        cell_count[ins_ind[-1]+1:,1]=cell_count[ins_ind[-1]+1:,1]-1;
+                else :
+                    current_cell_num=cell_count[ins_ind[-1],1];
+                    cell_count=np.insert(cell_count, ins_ind[-1]+1, cell_count_tmp[ii,:], axis=0)
+                    cell_count[ins_ind[-1]+1,1]=current_cell_num;
+                    cell_count[ins_ind[-1]+1:,1]=cell_count[ins_ind[-1]+1:,1]-1;
 
-                elif cell_count_tmp[ii,1]==0 : #quiescnce
-                    ins_ind=[i for i,x in enumerate(cell_count[:,0]) if x < cell_count_tmp[ii,0]]
+            elif cell_count_tmp[ii,1]==0 : #quiescnce
+                ins_ind=[i for i,x in enumerate(cell_count[:,0]) if x < cell_count_tmp[ii,0]]
 
-                    if ins_ind==[] :
-                        current_cell_num = cell_count[0,1]
-                        cell_count=np.insert(cell_count, 0+1, cell_count_tmp[ii,:], axis=0)
-                        cell_count[0+1,1]=current_cell_num;
+                if ins_ind==[] :
+                    current_cell_num = cell_count[0,1]
+                    cell_count=np.insert(cell_count, 0+1, cell_count_tmp[ii,:], axis=0)
+                    cell_count[0+1,1]=current_cell_num;
 
-                    else :
-                        current_cell_num=cell_count[ins_ind[-1],1];
-                        cell_count=np.insert(cell_count, ins_ind[-1]+1, cell_count_tmp[ii,:], axis=0)
-                        cell_count[ins_ind[-1]+1,1]=current_cell_num;
+                else :
+                    current_cell_num=cell_count[ins_ind[-1],1];
+                    cell_count=np.insert(cell_count, ins_ind[-1]+1, cell_count_tmp[ii,:], axis=0)
+                    cell_count[ins_ind[-1]+1,1]=current_cell_num;
 
-            u, indices = np.unique(cell_count[:,0], return_index=True)
-            cell_count=cell_count[indices,:];
-        #disp(cell_count(end,:))
-        except :
-            print("Cell population simulation error")
+        u, indices = np.unique(cell_count[:,0], return_index=True)
+        cell_count=cell_count[indices,:];
+
+    #### Processing the cell lineage
 
     selected_columns = ['ID', 'Lineage', 'event', 'division', 'Birth time', 'divisions history',
                         'division lineage history', "end of recording", "living_cell", "recording"]
     subset_dict = {key: cells[key] for key in selected_columns}
     cells_df = pd.DataFrame(subset_dict)
-
-    # Process the cell lineage
     population_df = break_down_cell_life(cells_df)
 
+    #### Plotting the results
     if return_plot :
         plot_cell_count(cell_count, run_time)
         plot_digraph_population_history(population_df)
@@ -547,7 +498,6 @@ if __name__=="__main__":
 
     # Importing the parameters:
     new_param = pd.read_csv(os.path.dirname(__file__) + '/../model_data/parameters.csv')
-    del new_param['Stress']
     for key in new_param.keys():
         try:
             if model.parameters[key].value != new_param[key][0]:
@@ -575,8 +525,8 @@ if __name__=="__main__":
 
     # Set inputs for Cell_Population_Simulation function
     init = 2
-    run_time = 100
-    observed_cells_time = 100
+    run_time = 120
+    observed_cells_time = 120
 
     # Run the model
     # Simulate Check_Model_Consistency
@@ -621,43 +571,40 @@ if __name__=="__main__":
     mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event'] == 'mitosis']
     censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event'] == 'End_of_Expt']
 
-    # Remove Starting cells from population_df, ie population_df['Starting Cell'] should be False
-    population_df = population_df[population_df['Starting Cell'] == False]
-    mitotic_lifespans_new = population_df['Lifetime'][population_df['Event'] == 'Mitosis']
-    censored_lifespans_new = population_df['Lifetime'][population_df['Event'] == 'End of experiment']
-
-    print("Mitotic lifespans: ", mitotic_lifespans)
-    print("Mitotic lifespans new method: ", mitotic_lifespans_new)
-    print("Censored lifespans: ", censored_lifespans)
-    print("Censored lifespans new method: ", censored_lifespans_new)
-
-
-    simulated_IMTs, simulated_SMs, simulated_G1s = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
-
-    parameters_sim = {}
-
-    if len(population_df) > 0:
-        number_of_deaths = len(population_df) - (population_df['Event']=='Apoptosis').value_counts()[0]
-        cell_time_total = sum(population_df['Lifetime'])
-        parameters_sim['a'] = number_of_deaths/cell_time_total
-    else:
-        parameters_sim['a'] = np.nan
-
-    # mitosis and quiescence rates
-    if len(mitotic_lifespans) > 0:
-        m = fp.mle(mitotic_lifespans, censored_lifespans)
-        parameters_sim['mu'] = m['x'][0]
-        parameters_sim['sigma'] = m['x'][1]
-        parameters_sim['lambda'] = m['x'][2]
-        parameters_sim.update(fp.q_rates(m))
-    else:
-        parameters_sim['d'] = np.nan
-        parameters_sim['q'] = np.nan
-        parameters_sim['mu'] = np.nan
-        parameters_sim['sigma'] = np.nan
-        parameters_sim['lambda'] = np.nan
-
-
-
-
+    # # Remove Starting cells from population_df, ie population_df['Starting Cell'] should be False
+    # population_df = population_df[population_df['Starting Cell'] == False]
+    # mitotic_lifespans_new = population_df['Lifetime'][population_df['Event'] == 'Mitosis']
+    # censored_lifespans_new = population_df['Lifetime'][population_df['Event'] == 'End of experiment']
+    #
+    # # print("Mitotic lifespans: ", mitotic_lifespans)
+    # # print("Mitotic lifespans new method: ", mitotic_lifespans_new)
+    # # print("Censored lifespans: ", censored_lifespans)
+    # # print("Censored lifespans new method: ", censored_lifespans_new)
+    #
+    #
+    # simulated_IMTs, simulated_SMs, simulated_G1s = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
+    #
+    # parameters_sim = {}
+    #
+    # if len(population_df) > 0:
+    #     number_of_deaths = len(population_df) - (population_df['Event']=='Apoptosis').value_counts()[0]
+    #     cell_time_total = sum(population_df['Lifetime'])
+    #     parameters_sim['a'] = number_of_deaths/cell_time_total
+    # else:
+    #     parameters_sim['a'] = np.nan
+    #
+    # # mitosis and quiescence rates
+    # if len(mitotic_lifespans) > 0:
+    #     m = fp.mle(mitotic_lifespans, censored_lifespans)
+    #     parameters_sim['mu'] = m['x'][0]
+    #     parameters_sim['sigma'] = m['x'][1]
+    #     parameters_sim['lambda'] = m['x'][2]
+    #     parameters_sim.update(fp.q_rates(m))
+    # else:
+    #     parameters_sim['d'] = np.nan
+    #     parameters_sim['q'] = np.nan
+    #     parameters_sim['mu'] = np.nan
+    #     parameters_sim['sigma'] = np.nan
+    #     parameters_sim['lambda'] = np.nan
+    #
 
