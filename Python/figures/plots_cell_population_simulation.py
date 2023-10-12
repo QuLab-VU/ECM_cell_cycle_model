@@ -259,9 +259,10 @@ def plot_tree_from_population_df(population_df):
     tre = toytree.tree(combined_newick_tree, tree_format=1)
 
     colors = set_colot_cell_events(tre, population_df)
-    canvas, axes, mark = tre.draw(node_hover=True,
+    canvas, axes, mark = tre.draw(node_hover=True, tip_labels=False,
                                   node_sizes=10, node_colors=colors,
-                                  tip_labels_align=True, tip_labels_style={"font-size": "8px"},);
+                                  tip_labels_align=True, tip_labels_style={"font-size": "8px"},
+                                  scalebar=True)
     toyplot.svg.render(canvas, "/Users/jeremie/Downloads/tree-plot.svg")
 
 if __name__=="__main__":
@@ -281,8 +282,8 @@ if __name__=="__main__":
 
     # Break down cell life
     population_df = break_down_cell_life(df)
-    print(population_df)
     plot_digraph_population_history(population_df)
+
 
     #
     # data = {

@@ -183,77 +183,93 @@ def log_likelihood_single_condition(model, init, run_time, inputs, condition, sa
     ###########################################################################
     print('Cell count')
     print(cell_count)
-    
-    if type(cell_count)==np.ndarray and save:
-        np.save(os.path.dirname(__file__) + "/../fit_data/pso/cell_count/cell_count_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", cell_count)
-    
-    # IMT_eoe_counts = retrieve_cellState(run_time, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
-    # all_events_simulated = call_events(run_time, IMT_eoe_counts);
-    # all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
-    # all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
-    # mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
-    # censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
 
-    if save:
-        population_history.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/distribution/Events_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".pkl") #doesn't save all imts, only the cells that are born before 30 hours
+    if check==True:
+        if type(cell_count)==np.ndarray and save:
+            np.save(os.path.dirname(__file__) + "/../fit_data/pso/cell_count/cell_count_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", cell_count)
+
+        # IMT_eoe_counts = retrieve_cellState(run_time, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
+        # all_events_simulated = call_events(run_time, IMT_eoe_counts);
+        # all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
+        # all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
+        # mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
+        # censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
+
+        if type(population_history)==pd.DataFrame and save:
+            population_history.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/distribution/Events_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".pkl") #doesn't save all imts, only the cells that are born before 30 hours
 
 
     ###########################################################################
     #Extract useful information from the simulations:
 
-    simulated_IMTs, simulated_SMs, simulated_G1s = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
+    if check==True:
+        simulated_IMTs, simulated_SMs, simulated_G1s = SMs_G1s_IMTs_extraction(cells) #G1, SM, IMT
 
-    if save:
-        np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/G1_distribution_particle_"  + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_G1s))
-        np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/SM_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_SMs))
-        np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_IMTs))
-        #save density estimation
-        # x=np.linspace(0, run_time, 360)
-        # y=[RBS(i, np.transpose([mitotic_lifespans.tolist()])) for i in x]
-       #  np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + '_' + '_'.join(cond_split) + "_kde.npy", np.array(y))
+        if save:
+            np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/G1_distribution_particle_"  + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_G1s))
+            np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/SM_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_SMs))
+            np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", np.array(simulated_IMTs))
+            #save density estimation
+            # x=np.linspace(0, run_time, 360)
+            # y=[RBS(i, np.transpose([mitotic_lifespans.tolist()])) for i in x]
+           #  np.save(os.path.dirname(__file__) + "/../fit_data/pso/distribution/IMT_distribution_particle_" + str(chain) + "_iteration_" + str(iteration) + '_' + '_'.join(cond_split) + "_kde.npy", np.array(y))
 
 
 
     ###########################################################################
     #compute frac prolif parameters of the simulation:
     # apoptosis rate
-    if len(population_history) > 0:
-        number_of_deaths = len(population_history) - (population_history['Event']=='Apoptosis').value_counts()[0]
-        cell_time_total = sum(population_history['Lifetime'])
-        parameters_sim['a'] = number_of_deaths/cell_time_total
+
+    if check==True:
+        if len(population_history) > 0:
+            number_of_deaths = len(population_history) - (population_history['Event']=='Apoptosis').value_counts()[0]
+            cell_time_total = sum(population_history['Lifetime'])
+            parameters_sim['a'] = number_of_deaths/cell_time_total
+        else:
+            parameters_sim['a'] = np.nan
+
+
+        # mitosis and quiescence rates
+
+        population_df = population_history[population_history['Starting Cell'] == False]
+        mitotic_lifespans = population_df['Lifetime'][population_df['Event'] == 'Mitosis']
+        censored_lifespans = population_df['Lifetime'][population_df['Event'] == 'End of experiment']
+
+        if len(mitotic_lifespans) > 0:
+            m = fp.mle(mitotic_lifespans, censored_lifespans)
+            parameters_sim['mu'] = m['x'][0]
+            parameters_sim['sigma'] = m['x'][1]
+            parameters_sim['lambda'] = m['x'][2]
+            parameters_sim.update(fp.q_rates(m))
+        else:
+            parameters_sim['d'] = np.nan
+            parameters_sim['q'] = np.nan
+            parameters_sim['mu'] = np.nan
+            parameters_sim['sigma'] = np.nan
+            parameters_sim['lambda'] = np.nan
+
     else:
         parameters_sim['a'] = np.nan
-
-
-    # mitosis and quiescence rates
-
-    population_df = population_history[population_history['Starting Cell'] == False]
-    mitotic_lifespans = population_df['Lifetime'][population_df['Event'] == 'Mitosis']
-    censored_lifespans = population_df['Lifetime'][population_df['Event'] == 'End of experiment']
-
-    if len(mitotic_lifespans) > 0:
-        m = fp.mle(mitotic_lifespans, censored_lifespans)            
-        parameters_sim['mu'] = m['x'][0]
-        parameters_sim['sigma'] = m['x'][1]
-        parameters_sim['lambda'] = m['x'][2]
-        parameters_sim.update(fp.q_rates(m))
-    else:
         parameters_sim['d'] = np.nan
         parameters_sim['q'] = np.nan
         parameters_sim['mu'] = np.nan
         parameters_sim['sigma'] = np.nan
         parameters_sim['lambda'] = np.nan
 
+
     ###########################################################################      
     # Compare distributions
 
-    experimental_G1s = all_IMTs[(all_IMTs['Drug']==treatment) & (all_IMTs['Stiffness']==stiffness)]['G1_t']
-    experimental_SMs = all_IMTs[(all_IMTs['Drug']==treatment) & (all_IMTs['Stiffness']==stiffness)]['S-M_t']
+    if check==True:
+        experimental_G1s = all_IMTs[(all_IMTs['Drug']==treatment) & (all_IMTs['Stiffness']==stiffness)]['G1_t']
+        experimental_SMs = all_IMTs[(all_IMTs['Drug']==treatment) & (all_IMTs['Stiffness']==stiffness)]['S-M_t']
 
-    if len(experimental_G1s) > 0 and len(experimental_SMs) > 0:
-        cost['cost G1 distributions'] = mmd_rbf(np.array([simulated_G1s]).transpose(), np.array([experimental_G1s]).transpose(), 1) #difference between IMT distribution
-        cost['cost S-M distributions'] = mmd_rbf(np.array([simulated_SMs]).transpose(), np.array([experimental_SMs]).transpose(), 1) #difference between IMT distribution
-    
+        if len(experimental_G1s) > 0 and len(experimental_SMs) > 0:
+            cost['cost G1 distributions'] = mmd_rbf(np.array([simulated_G1s]).transpose(), np.array([experimental_G1s]).transpose(), 1) #difference between IMT distribution
+            cost['cost S-M distributions'] = mmd_rbf(np.array([simulated_SMs]).transpose(), np.array([experimental_SMs]).transpose(), 1) #difference between IMT distribution
+        else:
+            cost['cost G1 distributions'] = np.inf
+            cost['cost S-M distributions'] = np.inf
     else:
         cost['cost G1 distributions'] = np.inf
         cost['cost S-M distributions'] = np.inf
@@ -358,7 +374,6 @@ if __name__=="__main__":
 
     # Importing the parameters:
     new_param = pd.read_csv(os.path.dirname(__file__) + '/../model_data/parameters.csv')
-    del new_param['Stress']
     for key in new_param.keys():
         try:
             if model.parameters[key].value != new_param[key][0]:

@@ -7,7 +7,7 @@ Created on Sat May 13 16:35:22 2023
 
 import os
 import sys
-path = os.path.dirname(os.path.abspath(__file__)) #add a pathway to the model
+# path = os.path.dirname(os.path.abspath(__file__)) #add a pathway to the model
 # Current directory
 path = os.getcwd()
 sys.path.insert(0, path + '/../') #add a pathway to the model
@@ -23,6 +23,9 @@ import pandas as pd
 from pysb.simulator import ScipyOdeSimulator, BngSimulator
 import matplotlib.pyplot as plt
 
+import time
+
+
 ###############################################################################
 
 # import pysb sampled parameters
@@ -30,7 +33,6 @@ pysb_sampled_parameter_names = np.loadtxt(path + "/../model_data/sampled_paramet
 
 # Importing the parameters:
 new_param = pd.read_csv(path + "/../model_data/parameters.csv")
-del new_param['Stress']
 for key in new_param.keys():
     try:
         if model.parameters[key].value != new_param[key][0]:
@@ -122,14 +124,17 @@ parameter_vector
 
 conditions = ['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO', '55 kPa erlotinib']
 run_times = [120, 120, 120, 120, 60, 60]
-init_cells = 6 * [5]
-chain = 0
-save=False
+init_cells = (5 * np.ones(6)).astype(int)
+save = False
 
 
+start = time.time()
 cost = log_posterior(model, np.log10(10**np.array(parameter_vector)), 'original_parameters',
                      pysb_sampled_parameter_names, mean, variance, ECM_conditions, conditions, run_times,
                      init_cells, save, 'original_parameters')
+end = time.time()
+duration_one_cell = end - start
+print(duration_one_cell)
 
 # log_posterior(model, parameter_vector, chain, sampled_parameter_names, mean, variance, inputs,
 #               conditions=['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO',
@@ -145,47 +150,37 @@ def cost_function(parameter_vectors):
                   '55 kPa erlotinib']
     run_times = [120, 120, 120, 120, 60, 60]
     init_cells = (5 * np.ones(6)).astype(int)
-    save = False
+    save = True
     global iteration_swarm
     iteration_swarm += 1
     cost = np.zeros(np.shape(parameter_vectors)[0])
     for chain in range(len(cost)):
         parameter_vector = parameter_vectors[chain]
         print(parameter_vector)
-        cost[chain] = + log_posterior(parameter_vector, chain + 1, pysb_sampled_parameter_names, mean, variance,
+        cost[chain] = + log_posterior(model, 10**parameter_vector, chain + 1, pysb_sampled_parameter_names, mean, variance,
                                       ECM_conditions, conditions, run_times, init_cells, save, iteration_swarm)
     return cost
 
 
+cost_function(initial_positions)
+
+###############################################################################
+
+import pyswarms as ps
+options = {'c1': 0.1, 'c2': 0.1, 'w': 0.1, 'k': 4, 'p': 2} #hyperparameters 4
+
+n_particles = len(pysb_sampled_parameter_names)
+dimensions = len(pysb_sampled_parameter_names)
+initial_positions = mvn.rvs(size=n_particles)
+
+
+max_bound = np.array(mean)+2
+min_bound = np.array(mean)-2
+bounds = (min_bound, max_bound)
 iteration_swarm = 0
-c = cost_function(sample)
 
-import time
+optimizer = ps.single.LocalBestPSO(n_particles=n_particles, dimensions=dimensions, options=options, bounds=bounds, init_pos = initial_positions)
 
-start = time.time()
-c_original = cost_function(np.log10(np.array([parameter_vector])))
-end = time.time()
+cost, pos = optimizer.optimize(cost_function, iters=80)
 
-duration_one_cell = end - start
 
-#
-# ###############################################################################
-#
-# import pyswarms as ps
-# options = {'c1': 0.1, 'c2': 0.1, 'w': 0.1, 'k': 4, 'p': 2} #hyperparameters 4
-#
-# n_particles = len(pysb_sampled_parameter_names)
-# dimensions = len(pysb_sampled_parameter_names)
-# initial_positions = mvn.rvs(size=n_particles)
-#
-#
-# max_bound = np.array(mean)+2
-# min_bound = np.array(mean)-2
-# bounds = (min_bound, max_bound)
-# iteration_swarm = 0
-#
-# optimizer = ps.single.LocalBestPSO(n_particles=n_particles, dimensions=dimensions, options=options, bounds=bounds, init_pos = initial_positions)
-#
-# cost, pos = optimizer.optimize(cost_function, iters=80)
-#
-#

@@ -19,7 +19,7 @@ import scipy.stats as ss
 
 import matplotlib.pyplot as plt
 
-def Check_Model_Consistency(model, cycling_species = ['obsCdc20', 'obsCycE', 'obsCycD', 'obsp21'], thr = 0.26, return_plot = False):
+def Check_Model_Consistency(model, cycling_species = ['obsCdc20', 'obsCycE', 'obsCycD', 'obsp21'], thr = [0.26, 0.18], return_plot = False):
     """
     Run a stochastic simulation and perform multiple checks on the simulation results.
 
@@ -150,8 +150,8 @@ def Check_Model_Consistency(model, cycling_species = ['obsCdc20', 'obsCycE', 'ob
 
     sys_size = model.parameters['omega'].value
     # Find the maximum of the oscillation peaks in Cdc20 and CyeE
-    (a,max_tmp_cdc) = peakfinder(simres_2.observables['obsCdc20'], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);
-    (b,max_tmp_cyce) = peakfinder(simres_2.observables['obsCycE'], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);
+    (a,max_tmp_cdc) = peakfinder(simres_2.observables['obsCdc20'], thr[0]*sys_size, thr[0]*sys_size, 1, includeEndpoints=1);
+    (b,max_tmp_cyce) = peakfinder(simres_2.observables['obsCycE'], thr[1]*sys_size, thr[1]*sys_size, 1, includeEndpoints=1);
    
     
     tmp_score=1 #score on how good they alternate, it may not be exactly one because of the stochasticity of the network, and peakfinder mught miss one peak
@@ -169,8 +169,8 @@ def Check_Model_Consistency(model, cycling_species = ['obsCdc20', 'obsCycE', 'ob
         
         if len(a)>=2 and len(b)>=2:
             #simres = ScipyOdeSimulator(model, t_ode, verbose=False).run()
-            (a_ode,max_tmp_cdc_ode) = peakfinder(yout[model.observables['obsCdc20'].name], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);
-            (b_ode,max_tmp_cyce_ode) = peakfinder(yout[model.observables['obsCycE'].name], thr*sys_size, thr*sys_size, 1, includeEndpoints=1);
+            (a_ode,max_tmp_cdc_ode) = peakfinder(yout[model.observables['obsCdc20'].name], thr[0]*sys_size, thr[0]*sys_size, 1, includeEndpoints=1);
+            (b_ode,max_tmp_cyce_ode) = peakfinder(yout[model.observables['obsCycE'].name], thr[1]*sys_size, thr[1]*sys_size, 1, includeEndpoints=1);
             
             
             for k in range(len(model.observables)) :
