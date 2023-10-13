@@ -24,6 +24,7 @@ from plots_cell_population_simulation import plot_cell_count
 from plots_cell_population_simulation import break_down_cell_life
 from plots_cell_population_simulation import plot_digraph_population_history
 from plots_cell_population_simulation import plot_tree_from_population_df
+from plots_cell_population_simulation import plot_event_population_history
 from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
 import fracprolif as fp
 
@@ -488,6 +489,11 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
     if return_plot :
         plot_cell_count(cell_count, run_time)
         plot_digraph_population_history(population_df)
+        g = plot_event_population_history(population_df, run_time, condition)
+        # save g in pdf with savefig
+        g.savefig("/Users/jeremie/Downloads/" + condition.replace(" ", "_") + '_population_events.pdf')
+
+
 
     return (True, population_df, cells, cell_count)
 
@@ -531,34 +537,35 @@ if __name__=="__main__":
             (ECM_conditions["condition"] == condition) & (ECM_conditions["species"] == input)].value
 
     # Set inputs for Cell_Population_Simulation function
-    init = 3
+    init = 2
     run_time = 120
     observed_cells_time = 120
-
-    # Run the model
-    # Simulate Check_Model_Consistency
-    # (variable_range, check, tmp_score) = Check_Model_Consistency(model, thr=[0.26, 0.14], return_plot=True)
+    
+    path_savefig = "/Users/jeremie/Downloads"
 
     (check, population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=[0.26, 0.14], return_plot=True)
-    # print(cells)
     print(cell_count)
+    plot_tree_from_population_df(population_df, path_savefig + "/tree-plot_" + condition.replace(" ", "_") + ".svg")
 
-    #
-    #
-    # condition = "0.6 kPa DMSO"
-    # (check, population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=[0.26, 0.14], return_plot=True)
-    #
-    # condition = "0.6 kPa erlotinib"
-    # (check, population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=[0.26, 0.14], return_plot=True)
-    #
-    # condition = "4 kPa DMSO"
-    # (check, population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=[0.26, 0.14], return_plot=True)
-    #
-    # condition = "55 kPa DMSO"
-    # (check, population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=[0.26, 0.14], return_plot=True)
-    #
-    # condition = "55 kPa erlotinib"
-    # (check, population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=[0.26, 0.14], return_plot=True)
+    condition = "0.6 kPa DMSO"
+    (check, population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=[0.26, 0.14], return_plot=True)
+    plot_tree_from_population_df(population_df, path_savefig + "/tree-plot_" + condition.replace(" ", "_") + ".svg")
+
+    condition = "0.6 kPa erlotinib"
+    (check, population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=[0.26, 0.14], return_plot=True)
+    plot_tree_from_population_df(population_df, path_savefig + "/tree-plot_" + condition.replace(" ", "_") + ".svg")
+
+    condition = "4 kPa DMSO"
+    (check, population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=[0.26, 0.14], return_plot=True)
+    plot_tree_from_population_df(population_df, path_savefig + "/tree-plot_" + condition.replace(" ", "_") + ".svg")
+
+    condition = "55 kPa DMSO"
+    (check, population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=[0.26, 0.14], return_plot=True)
+    plot_tree_from_population_df(population_df, path_savefig + "/tree-plot_" + condition.replace(" ", "_") + ".svg")
+
+    condition = "55 kPa erlotinib"
+    (check, population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=[0.26, 0.14], return_plot=True)
+    plot_tree_from_population_df(population_df, path_savefig + "/tree-plot_" + condition.replace(" ", "_") + ".svg")
 
 
     print(cells["ID"])
@@ -614,5 +621,5 @@ if __name__=="__main__":
     #     parameters_sim['sigma'] = np.nan
     #     parameters_sim['lambda'] = np.nan
     #
-    plot_tree_from_population_df(population_df)
+    plot_tree_from_population_df(population_df, path_savefig + "/tree-plot.svg")
 

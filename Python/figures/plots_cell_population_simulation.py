@@ -2,6 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import networkx as nx
+import seaborn as sns
+import toytree  # a tree plotting library
+import toyplot  # a general plotting library
+from toyplot import svg
+
 def plot_cell_count(cell_count, run_time):
     t_sim = np.arange(0, run_time, 1 / 3)
     cell_count_t = np.zeros(len(t_sim))
@@ -196,10 +201,6 @@ def plot_digraph_population_history(population_history):
     plt.title('Cell Lineage Graph')
     plt.show()
 
-import toytree  # a tree plotting library
-import toyplot  # a general plotting library
-from toyplot import svg
-
 class TreeNode:
     def __init__(self, id, lifetime):
         self.id = id
@@ -252,7 +253,10 @@ def set_colot_cell_events(tre, population_df):
 
     return tre.get_node_values('color', show_root=1, show_tips=1)
 
-def plot_tree_from_population_df(population_df):
+
+
+
+def plot_tree_from_population_df(population_df, path):
     roots = build_trees(population_df)
     newick_trees = [to_newick(root) for root in roots]
     combined_newick_tree = combine_newick_trees(newick_trees)
@@ -263,7 +267,35 @@ def plot_tree_from_population_df(population_df):
                                   node_sizes=10, node_colors=colors,
                                   tip_labels_align=True, tip_labels_style={"font-size": "8px"},
                                   scalebar=True)
-    toyplot.svg.render(canvas, "/Users/jeremie/Downloads/tree-plot.svg")
+    toyplot.svg.render(canvas, path)
+
+def plot_event_population_history(population_df, run_time, condition):
+    # Copy and remove starting cells
+    all_events = population_df.copy()
+    all_events = all_events.loc[all_events['Starting Cell'] == False]
+
+    #plot the results
+    grid = sns.JointGrid(x='Start Time', y='Lifetime', data=all_events) #x axis = birthtime of a cell, y = endtime of this cell
+    # pink for mitosis, orange for End of experiment and Blue for Apoptosis
+    event_palette = {
+        'End of experiment': (0.988, 0.553, 0.384, 1.000),  # rgba(98.8%, 55.3%, 38.4%, 1.000)
+        'Apoptosis': (0.553, 0.627, 0.796, 1.000),  # rgba(55.3%, 62.7%, 79.6%, 1.000)
+        'Mitosis': (0.906, 0.541, 0.765, 1.000),  # rgba(90.6%, 54.1%, 76.5%, 1.000)
+    }
+
+    g = grid.plot_joint(sns.scatterplot, hue='Event', data=all_events, palette=event_palette, legend=False)
+    # g.ax_marg_x.remove()
+    g.ax_joint.plot([run_time, 0], [0, run_time], 'b-', linewidth = 1, color='black') #Recorded events behind this line
+    sns.kdeplot(all_events.loc[all_events['Event']=='Mitosis', 'Lifetime'].to_list(),
+                ax=g.ax_marg_y, vertical=True, legend=False, bw=0.3, color = (0.906, 0.541, 0.765, 1.000)) #output distribution of intermitotic times
+    plt.ylim(0, 1.1*run_time)
+    g.fig.suptitle(condition, y=0.9, fontsize=16)
+    g.fig.tight_layout()
+    plt.show()
+    return g
+
+
+
 
 if __name__=="__main__":
     # Sample data
@@ -295,5 +327,5 @@ if __name__=="__main__":
     # # ((8:4,4:3)7:35,(9:21,5:21)3:18)1:0;
     # # (2:27,6:27))0:12;
 
-
-    plot_tree_from_population_df(population_df)
+    condition = '0.6 kPa DMSO'
+    plot_tree_from_population_df(population_df, "/Users/jeremie/Downloads/tree-plot_" + condition + ".svg")
