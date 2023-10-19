@@ -28,7 +28,6 @@ kasbh3bcl2
 kdsbh3bcl2
 v_s1p21
 F_n
-K_p21fak
 a_stress
 b_stress_AKT
 b_stress_ERK
