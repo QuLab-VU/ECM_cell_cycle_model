@@ -7,8 +7,8 @@ Created on Sat Oct 15 16:37:38 2022
 
 import os
 import sys
-sys.path.insert(0, os.getcwd() + "/Python/test_treatments/")#add a pathway to the model #not sure about how to use folder dependency, to change
-#sys.path.insert(0, os.getcwd() + "/../fit") #add a pathway to the fit functions #not sure about how to use folder dependency, to change
+# sys.path.insert(0, os.getcwd() + "/Python/test_treatments/")#add a pathway to the model #not sure about how to use folder dependency, to change
+# sys.path.insert(0, os.getcwd() + "/../fit") #add a pathway to the fit functions #not sure about how to use folder dependency, to change
 
 import numpy as np
 import pandas as pd
@@ -41,7 +41,9 @@ from pysb.simulator import ScipyOdeSimulator
 
 #change the model parameters of the model if needed
 
-new_param = pd.read_csv(os.getcwd() + '/Python/test_treatments/parameters.csv')
+#new_param = pd.read_csv('parameters_cycei.csv')
+#new_param = pd.read_csv('parameters_cycdi.csv')
+new_param = pd.read_csv('parameters.csv')
 for key in new_param.keys():
     try:
         if model.parameters[key].value != new_param[key][0]:
@@ -50,151 +52,22 @@ for key in new_param.keys():
         print(key)
 model.parameters['omega'].value = 200
 
+model.parameters['AKT'].value = 0.3
+model.parameters['ERK'].value = 0.2
+model.parameters['FAK'].value = 0.4
+
+
 t = np.linspace(0, 500, 50000)
 simres = ScipyOdeSimulator(model, t, verbose=False).run()
 yout = simres.all
 observables=['obsCycE', 'obsCdc20', 'obsBAXm']; #plot Cyclin E, Cdc20 and Cyclin A
+plt.figure()
 for obs in range(3):
     plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
 plt.legend(loc=1)
-plt.ylim(0, 1)
+#plt.ylim(0, 1)
 plt.show()
 
-model_population.parameters['ERK'].value = 0.2 * omega
-model_population.parameters['FAK'].value = 1.0 * omega
-model_population.parameters['AKT'].value = 0.6 * omega
-
-model_concentration.parameters['ERK'].value = 0.2 * 1
-model_concentration.parameters['FAK'].value = 1 * 1
-model_concentration.parameters['AKT'].value = 0.6 * 1
-
-model_concentration.parameters['ERK'].value = 0.2 * 1
-model_concentration.parameters['FAK'].value = 0.4 * 1
-model_concentration.parameters['AKT'].value = 0.251 * 1
-
-model_population.parameters['ERK'].value = 0.2 * omega
-model_population.parameters['FAK'].value = 0.4 * omega
-model_population.parameters['AKT'].value = 0.3 * omega
-
-
-omega = 200
-new_param = pd.read_csv("parameters_drugD.csv") 
-del new_param['Stress']
-for key in new_param.keys():
-    if model_population.parameters[key].value != new_param[key][0]:
-        model_population.parameters[key].value = new_param[key]
-    if model_concentration.parameters[key].value != new_param[key][0]:
-        model_concentration.parameters[key].value = new_param[key]
-model_concentration.parameters['omega'].value = 1
-t = np.linspace(0, 500, 50000)
-simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run(); #deterministic simulation
-yout = simres.all;
-observables=['obsdrug', 'obsCycE', 'obsCdc20']; #plot Cyclin E, Cdc20 and Cyclin A
-for obs in range(3) :
-    plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
-plt.legend(loc=1)
-plt.ylim(0, 1)
-plt.show()
-
-
-omega = 200
-new_param = pd.read_csv("parameters_drugE.csv") 
-del new_param['Stress']
-for key in new_param.keys():
-    if model_population.parameters[key].value != new_param[key][0]:
-        model_population.parameters[key].value = new_param[key]
-    if model_concentration.parameters[key].value != new_param[key][0]:
-        model_concentration.parameters[key].value = new_param[key]
-model_concentration.parameters['omega'].value = 1
-t = np.linspace(0, 500, 50000)
-simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run(); #deterministic simulation
-yout = simres.all;
-observables=['obsdrug', 'obsCycE', 'obsCdc20', 'obsCycEdrug']; #plot Cyclin E, Cdc20 and Cyclin A
-for obs in range(4) :
-    plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
-plt.legend(loc=1)
-plt.ylim(0, 1)
-plt.show()
-
-
-omega = 200
-new_param = pd.read_csv("parameters_drugA.csv") 
-del new_param['Stress']
-for key in new_param.keys():
-    if model_population.parameters[key].value != new_param[key][0]:
-        model_population.parameters[key].value = new_param[key]
-    if model_concentration.parameters[key].value != new_param[key][0]:
-        model_concentration.parameters[key].value = new_param[key]
-model_concentration.parameters['omega'].value = 1
-t = np.linspace(0, 500, 50000)
-simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run(); #deterministic simulation
-yout = simres.all;
-observables=['obsdrug', 'obsCycA', 'obsCdc20', 'obsCycAdrug']; #plot Cyclin E, Cdc20 and Cyclin A
-for obs in range(4) :
-    plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
-plt.legend(loc=1)
-plt.ylim(0, 1)
-plt.show()
-
-
-omega = 200
-new_param = pd.read_csv("parameters_drugB.csv") 
-del new_param['Stress']
-for key in new_param.keys():
-    if model_population.parameters[key].value != new_param[key][0]:
-        model_population.parameters[key].value = new_param[key]
-    if model_concentration.parameters[key].value != new_param[key][0]:
-        model_concentration.parameters[key].value = new_param[key]
-model_concentration.parameters['omega'].value = 1
-t = np.linspace(0, 500, 50000)
-simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run(); #deterministic simulation
-yout = simres.all;
-observables=['obsdrug', 'obsCycB', 'obsCdc20', 'obsCycBdrug']; #plot Cyclin E, Cdc20 and Cyclin A
-for obs in range(4) :
-    plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
-plt.legend(loc=1)
-plt.ylim(0, 1)
-plt.show()
-
-
-t = np.linspace(0, 500, 50000)
-simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run(); #deterministic simulation
-yout = simres.all;
-observables=['obsCycE','obsCycA', 'obsCycAdrug']; #plot Cyclin E, Cdc20 and Cyclin A
-for obs in range(3) :
-    plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
-plt.legend(loc=0)
-plt.show()
-
-t = np.linspace(0, 500, 50000)
-simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run();
-yout = simres.all;
-observables=['obsCycE','obsCycD']; #plot Cyclin E, Cdc20 and Cyclin A
-for obs in range(2) :
-    plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
-plt.legend(loc=0)
-plt.show()
-
-t = np.linspace(0, 500, 50000)
-simres = ScipyOdeSimulator(model_concentration, t, verbose=False).run(); #deterministic simulation
-yout = simres.all;
-observables=['obsCdc20', 'obsBAXm']; #plot Cyclin E, Cdc20 and Cyclin A
-
-for obs in range(2) :
-    plt.plot(t[:],yout[observables[obs]][:], label=observables[obs], lw=2)
-plt.legend(loc=0)
-plt.show()
-
-
-t = np.linspace(0, 6000, 600000)
-sim = BngSimulator(model_population, tspan=t, verbose=False); #stochastic simulator
-simres = sim.run(method='ssa', verbose=False, seed=33); #running the simulation; remove seed for truly random; seed=33 is used for similarity to deterministic sim
-yout = simres.observables;
-observables=['obsCycE','obsCdc20', 'obsp21']; #plot Cyclin E, Cdc20 and Cyclin A
-for obs in range(3) :    
-    plt.plot(t[500000:],yout[observables[obs]][500000:], label=observables[obs], lw=2)
-plt.legend(loc=1)
-plt.show()
 
 observables = [
     'obsSkp2', 'obsp21', 'obsp21p', 'obscdh1act', 'obsMyc', 'obsCycD', 
