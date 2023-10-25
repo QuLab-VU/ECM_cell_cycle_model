@@ -18,7 +18,7 @@ import pyarrow.feather as feather
 
 TREATMENT = 'ERL'  # set AKT, ERK, and FAK by setting 'ERL' or 'DMSO'
 POINTS = 10  # number to divide each condition into, sets the number of points to divide cell cycle
-PROCESSES = 100  # number of pool processes to run at once
+PROCESSES = 12  # number of pool processes to run at once
 integrator_options = {
     "rtol": 1e-12,
     "atol": 1e-12
@@ -44,8 +44,16 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
         y_out = sim_ode.observables
 
         peaks_cdc, _ = find_peaks(y_out['obsCdc20'], prominence=0.6, distance=10)
-        new_y = y_out[peaks_cdc[-11]:peaks_cdc[-2]]
+        # new_y = y_out[peaks_cdc[-11]:peaks_cdc[-2]]
         peaks_half = peaks_cdc[peaks_cdc < len(y_out)/2]
+        peaks_half2 = peaks_cdc[peaks_cdc > len(y_out) / 2]
+
+        if len(peaks_half2) > 0:
+            IMTs = [t_0[y] - t_0[x] for x, y in zip(peaks_half2, peaks_half2[1:])]
+            meanIMT = sum(IMTs) / len(IMTs)
+        else:
+            meanIMT = 0
+        print(meanIMT)
 
         variable_range=y_out[peaks_half[-2]:peaks_half[-1]]
         tmp_loc = (round(len(variable_range)/(points))*(kk))
@@ -80,7 +88,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
         logz = [math.log(num) for num in z]
         all_logz[kk + 1] = logz
 
-    return all_logz
+    return all_logz, meanIMT
 
 
 
@@ -145,10 +153,14 @@ with mp.Pool(processes = PROCESSES) as p:
 end = time.time()
 print(end - start)
 
-df = pd.DataFrame(results)
+z_list = [num[0] for num in results]
+mean_IMT = [num[1] for num in results]
 
-feather.write_feather(df, 'lyaps_orig.fea')
+df = pd.DataFrame(z_list)
+mean_df = pd.DataFrame(mean_IMT)
 
+feather.write_feather(df, 'lyaps_erl.fea')
+feather.write_feather(mean_df, 'mIMT_erl.fea')
 
 
 
