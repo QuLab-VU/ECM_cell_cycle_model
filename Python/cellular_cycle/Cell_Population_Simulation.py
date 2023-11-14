@@ -13,13 +13,13 @@ import numpy as np
 import pandas as pd
 
 # Import functions related to the model
-sys.path.insert(0, __file__ + "/../cellular_cycle")
+sys.path.insert(0, os.path.dirname(__file__) + "/../cellular_cycle")
 from Check_Model_Consistency import Check_Model_Consistency
 from pysb.simulator import BngSimulator
 from peakfinder import peakfinder
 
 # Import functions related to the plots
-sys.path.insert(0, os.getcwd() + "/../figures")
+sys.path.insert(0, os.path.dirname(__file__) + "/../figures")
 from plots_cell_population_simulation import plot_cell_count
 from plots_cell_population_simulation import break_down_cell_life
 from plots_cell_population_simulation import plot_digraph_population_history
