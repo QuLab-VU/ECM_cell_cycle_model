@@ -4,7 +4,11 @@ Created on Mon Jun 12 18:44:09 2023
 
 @author: Grim.M
 """
-from rbf_mmd import mmd_rbf
+import os
+import sys
+path = os.getcwd()
+sys.path.insert(0, path + '/../fit')
+
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -13,49 +17,12 @@ import matplotlib.colors as mcolors
 import pandas as pd
 import numpy as np
 
+from rbf_mmd import mmd_rbf
+
 ###############################################################################
-path_cost = r'C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\cost_sensitivity_cell_population\cost'
-path_cell_count = r'C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\cost_sensitivity_cell_population\cell_count'
-path_distribution = r'C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\cost_sensitivity_cell_population\distribution'
-
-cell_count_dict = {condition:{init:[] for init in range(1, 11)} for condition in conditions}
-time_dict = {}
-for key in ['G1', 'S-M', 'IMT']: time_dict[key] = {condition:{init:[] for init in range(1, 11)} for condition in conditions}
-frames = []
-
-condition = '0.6 kPa DMSO'
-init_cell_number = 1
-i = 0
-
-for condition in conditions[:]:
-    for init_cell_number in range(1,11):
-        for i in range(10):
-                                
-            filename = '/parameters_particle_test_initial_cell_number_' + condition.replace(' ', '_') + '_' + str(init_cell_number) + '_initial_cells_iteration_'  + str(i) + '_pso.pkl'
-            frac_prolif_parameters_temp = pd.read_pickle(path_cost + "\\" + filename)
-            
-            frac_prolif_parameters_temp['initial cells number'] = init_cell_number
-            frac_prolif_parameters_temp['condition'] = condition
-            frames += [frac_prolif_parameters_temp]
-            
-            
-            cell_count_dict[condition][init_cell_number] += [np.load(path_cell_count + '/cell_count_particle_test_initial_cell_number_' + condition.replace(" ", "_" ) + '_' + str(init_cell_number) + '_initial_cells_iteration_' + str(i) + '_' + condition.replace(" ", "_" ) + '.npy')] 
-            
-        
-            time_dict['G1'][condition][init_cell_number] += [np.load(path_distribution + '/G1_distribution_particle_test_initial_cell_number_' +  condition.replace(" ", "_" )  + '_' + str(init_cell_number) + '_initial_cells_iteration_' + str(i) + '_' + condition.replace(" ", "_" ) + '.npy')]
-            time_dict['SM'][condition][init_cell_number] += [np.load(path_distribution + '/SM_distribution_particle_test_initial_cell_number_' +  condition.replace(" ", "_" )  + '_' + str(init_cell_number) + '_initial_cells_iteration_' + str(i) + '_' + condition.replace(" ", "_" ) + '.npy')]
-            
-            try :           
-                all_events_tmp = pd.read_pickle(path_distribution + "\Events_particle_test_initial_cell_number_" + condition.replace(" ", "_" ) + '_' + str(init_cell_number) + '_initial_cells_iteration_' + str(i) + '_' + condition.replace(" ", "_" ) + ".pkl")
-                time_dict['IMT'][condition][init_cell_number] += [all_events_tmp['Lifespan'][all_events_tmp['event']=='mitosis'].to_list()]
-            except:
-                time_dict['IMT'][condition][init_cell_number]+=[[]]
-
-frac_prolif_parameters_pso_initial_cell = pd.concat(frames, sort=False)
 
 
-
-def import_data_pso(dimensions,iterations, path_pso):
+def import_data_pso(dimensions, iterations, path_pso):
     path_cost = path_pso + '/cost'
     path_cell_count = path_pso + '/cell_count'
     path_distribution = path_pso + '/distribution'
@@ -348,14 +315,14 @@ def figure_pso_cell_count(cell_count_dict_original, frac_prolif_parameters_origi
     vmin = np.nanmin(costs_array)
     normalize = mcolors.Normalize(vmin=vmin, vmax=vmax)
     colormap = cm.RdYlBu   
-    fig, axs = plt.subplots(nrows=3, ncols=2, sharey=False, figsize=(10,14))
+    fig, axs = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True, figsize=(12, 16))
     for ax,run_time, condition, num_condition in zip(axs.flatten(), run_times, conditions, range(len(conditions))):
         t_sim = np.arange(0,run_time,1/3)
         for chain, iteration, cost_tmp in zip(frac_prolif_parameters_pso['pso']['chain'], frac_prolif_parameters_pso['pso']['iteration'], frac_prolif_parameters_pso[('cost', 'cost population dynamics ' + condition)]): 
             cell_count_t = np.zeros(len(t_sim))
             time_tmp_m = 0        
             
-            for time_tmp_p, cell_count_time_tmp in cell_count_dict_pso['chain '+str(chain)]['iteration ' + str(iteration)][condition]:
+            for time_tmp_p, cell_count_time_tmp in cell_count_dict['chain '+str(chain)]['iteration ' + str(iteration)][condition]:
                 cell_count_t[(time_tmp_m <= t_sim) & (t_sim < time_tmp_p)] = cell_count_time_tmp
                 time_tmp_m = time_tmp_p
             
@@ -370,7 +337,7 @@ def figure_pso_cell_count(cell_count_dict_original, frac_prolif_parameters_origi
         
         DIP_sim = np.log2(cell_count_t/cell_count_t[0])
          
-        ax.plot(t_sim, DIP_sim, color = colormap(normalize(frac_prolif_parameters_original[('cost', 'cost population dynamics ' + condition)])), linewidth = 5)
+        ax.plot(t_sim, DIP_sim, color = colormap(normalize(frac_prolif_parameters_original[('cost', 'cost population dynamics ' + condition)]))[0,0], linewidth = 5)
         ax.set_title(condition)
         
         ax.plot(t_sim, means[num_condition][: len(t_sim)], color = 'black')
@@ -409,7 +376,7 @@ def plot_distributions_cost_pso(conditions, time_dict_pso, frac_prolif_parameter
     bins['IMT'] = np.linspace(imt_min, imt_max, int((imt_max - imt_min)/2))
     
     colormap = cm.RdYlBu
-    fig, axs = plt.subplots(nrows=len(conditions), ncols=len(times), figsize=(len(times)*4, 20), sharex=True, sharey=True)
+    fig, axs = plt.subplots(nrows=len(conditions), ncols=len(times), figsize=(len(times)*6, 22), sharex=True, sharey=True)
     
     for i, condition in enumerate(conditions):
         for j, cell_phase in enumerate(times):
@@ -449,67 +416,130 @@ def plot_distributions_cost_pso(conditions, time_dict_pso, frac_prolif_parameter
 
 ########################################################################
 
-run_times = [120, 120, 120, 120, 60, 60] 
-cell_numbers = range(1,11)
+
+if __name__=="__main__":
+    import os
+
+    path = os.getcwd()
+    path_cost = r'C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\cost_sensitivity_cell_population\cost'
+    path_cell_count = r'C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\cost_sensitivity_cell_population\cell_count'
+    path_distribution = r'C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\cost_sensitivity_cell_population\distribution'
+
+    conditions = ['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO', '55 kPa erlotinib']
+
+    cell_count_dict = {condition: {init: [] for init in range(1, 11)} for condition in conditions}
+    time_dict = {}
+    for key in ['G1', 'S-M', 'IMT']: time_dict[key] = {condition: {init: [] for init in range(1, 11)} for condition in
+                                                       conditions}
+    frames = []
+
+    condition = '0.6 kPa DMSO'
+    init_cell_number = 1
+    i = 0
+
+    for condition in conditions[:]:
+        for init_cell_number in range(1, 11):
+            for i in range(10):
+
+                filename = '/parameters_particle_test_initial_cell_number_' + condition.replace(' ', '_') + '_' + str(
+                    init_cell_number) + '_initial_cells_iteration_' + str(i) + '_pso.pkl'
+                frac_prolif_parameters_temp = pd.read_pickle(path_cost + "\\" + filename)
+
+                frac_prolif_parameters_temp['initial cells number'] = init_cell_number
+                frac_prolif_parameters_temp['condition'] = condition
+                frames += [frac_prolif_parameters_temp]
+
+                cell_count_dict[condition][init_cell_number] += [np.load(
+                    path_cell_count + '/cell_count_particle_test_initial_cell_number_' + condition.replace(" ",
+                                                                                                           "_") + '_' + str(
+                        init_cell_number) + '_initial_cells_iteration_' + str(i) + '_' + condition.replace(" ",
+                                                                                                           "_") + '.npy')]
+
+                time_dict['G1'][condition][init_cell_number] += [np.load(
+                    path_distribution + '/G1_distribution_particle_test_initial_cell_number_' + condition.replace(" ",
+                                                                                                                  "_") + '_' + str(
+                        init_cell_number) + '_initial_cells_iteration_' + str(i) + '_' + condition.replace(" ",
+                                                                                                           "_") + '.npy')]
+                time_dict['SM'][condition][init_cell_number] += [np.load(
+                    path_distribution + '/SM_distribution_particle_test_initial_cell_number_' + condition.replace(" ",
+                                                                                                                  "_") + '_' + str(
+                        init_cell_number) + '_initial_cells_iteration_' + str(i) + '_' + condition.replace(" ",
+                                                                                                           "_") + '.npy')]
+
+                try:
+                    all_events_tmp = pd.read_pickle(
+                        path_distribution + "\Events_particle_test_initial_cell_number_" + condition.replace(" ",
+                                                                                                             "_") + '_' + str(
+                            init_cell_number) + '_initial_cells_iteration_' + str(i) + '_' + condition.replace(" ",
+                                                                                                               "_") + ".pkl")
+                    time_dict['IMT'][condition][init_cell_number] += [
+                        all_events_tmp['Lifespan'][all_events_tmp['event'] == 'mitosis'].to_list()]
+                except:
+                    time_dict['IMT'][condition][init_cell_number] += [[]]
+
+    frac_prolif_parameters_pso_initial_cell = pd.concat(frames, sort=False)
+
+    run_times = [120, 120, 120, 120, 60, 60]
+    cell_numbers = range(1,11)
 
 
-figure_initial_cell_number_cost([ 'cost population dynamics', 'cost S-M distributions', 'cost G1 distributions'], conditions,  frac_prolif_parameters_pso_initial_cell)
+    figure_initial_cell_number_cost([ 'cost population dynamics', 'cost S-M distributions', 'cost G1 distributions'], conditions,  frac_prolif_parameters_pso_initial_cell)
 
-figure_initial_cell_number_cell_count(cell_count_dict, conditions, run_times, means, stdevs, cell_numbers)
+    figure_initial_cell_number_cell_count(cell_count_dict, conditions, run_times, means, stdevs, cell_numbers)
 
-cell_phase = 'G1'
+    cell_phase = 'G1'
 
-plot_g1_distributions(conditions, time_dict, 'G1' , cell_numbers, all_IMTs, colorcode='Initial Cell Number', sigma=1)
-plot_g1_distributions(conditions, time_dict, 'S-M' , cell_numbers, all_IMTs, colorcode='Initial Cell Number', sigma=1)
-plot_g1_distributions(conditions, time_dict, 'IMT' , cell_numbers, all_IMTs, colorcode='Initial Cell Number', sigma=1)
+    plot_g1_distributions(conditions, time_dict, 'G1' , cell_numbers, all_IMTs, colorcode='Initial Cell Number', sigma=1)
+    plot_g1_distributions(conditions, time_dict, 'S-M' , cell_numbers, all_IMTs, colorcode='Initial Cell Number', sigma=1)
+    plot_g1_distributions(conditions, time_dict, 'IMT' , cell_numbers, all_IMTs, colorcode='Initial Cell Number', sigma=1)
 
-plot_g1_distributions(conditions, time_dict, 'G1' , cell_numbers, all_IMTs, colorcode='Cost', sigma=1)
-plot_g1_distributions(conditions, time_dict, 'S-M' , cell_numbers, all_IMTs, colorcode='Cost', sigma=1)
-plot_g1_distributions(conditions, time_dict, 'IMT' , cell_numbers, all_IMTs, colorcode='Cost', sigma=1)
-
-
- 
-plot_distributions_cost(conditions, time_dict, cell_numbers, frac_prolif_parameters_pso_initial_cell, all_IMTs, sigma = 4, colorcode = 'Initial Cell Number')
-plot_distributions_cost(conditions, time_dict, cell_numbers, frac_prolif_parameters_pso_initial_cell, all_IMTs, sigma = 4, colorcode = 'Cost')
+    plot_g1_distributions(conditions, time_dict, 'G1' , cell_numbers, all_IMTs, colorcode='Cost', sigma=1)
+    plot_g1_distributions(conditions, time_dict, 'S-M' , cell_numbers, all_IMTs, colorcode='Cost', sigma=1)
+    plot_g1_distributions(conditions, time_dict, 'IMT' , cell_numbers, all_IMTs, colorcode='Cost', sigma=1)
 
 
 
-
-
-dimensions = 35
-iterations = 80
-
-conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
-run_times = [120, 120, 120, 120, 60, 60] 
-
-dimensions = 35
-iterations = 8
-
-path_pso = r'C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\model6'
-
-time_dict_original, cell_count_dict_original, frac_prolif_parameters_original, frac_prolif_parameters_pso, cell_count_dict_pso, time_dict_pso = import_data_pso(dimensions, iterations, path_pso)
-
-frac_prolif_parameters_pso.to_csv(r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data_parameters_pso_simulations_results.csv')
-
-frac_prolif_parameters_pso[('cost', 'cost population dynamics')] = np.array(sum([frac_prolif_parameters_pso[('cost', 'cost population dynamics ' + condition)] for condition in conditions]))
- 
-frac_prolif_parameters_pso['cost'].columns
-
-frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(by=[('cost', 'cost population dynamics')])
-frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(by=[('cost', 'total cost likelihood')])
-
-figure_pso_cell_count(cell_count_dict_original, frac_prolif_parameters_original, frac_prolif_parameters_pso.iloc[0:40], cell_count_dict_pso, conditions, run_times, means, stdevs)
+    plot_distributions_cost(conditions, time_dict, cell_numbers, frac_prolif_parameters_pso_initial_cell, all_IMTs, sigma = 4, colorcode = 'Initial Cell Number')
+    plot_distributions_cost(conditions, time_dict, cell_numbers, frac_prolif_parameters_pso_initial_cell, all_IMTs, sigma = 4, colorcode = 'Cost')
 
 
 
-times = ['G1', 'S-M']
-frac_prolif_parameters_pso[('cost', 'cost distribution')] = np.array(sum([frac_prolif_parameters_pso[('cost', 'cost ' + cell_phase + ' distributions ' + condition)].to_numpy() for condition in conditions for cell_phase in times]))
-
-frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(by=('cost', 'cost distribution'))
-frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(by=[('cost', 'total cost likelihood')])
 
 
-#for condition in conditions: frac_prolif_parameters_pso[('cost', 'cost IMT distributions '+condition)]=0
+    dimensions = 35
+    iterations = 80
 
-plot_distributions_cost_pso(conditions, time_dict_pso, frac_prolif_parameters_pso.iloc[0:60], all_IMTs, frac_prolif_parameters_original, time_dict_original)
+    conditions = ['0.6 kPa DMSO', '0.6 kPa ERL', '4 kPa DMSO', '4 kPa ERL', '55 kPa DMSO', '55 kPa ERL']
+    run_times = [120, 120, 120, 120, 60, 60]
+
+    dimensions = 35
+    iterations = 8
+
+    path_pso = r'C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\pso\model6'
+
+    time_dict_original, cell_count_dict_original, frac_prolif_parameters_original, frac_prolif_parameters_pso, cell_count_dict_pso, time_dict_pso = import_data_pso(dimensions, iterations, path_pso)
+
+    frac_prolif_parameters_pso.to_csv(r'C:\Users\Grim.M\Documents\git_repos\ECM_cell_cycle_model\Python\fit_data_parameters_pso_simulations_results.csv')
+
+    frac_prolif_parameters_pso[('cost', 'cost population dynamics')] = np.array(sum([frac_prolif_parameters_pso[('cost', 'cost population dynamics ' + condition)] for condition in conditions]))
+
+    frac_prolif_parameters_pso['cost'].columns
+
+    frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(by=[('cost', 'cost population dynamics')])
+    frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(by=[('cost', 'total cost likelihood')])
+
+    figure_pso_cell_count(cell_count_dict_original, frac_prolif_parameters_original, frac_prolif_parameters_pso.iloc[0:40], cell_count_dict_pso, conditions, run_times, means, stdevs)
+
+
+
+    times = ['G1', 'S-M']
+    frac_prolif_parameters_pso[('cost', 'cost distribution')] = np.array(sum([frac_prolif_parameters_pso[('cost', 'cost ' + cell_phase + ' distributions ' + condition)].to_numpy() for condition in conditions for cell_phase in times]))
+
+    frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(by=('cost', 'cost distribution'))
+    frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(by=[('cost', 'total cost likelihood')])
+
+
+    #for condition in conditions: frac_prolif_parameters_pso[('cost', 'cost IMT distributions '+condition)]=0
+
+    plot_distributions_cost_pso(conditions, time_dict_pso, frac_prolif_parameters_pso.iloc[0:60], all_IMTs, frac_prolif_parameters_original, time_dict_original)
 

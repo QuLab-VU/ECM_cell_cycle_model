@@ -127,14 +127,14 @@ run_times = [120, 120, 120, 120, 60, 60]
 init_cells = (5 * np.ones(6)).astype(int)
 save = False
 
-
-start = time.time()
-cost = log_posterior(model, np.log10(10**np.array(parameter_vector)), 'original_parameters',
-                     pysb_sampled_parameter_names, mean, variance, ECM_conditions, conditions, run_times,
-                     init_cells, save, 'original_parameters')
-end = time.time()
-duration_one_cell = end - start
-print(duration_one_cell)
+#
+# start = time.time()
+# cost = log_posterior(model, np.log10(10**np.array(parameter_vector)), 'original_parameters',
+#                      pysb_sampled_parameter_names, mean, variance, ECM_conditions, conditions, run_times,
+#                      init_cells, save, 'original_parameters')
+# end = time.time()
+# duration_one_cell = end - start
+# print(duration_one_cell)
 
 # log_posterior(model, parameter_vector, chain, sampled_parameter_names, mean, variance, inputs,
 #               conditions=['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO',
@@ -162,7 +162,7 @@ def cost_function(parameter_vectors):
     return cost
 
 
-cost_function(initial_positions)
+# cost_function(initial_positions)
 
 ###############################################################################
 

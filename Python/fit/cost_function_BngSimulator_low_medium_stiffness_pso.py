@@ -178,11 +178,17 @@ def log_likelihood_single_condition(model, init, run_time, inputs, condition, sa
     
     ###########################################################################
     print(condition)
-    (population_history, cells, cell_count) = Cell_Population_Simulation(init, run_time, run_time, model, inputs, condition, sampled_parameter_names, return_plot=True);
-
+    try:
+        (check, population_history, cells, cell_count) = Cell_Population_Simulation(init, run_time, run_time, model, inputs, condition, sampled_parameter_names, return_plot=True);
+    except:
+        check = False
+        # save parameter values in exception folder
+        parameter_vector = {}
+        for parameter_name in sampled_parameter_names:
+            parameter_vector[parameter_name] = model.parameters[parameter_name].value
+        parameter_vector = pd.DataFrame(parameter_vector, index=[0])
+        parameter_vector.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/exception/parameter_vector_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + "_exception.pkl")
     ###########################################################################
-    print('Cell count')
-    print(cell_count)
 
     if check==True:
         if type(cell_count)==np.ndarray and save:
@@ -236,11 +242,21 @@ def log_likelihood_single_condition(model, init, run_time, inputs, condition, sa
         censored_lifespans = population_df['Lifetime'][population_df['Event'] == 'End of experiment']
 
         if len(mitotic_lifespans) > 0:
-            m = fp.mle(mitotic_lifespans, censored_lifespans)
-            parameters_sim['mu'] = m['x'][0]
-            parameters_sim['sigma'] = m['x'][1]
-            parameters_sim['lambda'] = m['x'][2]
-            parameters_sim.update(fp.q_rates(m))
+            try:
+                m = fp.mle(mitotic_lifespans, censored_lifespans)
+                parameters_sim['mu'] = m['x'][0]
+                parameters_sim['sigma'] = m['x'][1]
+                parameters_sim['lambda'] = m['x'][2]
+                parameters_sim.update(fp.q_rates(m))
+            except:
+                # save the parameters as nan if the mle fails
+                parameters_sim['mu'] = np.nan
+                parameters_sim['sigma'] = np.nan
+                parameters_sim['lambda'] = np.nan
+                parameters_sim['d'] = np.nan
+                parameters_sim['q'] = np.nan
+                # save population_df in exception folder
+                population_df.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/exception/Events_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + "_exception.pkl")
         else:
             parameters_sim['d'] = np.nan
             parameters_sim['q'] = np.nan
@@ -278,7 +294,7 @@ def log_likelihood_single_condition(model, init, run_time, inputs, condition, sa
     # Cost computation: rmse dip rates
 
     # if cell_count is not None:
-    if type(cell_count)==np.ndarray:
+    if check and type(cell_count)==np.ndarray:
         cell_count_t = np.zeros(len(t_sim))
         time_tmp_m = 0
         
