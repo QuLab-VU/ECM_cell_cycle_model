@@ -189,16 +189,43 @@ if __name__ == '__main__':
     means, stdevs, all_IMTs = import_experimental_data(path)
     run_times = [120, 120, 120, 120, 60, 60]
 
+    frac_prolif_parameters_pso[('cost', 'cost custom')] = frac_prolif_parameters_pso[('cost', 'cost population dynamics 0.6 kPa DMSO')] +frac_prolif_parameters_pso[('cost', 'cost population dynamics 55 kPa erlotinib')]
     # Sort frac_prolif_parameters_pso by best cost
     frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(('cost', 'total cost likelihood'), ascending=True)
+    frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(('cost', 'cost population dynamics 0.6 kPa DMSO'), ascending=True)
+    frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(('cost', 'cost custom'), ascending=True)
 
-    figure_pso_cell_count(cell_count_dict_original, frac_prolif_parameters_original, frac_prolif_parameters_pso.iloc[0:40], cell_count_dict_pso, conditions, run_times, means, stdevs)
+    figure_pso_cell_count(cell_count_dict_original, frac_prolif_parameters_original, frac_prolif_parameters_pso.iloc[0:2], cell_count_dict_pso, conditions, run_times, means, stdevs)
     times = ['G1', 'S-M']
     plot_distributions_cost_pso(conditions, time_dict_pso, frac_prolif_parameters_pso.iloc[0:40], all_IMTs, frac_prolif_parameters_original, time_dict_original, times)
 
     frac_prolif_parameters_pso_parameters = frac_prolif_parameters_pso['model parameters']
 
     # umap
+
+    frac_prolif_parameters_pso['cost'].columns
+
+
+    frac_prolif_parameters_pso[('cost', 'cost 0.6 kPa DMSO')] =frac_prolif_parameters_pso['cost']['cost G1 distributions 0.6 kPa DMSO'] + frac_prolif_parameters_pso['cost']['cost S-M distributions 0.6 kPa DMSO'] + frac_prolif_parameters_pso['cost']['cost population dynamics 0.6 kPa DMSO']
+
+    frac_prolif_parameters_pso[('cost', 'cost 0.6 kPa erlotinib')] =frac_prolif_parameters_pso['cost']['cost G1 distributions 0.6 kPa erlotinib'] + frac_prolif_parameters_pso['cost']['cost S-M distributions 0.6 kPa erlotinib'] + frac_prolif_parameters_pso['cost']['cost population dynamics 0.6 kPa erlotinib']
+
+    frac_prolif_parameters_pso[('cost', 'cost 0.6 kPa')] = frac_prolif_parameters_pso['cost']['cost 0.6 kPa DMSO'] + frac_prolif_parameters_pso['cost']['cost 0.6 kPa erlotinib']
+
+    frac_prolif_parameters_pso[('cost', 'cost 55 kPa DMSO')] =frac_prolif_parameters_pso['cost']['cost G1 distributions 55 kPa DMSO'] + frac_prolif_parameters_pso['cost']['cost S-M distributions 55 kPa DMSO'] + frac_prolif_parameters_pso['cost']['cost population dynamics 55 kPa DMSO']
+
+    frac_prolif_parameters_pso[('cost', 'cost 55 kPa erlotinib')] =frac_prolif_parameters_pso['cost']['cost G1 distributions 55 kPa erlotinib'] + frac_prolif_parameters_pso['cost']['cost S-M distributions 55 kPa erlotinib'] + frac_prolif_parameters_pso['cost']['cost population dynamics 55 kPa erlotinib']
+
+    frac_prolif_parameters_pso[('cost', 'cost 55 kPa')] = frac_prolif_parameters_pso['cost']['cost 55 kPa DMSO'] + frac_prolif_parameters_pso['cost']['cost 55 kPa erlotinib']
+
+    plt.plot(frac_prolif_parameters_pso['cost', 'cost 0.6 kPa'], frac_prolif_parameters_pso['cost']['cost 55 kPa'], 'o')
+    plt.show()
+
+    plt.plot(frac_prolif_parameters_pso['cost', 'cost population dynamics 0.6 kPa DMSO'], frac_prolif_parameters_pso['cost']['cost population dynamics 55 kPa DMSO'], 'o')
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.show()
+
 
     import umap
 
@@ -225,7 +252,9 @@ if __name__ == '__main__':
     import seaborn as sns
 
     color_map = "discrete"
-    color_map = "continuous"
+    # color_map = "continuous"
+
+    number_of_chains = frac_prolif_parameters_pso['pso']['chain'].max()
 
     colors = sns.color_palette(n_colors=number_of_chains)
     number_of_chains = frac_prolif_parameters_pso['pso']['chain'].max()
@@ -270,8 +299,41 @@ if __name__ == '__main__':
         plt.scatter(frac_prolif_parameters_pso_chain_tmp['umap']['dim 1'].tolist()[-1], frac_prolif_parameters_pso_chain_tmp['umap']['dim 2'].tolist()[-1], c=color_tmp_n, s=30, marker='x')
 
     if color_map == "discrete":
-        plt.legend(['chain ' + str(i) for i in range(1, number_of_chains + 1)])
+        # plt.legend(['chain ' + str(i) for i in range(1, number_of_chains + 1)])
+        pass
     else: # add a cbar
         plt.colorbar()
 
     plt.show()
+
+
+
+
+    cost_columns = [('cost', 'cost 0.6 kPa'), ('cost', 'cost 55 kPa')]
+
+    # Identify the Pareto set
+    is_dominated = (frac_prolif_parameters_pso[cost_columns].values[:, None, :] < frac_prolif_parameters_pso[cost_columns].values[None, :, :]).all(axis=-1)
+    is_pareto = ~is_dominated.any(axis=0)
+    # nan are false
+    is_pareto = is_pareto & ~frac_prolif_parameters_pso[cost_columns].isna().any(axis=1)
+    frac_prolif_parameters_pso[('pareto', ' '.join([cost[1] for cost in cost_columns]))] = is_pareto
+
+
+    plt.plot(frac_prolif_parameters_pso['cost', 'cost 0.6 kPa'], frac_prolif_parameters_pso['cost']['cost 55 kPa'], 'o')
+    plt.plot(frac_prolif_parameters_pso['cost', 'cost 0.6 kPa'][is_pareto], frac_prolif_parameters_pso['cost']['cost 55 kPa'][is_pareto], 'o')
+    plt.show()
+
+    figure_pso_cell_count(cell_count_dict_original, frac_prolif_parameters_original, frac_prolif_parameters_pso[is_pareto], cell_count_dict_pso, conditions, run_times, means, stdevs)
+    figure_pso_cell_count(cell_count_dict_original, frac_prolif_parameters_original, frac_prolif_parameters_pso[is_pareto][2:3], cell_count_dict_pso, conditions, run_times, means, stdevs)
+
+
+    # ALL COLUMNS ('cost', cost) for cost in cost_columns
+    cost_columns = [('cost', 'cost ' + stiffness + ' kPa ' + drug) for stiffness in ['0.6', '4', '55'] for drug in ['DMSO', 'erlotinib']]
+
+    # Identify the Pareto set
+    is_dominated = (frac_prolif_parameters_pso[cost_columns].values[:, None, :] < frac_prolif_parameters_pso[cost_columns].values[None, :, :]).all(axis=-1)
+    is_pareto = ~is_dominated.any(axis=0)
+    frac_prolif_parameters_pso[('pareto', ' '.join([cost[1] for cost in cost_columns]))] = is_pareto
+
+    # select only the pareto set
+    frac_prolif_parameters_pso[('pareto', ' '.join([cost[1] for cost in cost_columns]))]
