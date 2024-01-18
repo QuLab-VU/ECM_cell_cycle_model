@@ -37,6 +37,7 @@ BCL2 = p.BCL2t - BH3BCL2 -BAXmBCL2;
 Initial = horzcat(Initial,BAXm,BCL2);
 TIMES = (0:1/3:1000);
 
+%[t,y] = ode23(@(t,y) cell_ode_death_test(t,y,p,1,1,1), TIMES, Initial);
 [t,y] = ode23(@(t,y) cell_ode(t,y,p), TIMES, Initial); 
 
 
@@ -47,7 +48,7 @@ variable_range=y(maxima(6):maxima(7),:);
 %disp('Finished ODE')
 p.AKT=AKT;
 p.ERK=ERK;
-%p.Stress=stress;
+p.Stress=stress;
 %p.v_s1p21 = p21_s;
 
 runAKTERK_death

@@ -105,7 +105,7 @@ legend()
 [cells, cell_count, cell_table] = runStochCell_death(0.6,0.2,0.6,10,0.01,0.7,true)
 
 
-stress = 0.5:0.02:0.7;
+stress = 0.6:0.02:0.7;
 plot_c = parula(length(stress));
 death_rate_lo_dmso = zeros(length(stress),2);
 figure; hold on
@@ -122,13 +122,14 @@ end
 axis([0 120 0 5])
 
 
+stress = 0.6:0.02:0.7;
 death_rate_lo_erl = zeros(length(stress),2);
 figure; hold on
 set(gcf,'color','w')
 axis([0 120 0 5])
-for ii = 1:11
-    for jj = 1:2
-        [cells, cell_count] = runStochCell_death(0.3,0.2,0.4,10,0.01,stress(ii)) %low erl
+for ii = 1:6
+    for jj = 1:5
+        [cells, cell_count] = runStochCell_death(0.3,0.2,0.4,10,0.01,stress(ii)); %low erl
         plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),Color=plot_c(ii,:))
         death_rate_lo_erl(ii,jj) = calc_death(cells);
         ii
@@ -186,9 +187,9 @@ death_rate_hi_erl = zeros(length(stress),2);
 figure; hold on
 set(gcf,'color','w')
 axis([0 120 0 5])
-for ii = 1:11
-    for jj = 1:2
-        [cells, cell_count] = runStochCell_death(0.6,0.2,1,3,0.01,stress(ii)) %hi erl
+for ii = 1:6
+    for jj = 1:5
+        [cells, cell_count] = runStochCell_death(0.6,0.2,1,5,0.01,stress(ii)) %hi erl
         plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),Color=plot_c(ii,:))
         death_rate_hi_erl(ii,jj) = calc_death(cells);
         ii
@@ -332,3 +333,24 @@ end
 figure;scatter(Stress,all_dead)
 figure;scatter(Stress,t_dead_all)
    
+
+ttest_difs = zeros(6,2);
+for ii = 1:6
+    [ttest_difs(ii,1),ttest_difs(ii,2)] = ttest2(death_rate_hi_erl(ii,:),death_rate_lo_erl(ii,:));
+end
+
+means=zeros(6,2);
+for ii = 1:6
+    means(ii,1) = mean(death_rate_lo_erl(ii,:));
+    means(ii,2) = mean(death_rate_hi_erl(ii,:));
+end
+
+stds=zeros(6,2);
+for ii = 1:6
+    stds(ii,1) = std(death_rate_lo_erl(ii,:));
+    stds(ii,2) = std(death_rate_hi_erl(ii,:));
+end
+
+figure;hold on
+errorbar(stress,means(:,2),stds(:,2))
+errobrar(stress,means(:,1),stds(:,1))

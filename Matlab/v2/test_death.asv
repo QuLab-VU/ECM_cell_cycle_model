@@ -105,15 +105,15 @@ legend()
 [cells, cell_count, cell_table] = runStochCell_death(0.6,0.2,0.6,10,0.01,0.7,true)
 
 
-stress = 0.55:0.01:0.66;
+stress = 0.6:0.02:0.7;
 plot_c = parula(length(stress));
-death_rate_lo_dmso = zeros(length(stress),3);
+death_rate_lo_dmso = zeros(length(stress),2);
 figure; hold on
 set(gcf,'color','w')
 for ii = 1:11
-    for jj = 1:3
+    for jj = 1:2
         [cells, cell_count] = runStochCell_death(0.6,1,0.4,10,0.01,stress(ii)) %low dmso
-        plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)),Color=plot_c(ii,:))
+        plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),Color=plot_c(ii,:))
         death_rate_lo_dmso(ii,jj) = calc_death(cells);
         ii
         jj
@@ -122,14 +122,15 @@ end
 axis([0 120 0 5])
 
 
-death_rate_lo_erl = zeros(length(stress),3);
+stress = 0.6:0.02:0.7;
+death_rate_lo_erl = zeros(length(stress),2);
 figure; hold on
 set(gcf,'color','w')
 axis([0 120 0 5])
-for ii = 1:11
-    for jj = 1:3
-        [cells, cell_count] = runStochCell_death(0.3,0.2,0.4,10,0.01,stress(ii)) %low erl
-        plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)),Color=plot_c(ii,:))
+for ii = 1:6
+    for jj = 1:5
+        [cells, cell_count] = runStochCell_death(0.3,0.2,0.4,10,0.01,stress(ii)); %low erl
+        plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),Color=plot_c(ii,:))
         death_rate_lo_erl(ii,jj) = calc_death(cells);
         ii
         jj
@@ -139,14 +140,14 @@ end
 
 
 
-death_rate_int_dmso = zeros(length(stress),3);
+death_rate_int_dmso = zeros(length(stress),2);
 figure; hold on
 set(gcf,'color','w')
 axis([0 120 0 5])
 for ii = 1:11
-    for jj = 1:3
+    for jj = 1:2
         [cells, cell_count] = runStochCell_death(1,1,0.6,5,0.01,stress(ii)) %int dmso
-        plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)),Color=plot_c(ii,:))
+        plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),Color=plot_c(ii,:))
         death_rate_int_dmso(ii,jj) = calc_death(cells);
         ii
         jj
@@ -154,42 +155,42 @@ for ii = 1:11
 end
 
 
-death_rate_int_erl = zeros(length(stress),3);
+death_rate_int_erl = zeros(length(stress),2);
 figure; hold on
 set(gcf,'color','w')
 axis([0 120 0 5])
 for ii = 1:11
-    for jj = 1:3
+    for jj = 1:2
         [cells, cell_count] = runStochCell_death(0.6,0.2,0.6,5,0.01,stress(ii)) %int erl
-        plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)),Color=plot_c(ii,:))
+        plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),Color=plot_c(ii,:))
         death_rate_int_erl(ii,jj) = calc_death(cells);
         ii
         jj
     end
 end
 
-death_rate_hi_dmso = zeros(length(stress),3);
+death_rate_hi_dmso = zeros(length(stress),2);
 figure; hold on
 set(gcf,'color','w')
 axis([0 120 0 5])
 for ii = 1:11
-    for jj = 1:3
-        [cells, cell_count] = runStochCell_death(1,1,1,5,0.01,stress(ii)) %hi dmso
-        plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)),Color=plot_c(ii,:))
+    for jj = 1:2
+        [cells, cell_count] = runStochCell_death(1,1,1,3,0.01,stress(ii)) %hi dmso
+        plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),Color=plot_c(ii,:))
         death_rate_hi_dmso(ii,jj) = calc_death(cells);
         ii
         jj
     end
 end
 
-death_rate_hi_erl = zeros(length(stress),3);
+death_rate_hi_erl = zeros(length(stress),2);
 figure; hold on
 set(gcf,'color','w')
 axis([0 120 0 5])
-for ii = 1:11
-    for jj = 1:3
-        [cells, cell_count] = runStochCell_death(0.6,0.2,1,5,0.01,stress(ii)) %hi erl
-        plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2)),Color=plot_c(ii,:))
+for ii = 1:6
+    for jj = 1:5
+        [cells, cell_count] = runStochCell_death(0.6,0.2,1,3,0.01,stress(ii)) %hi erl
+        plot(cell_count(:,1), log(cell_count(:,2)./cell_count(1,2))/log(2),Color=plot_c(ii,:))
         death_rate_hi_erl(ii,jj) = calc_death(cells);
         ii
         jj
@@ -212,12 +213,12 @@ legend('Low, DMSO', 'Int, DMSO', 'High, DMSO', 'Low, ERL', 'Int, ERL', 'High, ER
 figure; hold on
 set(gcf,'color','w')
 for ii = 1:11
-    scatter(stress(ii).*[1,1,1],death_rate_lo_dmso(ii,:),10,'blue')
-    scatter(stress(ii).*[1,1,1],death_rate_int_dmso(ii,:),10,'green')
-    scatter(stress(ii).*[1,1,1],death_rate_hi_dmso(ii,:),10,'cyan')
-    scatter(stress(ii).*[1,1,1],death_rate_lo_erl(ii,:),10,'red','filled')
-    scatter(stress(ii).*[1,1,1],death_rate_int_erl(ii,:),10,'magenta','filled')
-    scatter(stress(ii).*[1,1,1],death_rate_hi_erl(ii,:),10,'yellow','filled')
+    scatter(stress(ii).*[1,1],death_rate_lo_dmso(ii,:),10,'blue')
+    scatter(stress(ii).*[1,1],death_rate_int_dmso(ii,:),10,'green')
+    scatter(stress(ii).*[1,1],death_rate_hi_dmso(ii,:),10,'cyan')
+    scatter(stress(ii).*[1,1],death_rate_lo_erl(ii,:),10,'red','filled')
+    scatter(stress(ii).*[1,1],death_rate_int_erl(ii,:),10,'magenta','filled')
+    scatter(stress(ii).*[1,1],death_rate_hi_erl(ii,:),10,'yellow','filled')
 end
 
 
@@ -264,8 +265,11 @@ for ii=1:6
 end
 
 stress_fit=[1-0.565;1-0.56;1-0.56;1-0.59;1-0.57;1-0.57];
+out = [0.6, 0.56, 0.56, 0.65, 0.61, 0.61];
 x = [0.6; 1; 1; 0.3; 0.6; 0.6];
 y = [1; 1; 1; 0.2; 0.2; 0.2];
+p=polyfitn([x,y],out,'constant x, y');
+coeffs = [0.6815, -0.112, -0.0111];
 
 
 cell_count_all = {};

@@ -17,44 +17,78 @@ BCL2 = p.BCL2t - BH3BCL2 -BAXmBCL2;
 Initial = horzcat(Initial,BAXm,BCL2);
 TIMES = (0:0.01:1000);
 
+
+
 p.AKT = 1;
 p.ERK = 1;
 p.FAK = 1;
 
-[t,y] = ode23(@(t,y) cell_ode_death_test(t,y,p), TIMES, Initial); 
+[t,y] = ode23(@(t,y) cell_ode_death_test(t,y,p,p.AKT,p.ERK,p.FAK), TIMES, Initial); 
 writematrix(y,'ode_100_100_100.csv') 
+
+sys_size=200;
+maxima=peakfinder(y(:,18),[],0.2);   %find the peak of cdc20 - last protein to peak
+initial_divided=round(y(maxima(6),:).*sys_size);
+variable_range=y(maxima(6):maxima(7),:);
+
+Initial_s = round(datasample(variable_range,1,1).*sys_size);
+p.run_time=1000;
+
+[t,x] = cell_stoch_death_test(sys_size,p,Initial_s);
+[new_t, new_x] = rest_stoch(t,x,dt);
+writematrix(new_x,'stoch_100_100_100.csv') 
 
 p.AKT = 1;
 p.ERK = 1;
 p.FAK = 0.6;
 
-[t,y] = ode23(@(t,y) cell_ode_death_test(t,y,p), TIMES, Initial); 
+[t,y] = ode23(@(t,y) cell_ode_death_test(t,y,p,p.AKT,p.ERK,p.FAK), TIMES, Initial); 
 writematrix(y,'ode_100_100_060.csv') 
+
+[t,x] = cell_stoch_death_test(sys_size,p,Initial_s);
+[new_t, new_x] = rest_stoch(t,x,dt);
+writematrix(new_x,'stoch_100_100_060.csv') 
 
 p.AKT = 0.6;
 p.ERK = 1;
 p.FAK = 0.4;
 
-[t,y] = ode23(@(t,y) cell_ode_death_test(t,y,p), TIMES, Initial); 
+[t,y] = ode23(@(t,y) cell_ode_death_test(t,y,p,p.AKT,p.ERK,p.FAK), TIMES, Initial); 
 writematrix(y,'ode_060_100_040.csv')
+
+[t,x] = cell_stoch_death_test(sys_size,p,Initial_s);
+[new_t, new_x] = rest_stoch(t,x,dt);
+writematrix(new_x,'stoch_060_100_040.csv') 
 
 p.AKT = 0.6;
 p.ERK = 0.2;
 p.FAK = 1;
 
-[t,y] = ode23(@(t,y) cell_ode_death_test(t,y,p), TIMES, Initial); 
+[t,y] = ode23(@(t,y) cell_ode_death_test(t,y,p,p.AKT,p.ERK,p.FAK), TIMES, Initial); 
 writematrix(y,'ode_060_020_100.csv') 
+
+[t,x] = cell_stoch_death_test(sys_size,p,Initial_s);
+[new_t, new_x] = rest_stoch(t,x,dt);
+writematrix(new_x,'stoch_060_020_100.csv') 
 
 p.AKT = 0.6;
 p.ERK = 0.2;
 p.FAK = 0.6;
 
-[t,y] = ode23(@(t,y) cell_ode_death_test(t,y,p), TIMES, Initial); 
+[t,y] = ode23(@(t,y) cell_ode_death_test(t,y,p,p.AKT,p.ERK,p.FAK), TIMES, Initial); 
 writematrix(y,'ode_060_020_060.csv') 
+
+[t,x] = cell_stoch_death_test(sys_size,p,Initial_s);
+[new_t, new_x] = rest_stoch(t,x,dt);
+writematrix(new_x,'stoch_060_020_060.csv') 
 
 p.AKT = 0.3;
 p.ERK = 0.2;
 p.FAK = 0.4;
 
-[t,y] = ode23(@(t,y) cell_ode_death_test(t,y,p), TIMES, Initial); 
+[t,y] = ode23(@(t,y) cell_ode_death_test(t,y,p,p.AKT,p.ERK,p.FAK), TIMES, Initial); 
 writematrix(y,'ode_030_020_040.csv')
+
+[t,x] = cell_stoch_death_test(sys_size,p,Initial_s);
+[new_t, new_x] = rest_stoch(t,x,dt);
+writematrix(new_x,'stoch_030_020_040.csv') 
