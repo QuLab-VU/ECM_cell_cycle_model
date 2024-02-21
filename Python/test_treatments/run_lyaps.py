@@ -18,7 +18,7 @@ import pyarrow.feather as feather
 
 TREATMENT = 'ERL'  # set AKT, ERK, and FAK by setting 'ERL' or 'DMSO'
 POINTS = 10  # number to divide each condition into, sets the number of points to divide cell cycle
-PROCESSES = 12  # number of pool processes to run at once
+PROCESSES = 100  # number of pool processes to run at once
 integrator_options = {
     "rtol": 1e-12,
     "atol": 1e-12
@@ -48,15 +48,18 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
         peaks_half = peaks_cdc[peaks_cdc < len(y_out)/2]
         peaks_half2 = peaks_cdc[peaks_cdc > len(y_out) / 2]
 
-        if len(peaks_half2) > 0:
+        if len(peaks_half2) > 3:
             IMTs = [t_0[y] - t_0[x] for x, y in zip(peaks_half2, peaks_half2[1:])]
             meanIMT = sum(IMTs) / len(IMTs)
+            variable_range = y_out[peaks_half[-3]:peaks_half[-2]]
+            tmp_loc = (round(len(variable_range) / (points)) * (kk))
         else:
             meanIMT = 0
+            variable_range = y_out[575000:600000]
+            tmp_loc = (round(len(variable_range) / (points)) * (kk))
+
         print(meanIMT)
 
-        variable_range=y_out[peaks_half[-2]:peaks_half[-1]]
-        tmp_loc = (round(len(variable_range)/(points))*(kk))
 
         Initial_1 = variable_range[tmp_loc]
         Initial_1 = [val + ep for val in Initial_1]
@@ -76,7 +79,11 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
         z = [0] * (round((len(y_out1) / 2000)) + 1)
         n = 0
         for i in range(0, len(y_out1), 2000):
-            window = y_out[peaks_half[-2]+i+tmp_loc-5000:peaks_half[-1]+i+tmp_loc+5000]
+            if len(peaks_half2) > 0:
+                window = y_out[peaks_half[-3]+i+tmp_loc-5000:peaks_half[-2]+i+tmp_loc+5000]
+            else:
+                window = y_out[575000+i+tmp_loc-5000:600000+i+tmp_loc+5000]
+
             dists = [0] * len(window)
             for j in range(0, len(window)):
                 dif = np.asarray(window[j].tolist())-np.asarray(y_out1[i].tolist())
@@ -111,7 +118,7 @@ model.parameters['ERK'].value = 1
 model.parameters['FAK'].value = 1
 
 # Importing the parameters:
-new_param = pd.read_csv('parameters.csv')
+new_param = pd.read_csv('parameters_cycdi.csv')
 
 for key in new_param.keys():
     try:
@@ -159,8 +166,8 @@ mean_IMT = [num[1] for num in results]
 df = pd.DataFrame(z_list)
 mean_df = pd.DataFrame(mean_IMT)
 
-feather.write_feather(df, 'lyaps_erl.fea')
-feather.write_feather(mean_df, 'mIMT_erl.fea')
+feather.write_feather(df, 'lyaps_erl_cycdi_0_75.fea')
+feather.write_feather(mean_df, 'mIMT_erl_cycdi_0_75.fea')
 
 
 
