@@ -296,7 +296,7 @@ Rule('CycD_degradation', CycD(b=None) >> None, kd_CycD)
 
 Parameter('V_Di', 0.6)
 Parameter('K_Di', 0.2)
-Expression('kd_CycD_i', s * (V_Di * (1 / (K_Di * omega + obsCycDi))))
+Expression('kd_CycD_i', s * (V_Di * (1 / (K_Di * omega + obsCycD))))
 Rule('CycD_inhibition', CycD(b=None) + CycDi() >> CycDi(), kd_CycD_i)
 
 # ############
@@ -393,7 +393,7 @@ Rule('CycE_inactivation_CycA', CycA(b=None) + CycE(b=None) >> CycA(b=None), kina
 
 Parameter('V_Ei', 0.6)
 Parameter('K_Ei', 0.2)
-Expression('kd_CycE_i', s * (V_Ei * (1 / (K_Ei * omega + obsCycEi))))
+Expression('kd_CycE_i', s * (V_Ei * (1 / (K_Ei * omega + obsCycE))))
 Rule('CycE_inhibition', CycE(b=None) + CycEi() >> CycEi(), kd_CycE_i)
 
 # ############
@@ -413,7 +413,7 @@ Rule('CycA_inactivation_Cdc20', CycA(b=None) + Cdc20() >> Cdc20(), kinact_CycA_C
 
 Parameter('V_Ai', 0.6)
 Parameter('K_Ai', 0.2)
-Expression('kd_CycA_i', s * (V_Ai * (1 / (K_Ai * omega + obsCycAi))))
+Expression('kd_CycA_i', s * (V_Ai * (1 / (K_Ai * omega + obsCycA))))
 Rule('CycA_inhibition', CycA(b=None) + CycAi() >> CycAi(), kd_CycA_i)
 
 # ############
@@ -441,7 +441,7 @@ Rule('CycB_inactivation_Cdc20', CycB(b=None) + Cdc20() >> Cdc20(), kinact_CycB_C
 
 Parameter('V_Bi', 0.6)
 Parameter('K_Bi', 0.2)
-Expression('kd_CycB_i', s * (V_Bi * (1 / (K_Bi * omega + obsCycBi))))
+Expression('kd_CycB_i', s * (V_Bi * (1 / (K_Bi * omega + obsCycB))))
 Rule('CycB_inhibition', CycB(b=None) + CycBi() >> CycBi(), kd_CycB_i)
 
 # ############

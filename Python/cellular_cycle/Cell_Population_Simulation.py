@@ -35,7 +35,7 @@ from call_cell_events import call_events
 
 #######################################################################
 
-def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr = [0.26, 0.18], return_plot=False, seed=None):
+def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr = [0.26, 0.18], return_plot=False, bypass=False, seed=None):
     """
     init: number of initial cells
     run_time: time of the experiment
@@ -47,7 +47,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
     """
     print(condition)
 
-    initial_concentrations = pd.read_csv(os.getcwd() + '/../model_data/initial_concentrations.csv')
+    initial_concentrations = pd.read_csv(os.getcwd() + '/model_data/initial_concentrations.csv')
     for key in initial_concentrations.keys():
         try:
             model.parameters[key].value = initial_concentrations[key][0] / model.parameters['omega'].value
@@ -69,10 +69,12 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
         model.parameters[signal_tmp].value = ECM_conditions[(ECM_conditions["condition"] == condition_untreated) & (ECM_conditions["species"] == signal_tmp)]["value"]
 
     variable_range, check, tmp_score = Check_Model_Consistency(model, thr = thr, return_plot = return_plot)
-    if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.2: #the model doesn't oscillate or the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
-        print("check didn't pass");
-        print("The model doesn't oscillate or the model allows too high concentrations")
-        return (False, 0,0,0)
+
+    if not bypass:
+        if check==False or np.any(np.array([variable_range[key] for key in variable_range.keys()])<0) or tmp_score>0.2: #the model doesn't oscillate or the model allows negativ concentrations (possible for the apoptosis module) or tmpscore>0.1
+            print("check didn't pass");
+            print("The model doesn't oscillate or the model allows too high concentrations")
+            return (False, 0,0,0)
 
     #Set death module
     death_mod={'obsBAX': 186 ,'obsBAXmBCL2': 13, 'obsBH3': 0, 'obsBH3BCL2': 7, 'obsBAXm': 0, 'obsBCL2': 149}
@@ -491,7 +493,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
         plot_digraph_population_history(population_df)
         g = plot_event_population_history(population_df, run_time, condition)
         # save g in pdf with savefig
-        g.savefig("/Users/jeremie/Downloads/" + condition.replace(" ", "_") + '_population_events.pdf')
+        # g.savefig("/Users/jeremie/Downloads/" + condition.replace(" ", "_") + '_population_events.pdf')
 
 
 

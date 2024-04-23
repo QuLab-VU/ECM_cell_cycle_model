@@ -91,40 +91,61 @@ def smooth(y, box_pts):
     return y_smooth
 
 
-def fit_EMGMM(dat, init, bounds, centers, cond, ax=None, loc=4):
+def calc_doub(filename, t):
+    tmp = np.loadtxt(filename, delimiter=',')
+    
+    new_r = []
+    for num in t:
+        vals = tmp[tmp[:,0]<=num]
+        new_r.append([num, vals[-1,1]])
+    
+    doubs = []
+    for num in t:
+        doub = math.log(new_r[num][1]/new_r[0][1])/math.log(2)
+        doubs.append([num, doub])
+        
+    return doubs
+
+
+def fit_EMGMM(dat, init, bounds1, bounds2, centers, cond=None, ax=None, loc=4):
     """
     dat:
     """
-    G1_times = dat[(dat['Stiffness']==cond['stiff']) & (dat['Drug']==cond['drug'])]['G1_t']
-    G1_times = G1_times[~np.isnan(G1_times)]
-    data = G1_times[~np.isnan(G1_times)]
+    if cond is None:
+        data = np.array(dat)
+        G1_times = data[~np.isnan(data)]
+        data = data[~np.isnan(data)]
+    else:
+        G1_times = dat[(dat['Stiffness']==cond['stiff']) & (dat['Drug']==cond['drug'])]['G1_t']
+        G1_times = G1_times[~np.isnan(G1_times)]
+        data = G1_times[~np.isnan(G1_times)]
 
     h, edges =np.histogram(data, bins=range(0,101), density=True)
     tmp = smooth(h,7)
     out = ax.stairs(h, edges, fill=True, color="tab:red", alpha=0.2)
     params = exponnorm.fit(data)
-    LL = exponnorm.logpdf(G1_times,*params).sum()
+    LL = exponnorm.logpdf(data,*params).sum()
     AIC = calculate_aic(LL, 3)
-    AICc = calc_aicc(AIC, 3, len(G1_times))
+    AICc = calc_aicc(AIC, 3, len(data))
 
-    popt, pcov = opt.curve_fit(emg_fit_func_2, centers, tmp, p0=init, bounds=bounds, maxfev=50000)
+    popt, pcov = opt.curve_fit(emg_fit_func_2, centers, tmp, p0=init, bounds=bounds1, maxfev=50000)
 
     tmp = [math.log(x) for x in popt]
-    bounds = ((-5, 0),
-                 (0, 80),
-                 (0.5, 3),
-                 (-5, 0),
-                 (0, 80),
-                 (3, 4),
-                 (-10, -0.00000001))
+    # bounds = ((-5, 0),
+    #              (0, 80),
+    #              (0.5, 3),
+    #              (-5, 0),
+    #              (0, 80),
+    #              (3, 4),
+    #              (-10, -0.00000001))
 
-    results = opt.minimize(crit, tmp, G1_times, method = 'Nelder-Mead', bounds=bounds, options={'maxiter':10000})
+    results = opt.minimize(crit, tmp, data, method = 'Nelder-Mead', bounds=bounds2, options={'maxiter':10000})
 
 
-    LL2 = logl_emg2v2(results.x, G1_times)
+    LL2 = logl_emg2v2(results.x, data)
     negLL2 = -LL2
     AIC2 = calculate_aic(LL2, 7)
-    AICc2 = calc_aicc(AIC2, 7, len(G1_times))
+    AICc2 = calc_aicc(AIC2, 7, len(data))
 
     AICs = [AICc, AICc2]
     AICp = calc_aicp(AICs)
@@ -141,12 +162,12 @@ def fit_EMGMM(dat, init, bounds, centers, cond, ax=None, loc=4):
     ax.plot(x,y1, color='black', linestyle='dashed')
     ax.plot(x,y2, color='black', linestyle='dashed')
     ax.plot(x,y3, color='gray')
-    h, edges =np.histogram(G1_times, bins=range(0,101), density=True)
+    h, edges =np.histogram(data, bins=range(0,101), density=True)
     ax.stairs(h, edges, fill=True, color="tab:red", alpha=0.2)
 
-    LL2 = logl_emg2v2(results.x, G1_times)
+    LL2 = logl_emg2v2(results.x, data)
     AIC2 = calculate_aic(LL2, 7)
-    AICc2 = calc_aicc(AIC2, 7, len(G1_times))
+    AICc2 = calc_aicc(AIC2, 7, len(data))
 
     AICs = [AICc, AICc2]
     AICp = calc_aicp(AICs)
@@ -167,4 +188,87 @@ def fit_EMGMM(dat, init, bounds, centers, cond, ax=None, loc=4):
     out = pd.Series(data={'LL':LL, 'AIC':AIC, 'AICc':AICc, 'params':params,
                          'LL2':LL2, 'AIC2':AIC2, 'AICc2':AICc2, 'params2':results.x, 'AICp':AICp_r})
 
+    return(out)
+
+def fit_simEMGMM(G1_times, initial, centers, ax=None, loc=4, crit=crit):
+
+#     G1_times = dat[(dat['Stiffness']==cond['stiff']) & (dat['Drug']==cond['drug'])]['G1_t']
+#     G1_times = G1_times[~np.isnan(G1_times)]
+    
+#     G1_times = G1_times[~np.isnan(G1_times)]
+    data = np.array(G1_times)
+    data = data[~np.isnan(data)]
+    
+    init = [0.05975, 1.95, 10.2, 0.073, 8.17, 28.12, 0.602]
+    bounds = ((0.001, 0.01, 0.01, 0.01, 0.01, 5, 0.01),
+              (10, 10, 20, 10, 10, 100, 1))
+
+    h, edges =np.histogram(data, bins=range(0,101), density=True)
+    tmp = smooth(h,7)
+    out = ax.stairs(h, edges, fill=True, color="tab:red", alpha=0.2)
+    params = exponnorm.fit(data)
+    LL = exponnorm.logpdf(data,*params).sum()
+    AIC = calculate_aic(LL, 3)
+    AICc = calc_aicc(AIC, 3, len(data))
+
+    popt, pcov = opt.curve_fit(emg_fit_func_2, centers, tmp, p0=init, bounds=bounds, maxfev=50000)
+    
+    tmp = [math.log(x) for x in popt]
+    bounds = ((-5, 0),
+                 (0, 1),
+                 (0.5, 3),
+                 (-5, 0),
+                 (0, 1),
+                 (3, 4),
+                 (-5, -0.00001))
+
+    results = opt.minimize(crit, tmp, data, method = 'Nelder-Mead', bounds=bounds, options={'maxiter':10000})
+    
+    
+    LL2 = logl_emg2v2(results.x, data)
+    negLL2 = -LL2
+    AIC2 = calculate_aic(LL2, 7)
+    AICc2 = calc_aicc(AIC2, 7, len(data))
+
+    AICs = [AICc, AICc2]
+    AICp = calc_aicp(AICs)
+    AICp_r = [round_sig(AICp[0], 3), round_sig(AICp[1], 3)]
+    
+
+    x = np.arange(0,100,0.1)
+    y = emg_fit_func_2(x,*np.exp(results.x))       
+    
+    y1 = emg_fit_func(x, np.exp(results.x[0]), np.exp(results.x[1]), np.exp(results.x[2]))*np.exp(results.x[6])
+    y2 = emg_fit_func(x, np.exp(results.x[3]), np.exp(results.x[4]), np.exp(results.x[5]))*(1-np.exp(results.x[6]))
+    y3 = exponnorm.pdf(x, *params)
+    ax.plot(x,y, color='black')
+    ax.plot(x,y1, color='black', linestyle='dashed')
+    ax.plot(x,y2, color='black', linestyle='dashed')
+    ax.plot(x,y3, color='gray')
+    h, edges =np.histogram(data, bins=range(0,101), density=True)
+    ax.stairs(h, edges, fill=True, color="tab:red", alpha=0.2)
+
+    LL2 = logl_emg2v2(results.x, G1_times)
+    AIC2 = calculate_aic(LL2, 7)
+    AICc2 = calc_aicc(AIC2, 7, len(G1_times))
+    
+    AICs = [AICc, AICc2]
+    AICp = calc_aicp(AICs)
+    AICp_r = [round_sig(AICp[0], 3), round_sig(AICp[1], 3)]
+    
+    # rc('text', usetex=True) #  # must have LaTeX installed
+    # ax.text(loc, 0.11, r'$\underline{AICp}$', fontsize=12)
+    
+    # # if no LaTeX, use:
+    rc('text', usetex=False) #  # must have LaTeX installed
+    ax.text(loc, 0.11, r'${AICp}$', fontsize=12)
+    ax.text(loc, 0.11, '_____', fontsize=12)
+    
+    rc('text', usetex=False)
+    ax.text(loc, 0.097, f'EMG: {AICp_r[0]}', fontsize=12, color='gray')
+    ax.text(loc, 0.087, f'EMG2: {AICp_r[1]}', fontsize=12)
+
+    out = pd.Series(data={'LL':LL, 'AIC':AIC, 'AICc':AICc, 'params':params,
+                         'LL2':LL2, 'AIC2':AIC2, 'AICc2':AICc2, 'params2':results.x, 'AICp':AICp_r})
+          
     return(out)

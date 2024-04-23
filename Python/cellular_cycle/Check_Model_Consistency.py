@@ -156,7 +156,7 @@ def Check_Model_Consistency(model, cycling_species = ['obsCdc20', 'obsCycE', 'ob
     
     tmp_score=1 #score on how good they alternate, it may not be exactly one because of the stochasticity of the network, and peakfinder mught miss one peak
     variable_range={}
-    if len(max_tmp_cdc)>2 and len(max_tmp_cyce)>2 :
+    if len(max_tmp_cdc)>=3 and len(max_tmp_cyce)>=3 :
         ranks = ss.rankdata(np.concatenate([max_tmp_cdc, max_tmp_cyce]))
         max_tmp = np.concatenate([['obsCdc20' for i in range(len(max_tmp_cdc))],['obsCycE' for i in range(len(max_tmp_cyce))]])
         Z = [x for _,x in sorted(zip(ranks,max_tmp))]
@@ -167,16 +167,25 @@ def Check_Model_Consistency(model, cycling_species = ['obsCdc20', 'obsCycE', 'ob
                 tmp_score+=1
         tmp_score = tmp_score/len(Z)
         
-        if len(a)>=2 and len(b)>=2:
+        if len(a)>=3 and len(b)>=3:
             #simres = ScipyOdeSimulator(model, t_ode, verbose=False).run()
             (a_ode,max_tmp_cdc_ode) = peakfinder(yout[model.observables['obsCdc20'].name], thr[0]*sys_size, thr[0]*sys_size, 1, includeEndpoints=1);
             (b_ode,max_tmp_cyce_ode) = peakfinder(yout[model.observables['obsCycE'].name], thr[1]*sys_size, thr[1]*sys_size, 1, includeEndpoints=1);
             
-            
-            for k in range(len(model.observables)) :
-                variable_range[model.observables[k].name]=[yout[model.observables[k].name][i] for i in range(max_tmp_cdc_ode[-3], max_tmp_cdc_ode[-2])]
+            if len(max_tmp_cdc_ode) >= 3:
+                for k in range(len(model.observables)) :
+                    variable_range[model.observables[k].name]=[yout[model.observables[k].name][i] for i in range(max_tmp_cdc_ode[-3], max_tmp_cdc_ode[-2])]
+            else:
+                for k in range(len(model.observables)) :
+                    variable_range[model.observables[k].name]=[yout[model.observables[k].name][i] for i in range(900, 999)]
 
+        else:
+            for k in range(len(model.observables)) :
+                variable_range[model.observables[k].name]=[yout[model.observables[k].name][i] for i in range(900, 999)]
     # Plot on a first plot the trajectory of Cdc20 and CycE, with scatter plots on peaks of each with different colors. On a lower plots the scatter aligned on a line showing alternance between Cdc20 and CycE, and show the score
+    else:
+        for k in range(len(model.observables)) :
+            variable_range[model.observables[k].name]=[yout[model.observables[k].name][i] for i in range(900, 999)]
     if return_plot:
         # Top plot
         plt.figure()
