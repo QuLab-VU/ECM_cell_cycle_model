@@ -1,0 +1,2 @@
+# Lyapunov analysis run in multiprocessing mode
+# calculate Lyapunov exponent values
