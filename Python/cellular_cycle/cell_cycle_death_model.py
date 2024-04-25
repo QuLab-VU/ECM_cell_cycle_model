@@ -29,6 +29,12 @@ Monomer('BAX', ['b', 'm'], {'m': ['yes', 'no']})
 Monomer('BCL2', ['b'])
 Monomer('BH3', ['b'])
 
+Monomer('CycDi')
+Monomer('CycEi')
+Monomer('CycAi')
+Monomer('CycBi')
+Monomer('E2Fi')
+Monomer('Cdc20i')
 # PARAMETERS
 # Stiffness, Drug: [AKT, ERK, FAK]
 # Stiff, DMSO: 1, 1 ,1
@@ -77,6 +83,12 @@ Parameter('BAX_0', 0.999000159839911)
 Parameter('BAXmBCL2_0', 0.000997752220497874)
 Parameter('BH3_0', 5.81398691338436e-05)
 Parameter('BH3BCL2_0', 0.0332751934642001)
+Parameter('CycDi_0', 0)
+Parameter('CycEi_0', 0)
+Parameter('CycAi_0', 0)
+Parameter('CycBi_0', 0)
+Parameter('E2Fi_0', 0)
+Parameter('Cdc20i_0', 0)
 # TODO: What are BAX, BAXmBCL2, and BH3BCL2? Steady state values? What parameter values?
 Expression('BAXm_0_expr', (BAXt - 0.999000159839911 - 0.000997752220497874) * omega)  # BAXt - BAX - BAXmBCL2
 Expression('BCL2_0_expr', (BCL2t - 0.0332751934642001 - 0.000997752220497874) * omega)  # BCL2t - BH3BCL2 -BAXmBCL2
@@ -106,6 +118,12 @@ Initial(BH3(b=None), Expression('BH3_0_expr', BH3_0 * omega))
 Initial(BH3(b=1) % BCL2(b=1), Expression('BH3BCL2_0_expr', BH3BCL2_0 * omega))
 Initial(BAX(m='yes', b=None), BAXm_0_expr)
 Initial(BCL2(b=None), BCL2_0_expr)
+Initial(CycDi(), Expression('CycDi_0_expr', CycDi_0 * omega))
+Initial(CycEi(), Expression('CycEi_0_expr', CycEi_0 * omega))
+Initial(CycAi(), Expression('CycAi_0_expr', CycAi_0 * omega))
+Initial(CycBi(), Expression('CycBi_0_expr', CycBi_0 * omega))
+Initial(E2Fi(), Expression('E2Fi_0_expr', E2Fi_0 * omega))
+Initial(Cdc20i(), Expression('Cdc20i_0_expr', Cdc20i_0 * omega))
 
 # OBSERVABLES
 Observable('obsSkp2', Skp2())
@@ -133,6 +151,12 @@ Observable('obsBH3', BH3(b=None))
 Observable('obsBH3BCL2', BH3(b=1) % BCL2(b=1))
 Observable('obsBAXm', BAX(b=None, m='yes'))
 Observable('obsBCL2', BCL2(b=None))
+Observable('obsCycDi', CycDi())
+Observable('obsCycEi', CycEi())
+Observable('obsCycAi', CycAi())
+Observable('obsCycBi', CycBi())
+Observable('obsE2Fi', E2Fi())
+Observable('obsCdc20i', Cdc20i())
 
 # RULES
 
@@ -270,6 +294,11 @@ Parameter('d_CD', 1.5)  # 1.5 # /h
 Expression('kd_CycD', s * d_CD)
 Rule('CycD_degradation', CycD(b=None) >> None, kd_CycD)
 
+Parameter('V_Di', 0.6)
+Parameter('K_Di', 0.2)
+Expression('kd_CycD_i', s * (V_Di * (1 / (K_Di * omega + obsCycD))))
+Rule('CycD_inhibition', CycD(b=None) + CycDi() >> CycDi(), kd_CycD_i)
+
 # ############
 # pRb and pRbp
 # ############
@@ -338,6 +367,11 @@ Parameter('K_2E2F', 0.5)   # 0.5 # Michaelis constant for E2f inactivation by cy
 Expression('kd_E2F_CycA', s * (V_2E2F / ((K_2E2F * omega) + obsE2F)))
 Rule('E2F_degradation_CycA', E2F(b=None) + CycA(b=None) >> CycA(b=None), kd_E2F_CycA)
 
+Parameter('V_E2Fi', 0.6)
+Parameter('K_E2Fi', 0.2)
+Expression('kd_E2F_i', s * (V_E2Fi * (1 / (K_E2Fi * omega + obsE2Fi))))
+Rule('E2F_inhibition', E2F(b=None) + E2Fi() >> E2Fi(), kd_E2F_i)
+
 # ############
 #    CycE
 # ############
@@ -357,6 +391,11 @@ Parameter('K_2Me', 0.12)  # 0.1 # Michaelis constant for cyclinE/Cdk2 inactivati
 Expression('kinact_CycE_CycA', s * (V_2Me * (1 / (K_2Me * omega + obsCycE))))
 Rule('CycE_inactivation_CycA', CycA(b=None) + CycE(b=None) >> CycA(b=None), kinact_CycE_CycA)
 
+Parameter('V_Ei', 0.6)
+Parameter('K_Ei', 0.2)
+Expression('kd_CycE_i', s * (V_Ei * (1 / (K_Ei * omega + obsCycE))))
+Rule('CycE_inhibition', CycE(b=None) + CycEi() >> CycEi(), kd_CycE_i)
+
 # ############
 #    CycA
 # ############
@@ -371,6 +410,11 @@ Parameter('V_2Ma', 0.6)  # 0.6 # Rate constant for inactivation of cyclinA/Cdk2 
 Parameter('K_2Ma', 0.1)  # 0.1 # Michaelis constant for cyclinA/Cdk2 inactivation by Cdc20 (uM)
 Expression('kinact_CycA_Cdc20', s * (V_2Ma * (1 / (K_2Ma * omega + obsCycA))))
 Rule('CycA_inactivation_Cdc20', CycA(b=None) + Cdc20() >> Cdc20(), kinact_CycA_Cdc20)
+
+Parameter('V_Ai', 0.6)
+Parameter('K_Ai', 0.2)
+Expression('kd_CycA_i', s * (V_Ai * (1 / (K_Ai * omega + obsCycA))))
+Rule('CycA_inhibition', CycA(b=None) + CycAi() >> CycAi(), kd_CycA_i)
 
 # ############
 #    CycB
@@ -395,6 +439,11 @@ Expression('kinact_CycB_Cdc20', s * (V_2Mb * ((K_ib * omega) / ((K_ib * omega) +
                                      (1 / ((K_2Mb * omega) + obsCycB))))
 Rule('CycB_inactivation_Cdc20', CycB(b=None) + Cdc20() >> Cdc20(), kinact_CycB_Cdc20)  # 1/uM-h
 
+Parameter('V_Bi', 0.6)
+Parameter('K_Bi', 0.2)
+Expression('kd_CycB_i', s * (V_Bi * (1 / (K_Bi * omega + obsCycB))))
+Rule('CycB_inhibition', CycB(b=None) + CycBi() >> CycBi(), kd_CycB_i)
+
 # ############
 #    Cdc20
 # ############
@@ -409,6 +458,11 @@ Parameter('V_2cdc20', 0.6)  # 0.6  # Rate for inactivation of Cdc20 through deph
 Parameter('K_2cdc20', 0.1)  # 0.1 # Michaelis constant for Cdc20 inactivation through dephosphorylation (uM)
 Expression('kinact_Cdc20', s * ((V_2cdc20 * omega) * (1 / ((K_2cdc20 * omega) + obsCdc20))))
 Rule('Cdc20_inactivation', Cdc20() >> None, kinact_Cdc20)
+
+Parameter('V_cdc20i', 0.6)
+Parameter('K_cdc20i', 0.2)
+Expression('kd_Cdc20_i', s * (V_cdc20i * (1 / (K_cdc20i * omega + obsCdc20i))))
+Rule('Cdc20_inhibition', Cdc20() + Cdc20i() >> Cdc20i(), kd_Cdc20_i)
 
 # ################
 # Apoptotic switch
