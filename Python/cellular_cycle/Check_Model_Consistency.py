@@ -44,7 +44,7 @@ def Check_Model_Consistency(model, cycling_species = ['obsCdc20', 'obsCycE', 'ob
 
     # Run deterministic simulation with ScipyOdeSimulator
     t_ode = np.linspace(0, 1000, 1000)  # Time points for ODE simulation
-    simres = ScipyOdeSimulator(model, t_ode, verbose=False).run()
+    simres = ScipyOdeSimulator(model, t_ode, verbose=False, compiler='python').run()
     yout = simres.all  # get simulation results
 
     if return_plot:

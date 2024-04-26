@@ -125,7 +125,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                 Initial=[]
                 for j in cells['molecules'][ii] :
                     Initial=Initial+[cells['molecules'][ii][j][-1]]
-                simres = sim.run(initials=Initial, tspan = tmp_t); #seed removed
+                simres = sim.run(initials=Initial, tspan = tmp_t, compiler='python') #seed removed
 
                 tmp_t = simres.tout[0]
                 yout = simres.observables
@@ -286,7 +286,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
                 Initial=[]
                 for j in cells['molecules'][ii] :
                     Initial=Initial+[cells['molecules'][ii][j][-1]]
-                simres = sim.run(initials=Initial, tspan=tmp_t); # stop_if = 'obsBH3>200'
+                simres = sim.run(initials=Initial, tspan=tmp_t, compiler='python') # stop_if = 'obsBH3>200'
 
                 tmp_t = simres.tout[0]
                 yout = simres.observables
