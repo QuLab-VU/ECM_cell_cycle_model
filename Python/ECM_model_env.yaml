@@ -11,12 +11,14 @@ dependencies:
   - pandas
   - joblib
   - numpy
-  - bokeh
   - jupyterlab
   - ipywidgets
   - cython
   - pip
   - pysb
+  - toyplot
+  - toytree
+  - multiprocess
   - pip:
     - sobol-seq
 

@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import pandas as pd
 import numpy as np
+from Cell_Population_Simulation import Cell_Population_Simulation
+from call_cell_events import call_events
+from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
 
 def plotObs(model, obs, times, tpos, title=None, ax=None, legend=True, **kwargs):
     """Plot an observable of a model"""
