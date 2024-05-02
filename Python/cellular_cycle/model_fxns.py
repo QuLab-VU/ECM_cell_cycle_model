@@ -5,7 +5,9 @@ import pandas as pd
 import numpy as np
 from Cell_Population_Simulation import Cell_Population_Simulation
 from call_cell_events import call_events
+from retrieve_cellState_dw_2 import retrieve_cellState
 from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
+from pathlib import Path
 
 def plotObs(model, obs, times, tpos, title=None, ax=None, legend=True, **kwargs):
     """Plot an observable of a model"""
@@ -368,6 +370,7 @@ def runIMTs(init, run_time, observed_cells_time, model, ECM_conditions, conditio
                                                                              ECM_conditions, condition,
                                                                              sampled_parameter_names, thr=[0.26, 0.14],
                                                                              return_plot=False, bypass=True)
+        IMT_eoe_counts, all_prot = retrieve_cellState(run_time, cells, return_all_prot=True)
         all_events_simulated = call_events(run_time, IMT_eoe_counts)
 
         mits = all_events_simulated.loc[all_events_simulated['event'] == 'mitosis'].reset_index()
