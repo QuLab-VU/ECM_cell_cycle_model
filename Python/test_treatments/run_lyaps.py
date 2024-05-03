@@ -2,9 +2,6 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import random
 from pathlib import Path
 from numpy.linalg import norm
 import datetime
@@ -15,17 +12,26 @@ from pysb.simulator import BngSimulator
 from pysb.simulator import ScipyOdeSimulator
 from scipy.signal import find_peaks
 import pyarrow.feather as feather
+sys.path.insert(0, "./cellular_cycle")
+from cell_cycle_death_model import model
 
+PARAM = pd.read_csv(os.getcwd() + '/model_data/parameters.csv')  # parameter file to use
+INIT_CONCS = pd.read_csv(os.getcwd() + '/model_data/initial_concentrations.csv')  # initial concentrations for simulations
 TREATMENT = 'ERL'  # set AKT, ERK, and FAK by setting 'ERL' or 'DMSO'
+CYCDI_CONC = 0
 POINTS = 10  # number to divide each condition into, sets the number of points to divide cell cycle
 PROCESSES = 100  # number of pool processes to run at once
+OVERWRITE = False  # Overwrite existing simulation files
 integrator_options = {
     "rtol": 1e-12,
     "atol": 1e-12
 }
 
-#sys.path.insert(0, "../../Python/cellular_cycle")
-from cell_cycle_death_model import model
+# Where to save large simulation output files
+SAVE_DIR = Path(Path.home(), 'ECM_mod_output')
+if not SAVE_DIR.exists():
+    SAVE_DIR.mkdir()
+
 
 def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulator=ScipyOdeSimulator,
               find_peaks=find_peaks,
@@ -98,15 +104,6 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
     return all_logz, meanIMT
 
 
-
-
-# Where to save large simulation output files
-# SAVE_DIR = Path(Path.home(),'ECM_mod_output')
-# if not SAVE_DIR.exists():
-#     SAVE_DIR.mkdir()
-
-OVERWRITE = False # Overwrite existing simulation files
-
 CURDATE = datetime.datetime.now().strftime('%Y%m%d')
 
 t = np.linspace(0, 1000, 1000001)
@@ -118,22 +115,22 @@ model.parameters['ERK'].value = 1
 model.parameters['FAK'].value = 1
 
 # Importing the parameters:
-new_param = pd.read_csv('parameters_cycdi.csv')
 
-for key in new_param.keys():
+for key in PARAM.keys():
     try:
-        if model.parameters[key].value != new_param[key][0]:
-            model.parameters[key].value = new_param[key]
+        if model.parameters[key].value != PARAM[key][0]:
+            model.parameters[key].value = PARAM[key]
     except:
         print(key)
 model.parameters['omega'].value = 200
 
-initial_concentrations = pd.read_csv(os.getcwd() + '/../../Python/model_data/initial_concentrations.csv')
-for key in initial_concentrations.keys():
+for key in INIT_CONCS.keys():
     try:
-        model.parameters[key].value = initial_concentrations[key][0] / model.parameters['omega'].value
+        model.parameters[key].value = INIT_CONCS[key][0] / model.parameters['omega'].value
     except:
         print(key)
+
+model.parameters['CycDi_0'].value = CYCDI_CONC
 
 if TREATMENT == 'ERL':
     FAKs = list(np.linspace(0.4,0.6,50))
@@ -166,8 +163,12 @@ mean_IMT = [num[1] for num in results]
 df = pd.DataFrame(z_list)
 mean_df = pd.DataFrame(mean_IMT)
 
-feather.write_feather(df, 'lyaps_erl_cycdi_0_75.fea')
-feather.write_feather(mean_df, 'mIMT_erl_cycdi_0_75.fea')
+cycdi = str(round(model.parameters['CycDi_0'].value % 1,2)).split('.')[1]
+filename = str(Path(SAVE_DIR, f'lyaps_{TREATMENT}_cycdi_0_{cycdi}.fea'))  # feather might have an issue with Path object
+feather.write_feather(df, filename)
+
+filename = str(Path(SAVE_DIR, f'mINT_{TREATMENT}_cycdi_0_{cycdi}.fea'))
+feather.write_feather(mean_df, filename)
 
 
 
