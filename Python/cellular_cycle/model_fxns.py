@@ -361,8 +361,8 @@ def plot_death_avgdiv(concs, population_dfs, title="Unknown Condition"):
     return fig, ax
 
 
-def runIMTs(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, IMTs_count,
-            inhib):
+def runIMTs(init, run_time, observed_cells_time, model, ECM_conditions, condition, 
+            sampled_parameter_names, IMTs_count, inhib, SAVE_DIR):
     all_IMTs = []
     n = 0
     while len(all_IMTs) < IMTs_count:
@@ -393,6 +393,7 @@ def runIMTs(init, run_time, observed_cells_time, model, ECM_conditions, conditio
 
     filename_IMT = Path(SAVE_DIR, f'IMTs_{condition}_{inhib}.csv')
     filename_g1 = Path(SAVE_DIR, f'G1s_{condition}_{inhib}.csv')
+    print(f'Saving {filename_IMT} and {filename_g1}...')
     np.savetxt(filename_IMT, all_IMTs, delimiter=',')
     np.savetxt(filename_g1, all_g1s, delimiter=',')
 
