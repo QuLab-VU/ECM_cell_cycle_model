@@ -17,11 +17,12 @@ from cell_cycle_death_model import model
 
 PARAM = pd.read_csv(os.getcwd() + '/model_data/parameters.csv')  # parameter file to use
 INIT_CONCS = pd.read_csv(os.getcwd() + '/model_data/initial_concentrations.csv')  # initial concentrations for simulations
-TREATMENT = 'ERL'  # set AKT, ERK, and FAK by setting 'ERL' or 'DMSO'
+TREATMENT = 'DMSO'  # set AKT, ERK, and FAK by setting 'ERL' or 'DMSO'
 CYCDI_CONC = 0
 POINTS = 10  # number to divide each condition into, sets the number of points to divide cell cycle
 PROCESSES = 100  # number of pool processes to run at once
 OVERWRITE = False  # Overwrite existing simulation files
+VERBOSE = True
 integrator_options = {
     "rtol": 1e-12,
     "atol": 1e-12
@@ -34,8 +35,8 @@ if not SAVE_DIR.exists():
 
 
 def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulator=ScipyOdeSimulator,
-              find_peaks=find_peaks,
-              integrator_options=integrator_options, norm=norm, math=math):
+              find_peaks=find_peaks, integrator_options=integrator_options, norm=norm, math=math,
+              verbose=VERBOSE):
     model.parameters['AKT'].value = AKT
     model.parameters['ERK'].value = ERK
     model.parameters['FAK'].value = FAK
@@ -63,8 +64,8 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
             meanIMT = 0
             variable_range = y_out[575000:600000]
             tmp_loc = (round(len(variable_range) / (points)) * (kk))
-
-        print(meanIMT)
+        if verbose:
+            print(meanIMT)
 
 
         Initial_1 = variable_range[tmp_loc]
@@ -100,6 +101,8 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
 
         logz = [math.log(num) for num in z]
         all_logz[kk + 1] = logz
+        if verbose:
+            print([AKT, ERK, FAK, kk])
 
     return all_logz, meanIMT
 
