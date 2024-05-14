@@ -8,6 +8,7 @@ import datetime
 import math
 import multiprocess as mp
 import time
+import pickle
 from pysb.simulator import BngSimulator
 from pysb.simulator import ScipyOdeSimulator
 from scipy.signal import find_peaks
@@ -20,9 +21,11 @@ INIT_CONCS = pd.read_csv(os.getcwd() + '/model_data/initial_concentrations.csv')
 TREATMENT = 'DMSO'  # set AKT, ERK, and FAK by setting 'ERL' or 'DMSO'
 CYCDI_CONC = 0
 POINTS = 10  # number to divide each condition into, sets the number of points to divide cell cycle
-PROCESSES = 100  # number of pool processes to run at once
+PROCESSES = 75  # number of pool processes to run at once
 OVERWRITE = False  # Overwrite existing simulation files
 VERBOSE = True
+SET_JPARAM = True
+PARAM_NUM = 0
 integrator_options = {
     "rtol": 1e-12,
     "atol": 1e-12
@@ -127,6 +130,20 @@ for key in PARAM.keys():
         print(key)
 model.parameters['omega'].value = 200
 
+if SET_JPARAM:
+    with open('fit_data/pso/frac_prolif_parameters_pso.pkl', 'rb') as f:
+        frac_prolif_parameters_pso = pickle.load(f)
+    new_param_pso_sort = frac_prolif_parameters_pso.sort_values([('cost', 'total cost likelihood')])
+    new_params = new_param_pso_sort['model parameters']
+    # Importing the parameters:
+    for key in new_params.keys():
+        try:
+            if model.parameters[key].value != new_params[key].iloc[PARAM_NUM]:
+                model.parameters[key].value = new_params[key].iloc[PARAM_NUM]
+        except:
+            print(key)
+    model.parameters['omega'].value = 200
+
 for key in INIT_CONCS.keys():
     try:
         model.parameters[key].value = INIT_CONCS[key][0] / model.parameters['omega'].value
@@ -167,10 +184,17 @@ df = pd.DataFrame(z_list)
 mean_df = pd.DataFrame(mean_IMT)
 
 cycdi = str(round(model.parameters['CycDi_0'].value % 1,2)).split('.')[1]
-filename = str(Path(SAVE_DIR, f'lyaps_{TREATMENT}_cycdi_0_{cycdi}.fea'))  # feather might have an issue with Path object
+if SET_JPARAM:
+    filename = str(Path(SAVE_DIR, f'lyaps_{TREATMENT}_pso_{PARAM_NUM}_cycdi_0_{cycdi}.fea')) # feather might have an issue with Path object
+else:
+    filename = str(Path(SAVE_DIR, f'lyaps_{TREATMENT}_cycdi_0_{cycdi}.fea'))
 feather.write_feather(df, filename)
 
-filename = str(Path(SAVE_DIR, f'mINT_{TREATMENT}_cycdi_0_{cycdi}.fea'))
+if SET_JPARAM:
+    filename = str(Path(SAVE_DIR, f'mINT_{TREATMENT}_pso_{PARAM_NUM}_cycdi_0_{cycdi}.fea'))
+else:
+    filename = str(Path(SAVE_DIR, f'mINT_{TREATMENT}_cycdi_0_{cycdi}.fea'))
+
 feather.write_feather(mean_df, filename)
 
 
