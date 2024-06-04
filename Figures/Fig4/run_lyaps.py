@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 import os
 import sys
 import numpy as np
@@ -13,19 +19,33 @@ from pysb.simulator import BngSimulator
 from pysb.simulator import ScipyOdeSimulator
 from scipy.signal import find_peaks
 import pyarrow.feather as feather
-sys.path.insert(0, "./cellular_cycle")
+sys.path.insert(0, "../../Python/cellular_cycle")
 from cell_cycle_death_model import model
 
-PARAM = pd.read_csv(os.getcwd() + '/model_data/parameters.csv')  # parameter file to use
-INIT_CONCS = pd.read_csv(os.getcwd() + '/model_data/initial_concentrations.csv')  # initial concentrations for simulations
+
+# In[2]:
+
+
+PARAM = pd.read_csv(Path('../../Python/model_data/parameters.csv'))  # parameter file to use
+INIT_CONCS = pd.read_csv(Path('../../Python/model_data/initial_concentrations.csv'))  # initial concentrations for simulations
+
 TREATMENT = 'DMSO'  # set AKT, ERK, and FAK by setting 'ERL' or 'DMSO'
+
 CYCDI_CONC = 0
 POINTS = 10  # number to divide each condition into, sets the number of points to divide cell cycle
-PROCESSES = 75  # number of pool processes to run at once
-OVERWRITE = False  # Overwrite existing simulation files
-VERBOSE = True
+
+# number of processes to reserve; set to either 10% or 1, whichever is greater
+if round(mp.cpu_count()*0.1,0) < 1:
+    RES_PROC = 1
+else:
+    RES_PROC = round(mp.cpu_count()*0.1,0)
+
+PROCESSES = int(mp.cpu_count() - RES_PROC)  # number of pool processes to run at once
+OVERWRITE = True  # Overwrite existing simulation files
+VERBOSE = False
 SET_JPARAM = False
 PARAM_NUM = 0
+
 integrator_options = {
     "rtol": 1e-12,
     "atol": 1e-12
@@ -35,6 +55,23 @@ integrator_options = {
 SAVE_DIR = Path(Path.home(), 'ECM_mod_output')
 if not SAVE_DIR.exists():
     SAVE_DIR.mkdir()
+
+CURDATE = datetime.datetime.now().strftime('%Y%m%d')
+
+
+# In[3]:
+
+
+print(f'{PROCESSES} will be used in multiprocessing')
+
+
+# In[4]:
+
+
+print(f'Files to be saved in: {SAVE_DIR}')
+
+
+# In[5]:
 
 
 def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulator=ScipyOdeSimulator,
@@ -110,11 +147,14 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
     return all_logz, meanIMT
 
 
-CURDATE = datetime.datetime.now().strftime('%Y%m%d')
+# In[6]:
+
 
 t = np.linspace(0, 1000, 1000001)
-# t = np.linspace(0, 20000, 200001)
-# t = np.linspace(0, 50000, 500001)
+
+
+# In[7]:
+
 
 model.parameters['AKT'].value = 1
 model.parameters['ERK'].value = 1
@@ -129,6 +169,7 @@ for key in PARAM.keys():
     except:
         print(key)
 model.parameters['omega'].value = 200
+
 
 if SET_JPARAM:
     with open('fit_data/pso/frac_prolif_parameters_pso.pkl', 'rb') as f:
@@ -171,11 +212,29 @@ else:
 
 conds = [(AKT, ERK, FAK) for AKT, ERK, FAK, in zip(AKTs, ERKs, FAKs)]
 
+
+# In[ ]:
+
+
 start = time.time()
+print(f'Start time is {time.strftime("%Y-%m-%d %H:%M:%S",time.gmtime(start))}')
 with mp.Pool(processes = PROCESSES) as p:
     results = p.starmap(run_lyaps, conds)
 end = time.time()
-print(end - start)
+print(f'End time is {time.strftime("%Y-%m-%d %H:%M:%S",time.gmtime(end))}')
+print(f'Process took {np.round((end - start)/60, 2)} minutes')
+
+
+# In[ ]:
+
+
+z_list = [num[0] for num in results]
+mean_IMT = [num[1] for num in results]
+mean_IMT
+
+
+# In[ ]:
+
 
 z_list = [num[0] for num in results]
 mean_IMT = [num[1] for num in results]
@@ -184,6 +243,11 @@ df = pd.DataFrame(z_list)
 mean_df = pd.DataFrame(mean_IMT)
 
 cycdi = str(round(model.parameters['CycDi_0'].value % 1,2)).split('.')[1]
+
+
+# In[ ]:
+
+
 if SET_JPARAM:
     filename = str(Path(SAVE_DIR, f'lyaps_{TREATMENT}_pso_{PARAM_NUM}_cycdi_0_{cycdi}.fea')) # feather might have an issue with Path object
 else:
@@ -195,7 +259,16 @@ if SET_JPARAM:
 else:
     filename = str(Path(SAVE_DIR, f'mINT_{TREATMENT}_cycdi_0_{cycdi}.fea'))
 
+
+# In[ ]:
+
+
+print(f'Saving file to {filename}...')
 feather.write_feather(mean_df, filename)
+
+
+# In[ ]:
+
 
 
 
