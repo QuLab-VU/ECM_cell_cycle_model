@@ -133,8 +133,13 @@ model.parameters['omega'].value = 200
 if SET_JPARAM:
     with open('fit_data/pso/frac_prolif_parameters_pso.pkl', 'rb') as f:
         frac_prolif_parameters_pso = pickle.load(f)
-    new_param_pso_sort = frac_prolif_parameters_pso.sort_values([('cost', 'total cost likelihood')])
-    new_params = new_param_pso_sort['model parameters']
+
+    frac_prolif_parameters_pso[('cost', 'custom cost populations')] = frac_prolif_parameters_pso[(
+    'cost', 'cost population dynamics 0.6 kPa DMSO')] + frac_prolif_parameters_pso[(
+    'cost', 'cost population dynamics 4 kPa erlotinib')] + frac_prolif_parameters_pso[(
+    'cost', 'cost population dynamics 55 kPa erlotinib')]
+    pso_sort_pops = frac_prolif_parameters_pso.sort_values(by=[('cost', 'custom cost populations')])
+    new_params = pso_sort_pops['model parameters']
     # Importing the parameters:
     for key in new_params.keys():
         try:
@@ -143,6 +148,7 @@ if SET_JPARAM:
         except:
             print(key)
     model.parameters['omega'].value = 200
+
 
 for key in INIT_CONCS.keys():
     try:
