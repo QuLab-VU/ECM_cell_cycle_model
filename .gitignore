@@ -7,6 +7,9 @@
 extracted_files/
 temp.zip
 
+# rendered ipynb files
+run_lyaps.html
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
