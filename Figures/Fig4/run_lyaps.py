@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 
 import os
@@ -22,8 +22,10 @@ import pyarrow.feather as feather
 sys.path.insert(0, "../../Python/cellular_cycle")
 from cell_cycle_death_model import model
 
+import tqdm
 
-# In[2]:
+
+# In[ ]:
 
 
 PARAM = pd.read_csv(Path('../../Python/model_data/parameters.csv'))  # parameter file to use
@@ -42,7 +44,7 @@ else:
 
 PROCESSES = int(mp.cpu_count() - RES_PROC)  # number of pool processes to run at once
 OVERWRITE = True  # Overwrite existing simulation files
-VERBOSE = False
+VERBOSE = True
 SET_JPARAM = False
 PARAM_NUM = 0
 
@@ -59,19 +61,19 @@ if not SAVE_DIR.exists():
 CURDATE = datetime.datetime.now().strftime('%Y%m%d')
 
 
-# In[3]:
+# In[ ]:
 
 
 print(f'{PROCESSES} will be used in multiprocessing')
 
 
-# In[4]:
+# In[ ]:
 
 
 print(f'Files to be saved in: {SAVE_DIR}')
 
 
-# In[5]:
+# In[ ]:
 
 
 def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulator=ScipyOdeSimulator,
@@ -147,13 +149,13 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
     return all_logz, meanIMT
 
 
-# In[6]:
+# In[ ]:
 
 
 t = np.linspace(0, 1000, 1000001)
 
 
-# In[7]:
+# In[ ]:
 
 
 model.parameters['AKT'].value = 1
@@ -218,8 +220,11 @@ conds = [(AKT, ERK, FAK) for AKT, ERK, FAK, in zip(AKTs, ERKs, FAKs)]
 
 start = time.time()
 print(f'Start time is {time.strftime("%Y-%m-%d %H:%M:%S",time.gmtime(start))}')
+results = []
+
 with mp.Pool(processes = PROCESSES) as p:
-    results = p.starmap(run_lyaps, conds)
+    results = p.starmap(run_lyaps, tqdm.tqdm(conds, total=len(conds)))
+
 end = time.time()
 print(f'End time is {time.strftime("%Y-%m-%d %H:%M:%S",time.gmtime(end))}')
 print(f'Process took {np.round((end - start)/60, 2)} minutes')
