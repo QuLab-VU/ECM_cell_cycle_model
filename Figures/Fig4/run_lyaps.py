@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 import os
@@ -25,7 +25,7 @@ from cell_cycle_death_model import model
 import tqdm
 
 
-# In[ ]:
+# In[2]:
 
 
 PARAM = pd.read_csv(Path('../../Python/model_data/parameters.csv'))  # parameter file to use
@@ -61,24 +61,27 @@ if not SAVE_DIR.exists():
 CURDATE = datetime.datetime.now().strftime('%Y%m%d')
 
 
-# In[ ]:
+# In[3]:
 
 
 print(f'{PROCESSES} will be used in multiprocessing')
 
 
-# In[ ]:
+# In[4]:
 
 
 print(f'Files to be saved in: {SAVE_DIR}')
 
 
-# In[ ]:
+# In[5]:
 
 
 def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulator=ScipyOdeSimulator,
               find_peaks=find_peaks, integrator_options=integrator_options, norm=norm, math=math,
               verbose=VERBOSE):
+    if verbose:
+        print(f'AKT={AKT}, ERK={ERK}, FAK={FAK}, {time.strftime("%Y-%m-%d %H:%M:%S",time.time())}')
+
     model.parameters['AKT'].value = AKT
     model.parameters['ERK'].value = ERK
     model.parameters['FAK'].value = FAK
@@ -107,7 +110,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
             variable_range = y_out[575000:600000]
             tmp_loc = (round(len(variable_range) / (points)) * (kk))
         if verbose:
-            print(meanIMT)
+            print(f'AKT={AKT}, ERK={ERK}, FAK={FAK}, meanIMT={meanIMT}')
 
 
         Initial_1 = variable_range[tmp_loc]
@@ -144,18 +147,18 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
         logz = [math.log(num) for num in z]
         all_logz[kk + 1] = logz
         if verbose:
-            print([AKT, ERK, FAK, kk])
+            print(f'AKT={AKT}, ERK={ERK}, FAK={FAK}, kk={kk}')
 
     return all_logz, meanIMT
 
 
-# In[ ]:
+# In[6]:
 
 
 t = np.linspace(0, 1000, 1000001)
 
 
-# In[ ]:
+# In[7]:
 
 
 model.parameters['AKT'].value = 1
@@ -215,7 +218,7 @@ else:
 conds = [(AKT, ERK, FAK) for AKT, ERK, FAK, in zip(AKTs, ERKs, FAKs)]
 
 
-# In[ ]:
+# In[8]:
 
 
 start = time.time()
@@ -223,8 +226,9 @@ print(f'Start time is {time.strftime("%Y-%m-%d %H:%M:%S",time.gmtime(start))}')
 results = []
 
 with mp.Pool(processes = PROCESSES) as p:
-    results = p.starmap(run_lyaps, tqdm.tqdm(conds, total=len(conds)))
-
+    for result in p.starmap(run_lyaps, conds):
+        results.append(result)
+            
 end = time.time()
 print(f'End time is {time.strftime("%Y-%m-%d %H:%M:%S",time.gmtime(end))}')
 print(f'Process took {np.round((end - start)/60, 2)} minutes')
