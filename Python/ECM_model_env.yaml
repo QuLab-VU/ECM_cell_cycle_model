@@ -4,13 +4,13 @@ channels:
   - alubbock
 dependencies:
   - python=3.10
-  - umap-learn
-  - scikit-learn
+  - umap-learn=0.5.3
+  - scikit-learn=1.3.0
   - seaborn
   - matplotlib
   - pandas
-  - joblib
-  - numpy
+  - joblib=1.3.0
+  - numpy=1.24.4
   - jupyterlab
   - ipywidgets
   - cython
