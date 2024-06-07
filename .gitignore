@@ -9,6 +9,8 @@ temp.zip
 
 # rendered ipynb files
 run_lyaps.html
+**/0*.html
+**/0*.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
