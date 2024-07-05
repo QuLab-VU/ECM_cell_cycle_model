@@ -1,0 +1,33 @@
+---
+title: "IMT analysis"
+output: html_notebook
+author: Darren Tyson
+date: 2024-06-09
+---
+
+## Analysis of experimental IMT distributions
+
+
+```{r}
+if(!'devtools' %in% installed.packages()) install.packages('devtools')
+if(!require('diprate')) devtools::install_github("QuLab-VU/dipDRC", subdir="diprate", dependencies=TRUE)
+```
+
+### Load data
+```{r}
+f <- list.files('../../Data/exp_cell_counts_raw', full.names = TRUE)
+
+conds <- paste(sapply(strsplit(basename(f), "_"), "[[", 2), sapply(strsplit(basename(f), "_"), "[[", 3))
+conds <- gsub(".csv","",conds)
+conds
+```
+
+```{r}
+d <- lapply(f, function(x) read.csv(x, header = FALSE))
+
+```
+
+
+
+
+

@@ -2,7 +2,7 @@
 ### Summary of steps
 1) `Python/04_Stoch_sims_for_UMAP.ipynb`: Perform model simulations of each -/+ erlotinib condition for matrix stiffnesses ranging from 0-99  
 1) `Python/05_UMAP_of_stoch_sims.ipynb`: Generate UMAP embedded space from (normalized) simulated data (subsampled?) from all conditions  
-1) `Figures/Fig4/run_lyaps.py`: Calculate Lyapunov exponent for each condition  
+1) `Figures/Fig4/run_lyaps.ipynb`: Calculate Lyapunov exponent for each condition  
 1) `Figures/Fig4/calcLyapunov.ipynb`: Calculate Lyapunov exponent for each condition  
 1) `Figures/Fig4/Lyapunov_analysis.ipynb`: Produce plots for figure:  
     A) Plot of cell cycle trajectories of DMSO or erlotinib in UMAP embedded space colored by IMT  
