@@ -48,16 +48,16 @@ Parameter('ERK', 0.2)  # µM
 Parameter('FAK', 0.6)  # µM
 
 Parameter('omega', 200)  # 1/µM
-Parameter('BCL2t', 0.95)  # uM
-Parameter('BAXt', 1)  # uM
+Parameter('BCL2t', 0.95)  # µM
+Parameter('BAXt', 1)  # µM
 # TODO: Is the scaling parameter necessary?
 Parameter('s', 0.4)  # 0.4 # scaling parameter
 # TODO: Is the 'm' parameter necessary? Are 's' and 'm' related to cytosolic and mitochondrial volumes?
 Parameter('m', 3)  # 3 # unitless
-Parameter('Cdc20_tot', 1)  # total concentration of cdc20 (uM)
-Parameter('CycE_tot', 1)  # total concentration of cyclinE/Cdk2 (uM)
-Parameter('CycA_tot', 1)  # total concentration of cyclinA/Cdk2 (uM)
-Parameter('CycB_tot', 1)  # total concentration of cyclinB/Cdk1 (uM)
+Parameter('Cdc20_tot', 1)  # total concentration of cdc20 (µM)
+Parameter('CycE_tot', 1)  # total concentration of cyclinE/Cdk2 (µM)
+Parameter('CycA_tot', 1)  # total concentration of cyclinA/Cdk2 (µM)
+Parameter('CycB_tot', 1)  # total concentration of cyclinB/Cdk1 (µM)
 
 # INITIAL CONDITIONS (all µM units)
 Parameter('Skp2_0', 0.06)
@@ -163,7 +163,7 @@ Observable('obsCdc20i', Cdc20i())
 # ############
 #    Skp2
 # ############
-Parameter('V_sskp2', 0.01)  # 0.15 (uM/h)
+Parameter('V_sskp2', 0.01)  # 0.15 (µM/h)
 Expression('ks_Skp2', s * V_sskp2 * omega)
 Rule('Skp2_synthesis', None >> Skp2(), ks_Skp2)  # µM/h
 
@@ -175,47 +175,47 @@ Parameter('V_s2skp', 0.01)  # 0.07 (1/h)
 Expression('ks_Skp2_FAK', s * V_s2skp * (FAK * omega))
 Rule('Skp2_synthesis_FAK', None >> Skp2(), ks_Skp2_FAK)
 
-Parameter('V_dskp2', 1.1)  # uM/h
-Parameter('K_dskp2', 0.5)  # uM
-Parameter('K_cdh1', 0.4)  # uM
-Expression('kd_Skp2_cdh1', s * V_dskp2 * omega / ((K_dskp2 * omega + obsSkp2) * (K_cdh1 * omega + obscdh1act)))  # /uM-h
+Parameter('V_dskp2', 1.1)  # µM/h
+Parameter('K_dskp2', 0.5)  # µM
+Parameter('K_cdh1', 0.4)  # µM
+Expression('kd_Skp2_cdh1', s * V_dskp2 * omega / ((K_dskp2 * omega + obsSkp2) * (K_cdh1 * omega + obscdh1act)))  # /µM-h
 Rule('Skp2_degradation_cdh1', Skp2() + cdh1(A='yes') >> cdh1(A='yes'), kd_Skp2_cdh1)
 
 # ############
 # p21 and p21p
 # ############
-Parameter('v_s1p21', 0.7)  # uM^[(n+1)/n]/h # updated 20230808
-Parameter('K_p21fak', 0.72)  # uM # updated 20230919
+Parameter('v_s1p21', 0.7)  # µM^[(n+1)/n]/h # updated 20230808
+Parameter('K_p21fak', 0.72)  # µM # updated 20230919
 Parameter('F_n', 8)  # unitless # updated 20230808
 # TODO: Ask about the commented out equation below. I changed it to the equation on the subsequent line.
 # vv Austin's original equation vv
-# Expression('ks_p21', s * ((v_s1p21 * omega) * (omega ** F_n) / (omega ** F_n + K_p21fak * (FAK * omega) ** F_n)))  # uM/h
+# Expression('ks_p21', s * ((v_s1p21 * omega) * (omega ** F_n) / (omega ** F_n + K_p21fak * (FAK * omega) ** F_n)))  # µM/h
 # vv Leonard's modified equation vv
-Expression('ks_p21', s * (v_s1p21 ** F_n * omega / (K_p21fak ** F_n + FAK ** F_n)))  # uM/h
+Expression('ks_p21', s * (v_s1p21 ** F_n * omega / (K_p21fak ** F_n + FAK ** F_n)))  # µM/h
 Rule('p21_synthesis', None >> p21(b=None, S='u'), ks_p21)
 
-Parameter('k_c1', 3)  # 0.15 # 1/uM-h
+Parameter('k_c1', 3)  # 0.15 # 1/µM-h
 Parameter('k_c2', 1)  # 0.05 # /h
 Expression('kasso_p21_CycD', s * (k_c1 / omega))
 Expression('kdiss_p21_CycD', s * k_c2)
 Rule('p21_CycD_association', p21(b=None, S='u') + CycD(b=None) | p21(b=1, S='u') % CycD(b=1),
      kasso_p21_CycD, kdiss_p21_CycD)
 
-Parameter('k_c5', 5)  # 0.15 # 1/uM-h
+Parameter('k_c5', 5)  # 0.15 # 1/µM-h
 Parameter('k_c6', 1)  # 0.125 # /h
 Expression('kasso_p21_CycA', s * (k_c5 / omega))
 Expression('kdiss_p21_CycA', s * k_c6)
 Rule('p21_CycA_association', p21(b=None, S='u') + CycA(b=None) | p21(b=1, S='u') % CycA(b=1),
      kasso_p21_CycA, kdiss_p21_CycA)
 
-Parameter('k_c7', 0.12)  # 1/uM-h
+Parameter('k_c7', 0.12)  # 1/µM-h
 Parameter('k_c8', 0.2)  # /h
 Expression('kasso_p21_CycB', s * (k_c7 / omega))
 Expression('kdiss_p21_CycB', s * k_c8)
 Rule('p21_CycB_association', p21(b=None, S='u') + CycB(b=None) | p21(b=1, S='u') % CycB(b=1),
      kasso_p21_CycB, kdiss_p21_CycB)
 
-Parameter('k_c3', 8)  # 0.2 # 1/uM-h
+Parameter('k_c3', 8)  # 0.2 # 1/µM-h
 Parameter('k_c4', 2)  # 0.1 # /h
 Expression('kasso_p21_CycE', s * (k_c3 / omega))
 Expression('kdiss_p21_CycE', s * k_c4)
@@ -223,12 +223,12 @@ Rule('p21_CycE_association', p21(b=None, S='u') + CycE(b=None) | p21(b=1, S='u')
      kasso_p21_CycE, kdiss_p21_CycE)
 
 Parameter('V_1p21', 100)  # /h
-Parameter('K_1p21', 0.5)  # uM
+Parameter('K_1p21', 0.5)  # µM
 Expression('kp_p21_CycE', s * V_1p21 / (K_1p21 * omega + obsp21))
 Rule('p21_phosphorylation_CycE', p21(b=None, S='u') + CycE(b=None) >> p21(b=None, S='p') + CycE(b=None), kp_p21_CycE)
 
-Parameter('V_2p21', 0.1)  # uM/h
-Parameter('K_2p21', 0.5)  # uM
+Parameter('V_2p21', 0.1)  # µM/h
+Parameter('K_2p21', 0.5)  # µM
 Expression('kunph_p21p', s * ((V_2p21 * omega) / (K_2p21 * omega + obsp21p)))
 Rule('p21p_unphosphorylation', p21(b=None, S='p') >> p21(b=None, S='u'), kunph_p21p)
 
@@ -236,9 +236,9 @@ Parameter('k_ddp21', 0.06)  # /h
 Expression('kd_p21', s * k_ddp21)
 Rule('p21_degradation', p21(b=None) >> None, kd_p21)  # p21 and p21p non specific degradation
 
-Parameter('V_dp21p', 5)  # uM/h
-Parameter('K_dp21skp2', 0.1)  # uM
-Parameter('K_dp21p', 0.1)  # uM
+Parameter('V_dp21p', 5)  # µM/h
+Parameter('K_dp21skp2', 0.1)  # µM
+Parameter('K_dp21p', 0.1)  # µM
 Expression('kd_p21p_Skp2',
            s * (V_dp21p * omega * (1 / (K_dp21skp2 * omega + obsSkp2)) * (1 / (K_dp21p * omega + obsp21p))))
 Rule('p21p_degradation_Skp2',  p21(b=None, S='p') + Skp2() >> Skp2(), kd_p21p_Skp2)  # p21p degradation from skp2
@@ -246,13 +246,13 @@ Rule('p21p_degradation_Skp2',  p21(b=None, S='p') + Skp2() >> Skp2(), kd_p21p_Sk
 # ############
 #    cdh1
 # ############
-Parameter('V_1cdh1', 1.25)  # 1.25 # uM/h
-Parameter('K_1cdh1', 0.1)  # uM
+Parameter('V_1cdh1', 1.25)  # 1.25 # µM/h
+Parameter('K_1cdh1', 0.1)  # µM
 Expression('kautoact_cdh1', s * (V_1cdh1 * omega / (K_1cdh1 * omega + obscdh1inact)))
 Rule('cdh1_autoactivation', cdh1(A='no') >> cdh1(A='yes'), kautoact_cdh1)
 
 Parameter('V_2cdh1', 8)  # 8 # /h
-Parameter('K_2cdh1', 0.1)  # uM
+Parameter('K_2cdh1', 0.1)  # µM
 Expression('k_inact_CycAorB', s * (V_2cdh1 * (1 / (K_2cdh1 * omega + obscdh1act))))
 Rule('cdh1_inhibiton_CycA', cdh1(A='yes') + CycA(b=None) >> cdh1(A='no') + CycA(b=None), k_inact_CycAorB)
 Rule('cdh1_inhibiton_CycB', cdh1(A='yes') + CycB(b=None) >> cdh1(A='no') + CycB(b=None), k_inact_CycAorB)
@@ -260,13 +260,13 @@ Rule('cdh1_inhibiton_CycB', cdh1(A='yes') + CycB(b=None) >> cdh1(A='no') + CycB(
 # ############
 #     Myc
 # ############
-Parameter('k_M', 0.27)  # updated 20230808 # uM/h
-Parameter('K_S', 0.8)  # 0.5 # 0.1 # uM
+Parameter('k_M', 0.27)  # updated 20230808 # µM/h
+Parameter('K_S', 0.8)  # 0.5 # 0.1 # µM
 Expression('ks_Myc_AKT', s * ((k_M * omega) * (AKT * omega) / ((K_S * omega) + (AKT * omega))))
 Rule('Myc_synthesis_AKT', None >> Myc(), ks_Myc_AKT)
 
-Parameter('k_EMY', 0.37)  # updated 20230808 # uM/h
-Parameter('K_MY', 0.1)  # 0.15 # 0.1 # uM
+Parameter('k_EMY', 0.37)  # updated 20230808 # µM/h
+Parameter('K_MY', 0.1)  # 0.15 # 0.1 # µM
 Expression('ks_Myc_ERK', s * ((k_EMY * omega) * (ERK * omega) / ((K_MY * omega) + (ERK * omega))))
 Rule('Myc_synthesis_ERK', None >> Myc(), ks_Myc_ERK)
 
@@ -277,16 +277,16 @@ Rule('Myc_degradation', Myc() >> None, kd_Myc)
 # ############
 #    CycD
 # ############
-Parameter('k_CDS', 0.25)  # updated 20230808 # uM/h
+Parameter('k_CDS', 0.25)  # updated 20230808 # µM/h
 Expression('ks_CycD_AKT', s * ((k_CDS * omega) * (AKT * omega) / ((K_S * omega) + (AKT * omega))))
 Rule('CycD_synthesis_AKT', None >> CycD(b=None), ks_CycD_AKT)
 
-Parameter('k_ED', 0.2)  # 0.23 # 0.08 # uM/h
+Parameter('k_ED', 0.2)  # 0.23 # 0.08 # µM/h
 Expression('ks_CycD_ERK', s * ((k_ED * omega) * (ERK * omega) / ((K_MY * omega) + (ERK * omega))))
 Rule('CycD_synthesis_ERK', None >> CycD(b=None), ks_CycD_ERK)
 
-Parameter('k_CD', 0.03)  # 0.03 # uM/h
-Parameter('K_M', 0.27)  # updated 20230808 # uM
+Parameter('k_CD', 0.03)  # 0.03 # µM/h
+Parameter('K_M', 0.2)  # updated 20240711 to match parameters.csv # µM # NOTE that this is distinct from k_M in Myc above
 Expression('ks_CycD_Myc', s * ((k_CD * omega) / ((K_M * omega) + obsMyc)))
 Rule('CycD_synthesis_Myc', Myc() >> CycD(b=None) + Myc(), ks_CycD_Myc)
 
@@ -302,16 +302,16 @@ Rule('CycD_inhibition', CycD(b=None) + CycDi() >> CycDi(), kd_CycD_i)
 # ############
 # pRb and pRbp
 # ############
-Parameter('k_R', 0.07)  # 0.03 # 0.18 # uM/h
+Parameter('k_R', 0.07)  # 0.03 # 0.18 # µM/h
 Expression('ks_pRb', s * (k_R * omega))
 Rule('pRb_synthesis', None >> pRb(b=None, S='u'), ks_pRb)
 
-Parameter('k_DP', 3.6)  # 3.6 # uM/h
-Parameter('K_RP', 0.01)  # 0.01 # uM
+Parameter('k_DP', 3.6)  # 3.6 # µM/h
+Parameter('K_RP', 0.01)  # 0.01 # µM
 Expression('kunph_pRbp', s * ((k_DP * omega) / ((K_RP * omega) + obspRbp)))
 Rule('pRbp_unphosphorylation', pRb(b=None, S='p') >> pRb(b=None, S='u'), kunph_pRbp)
 
-Parameter('k_RE', 180)  # 180 # 1/uM-h
+Parameter('k_RE', 180)  # 180 # 1/µM-h
 Expression('kf_RbE2F', s * (k_RE / omega))
 Rule('pRbE2F_complex_formation', pRb(b=None, S='u') + E2F(b=None) >> pRb(b=1, S='u') % E2F(b=1), kf_RbE2F)
 
@@ -320,7 +320,7 @@ Expression('kd_pRbE2F', s * d_RE)
 Rule('pRbE2F_degradation', pRb(b=1, S='u') % E2F(b=1) >> None, kd_pRbE2F)
 
 Parameter('k_P2', 18)  # 18 # 1/h
-Parameter('K_CE', 0.55)  # 0.92 # uM
+Parameter('K_CE', 0.55)  # 0.92 # µM
 Expression('kp_pRb_CycE', s * (k_P2 / ((K_CE * omega) + obspRb)))
 Expression('kp_pRbE2F_CycE', s * (k_P2 / ((K_CE * omega) + obspRbE2F)))
 Rule('pRb_phosphorylation_CycE', pRb(b=None, S='u') + CycE(b=None) >> pRb(b=None, S='p') + CycE(b=None), kp_pRb_CycE)
@@ -328,7 +328,7 @@ Rule('pRbE2F_phosphorylation_CycE', pRb(b=1, S='u') % E2F(b=1) + CycE(b=None) >>
      pRb(b=None, S='p') + E2F(b=None) + CycE(b=None), kp_pRbE2F_CycE)
 
 Parameter('k_P1', 18)  # 18 # 1/h
-Parameter('K_CD', 0.55)  # 0.92 # uM
+Parameter('K_CD', 0.55)  # 0.92 # µM
 Expression('kp_pRb_CycD', s * (k_P1 / ((K_CD * omega) + obspRb)))
 Expression('kp_pRbE2F_CycD', s * (k_P1 / ((K_CD * omega) + obspRbE2F)))
 Rule('pRb_phosphorylation_CycD', pRb(b=None, S='u') + CycD(b=None) >> pRb(b=None, S='p') + CycD(b=None), kp_pRb_CycD)
@@ -348,13 +348,13 @@ Rule('pRbp_degradation', pRb(b=None, S='p') >> None, kd_pRbp)
 #     E2F
 # ############
 # E2F synthesis from Myc E2F autoactivation
-Parameter('k_E', 0.4)  # 0.4 # uM/h
-Parameter('K_E', 0.15)  # 0.1 # uM
+Parameter('k_E', 0.4)  # 0.4 # µM/h
+Parameter('K_E', 0.15)  # 0.1 # µM
 Expression('ks_E2F_E2FMyc', s * (k_E * omega * (1 / ((K_M * omega) + obsMyc)) * (1 / ((K_E * omega) + obsE2F))))
 Rule('E2F_synthesis_E2FMyc', Myc() + E2F(b=None) >> Myc() + E2F(b=None) + E2F(b=None), ks_E2F_E2FMyc)
 
 # E2F synthesis from Myc E2F autoactivation
-Parameter('k_b', 0.003)  # 0.003 # uM/h
+Parameter('k_b', 0.003)  # 0.003 # µM/h
 Expression('ks_E2F_Myc', s * (k_b * omega / ((K_M * omega) + obsMyc)))
 Rule('E2F_synthesis_Myc', Myc() >> Myc() + E2F(b=None), ks_E2F_Myc)
 
@@ -363,7 +363,7 @@ Expression('kd_E2F', s * d_E)
 Rule('E2F_degradation', E2F(b=None) >> None, kd_E2F)
 
 Parameter('V_2E2F', 0.7)  # 0.7  # Rate constant for inactivation of E2F by cyclinA/Cdk2 complex (1/h)
-Parameter('K_2E2F', 0.5)   # 0.5 # Michaelis constant for E2f inactivation by cyclinA/Cdk2 complex (uM)
+Parameter('K_2E2F', 0.5)   # 0.5 # Michaelis constant for E2f inactivation by cyclinA/Cdk2 complex (µM)
 Expression('kd_E2F_CycA', s * (V_2E2F / ((K_2E2F * omega) + obsE2F)))
 Rule('E2F_degradation_CycA', E2F(b=None) + CycA(b=None) >> CycA(b=None), kd_E2F_CycA)
 
@@ -375,19 +375,19 @@ Rule('E2F_inhibition', E2F(b=None) + E2Fi() >> E2Fi(), kd_E2F_i)
 # ############
 #    CycE
 # ############
-Parameter('V_1Me', 1.1)  # 0.7 # 1.1 # Rate for activation of cyclinE/Cdk2 by E2F (1/uM-h)
-Parameter('a', 1)  # basal term for activation of cyclin E/Cdk2 (without PF loop)) (uM)
+Parameter('V_1Me', 1.1)  # 0.7 # 1.1 # Rate for activation of cyclinE/Cdk2 by E2F (1/µM-h)
+Parameter('a', 1)  # basal term for activation of cyclin E/Cdk2 (without PF loop)) (µM)
 # Term representing the self-activation of cyclinE/Cdk2 through the mutual activation between cyclinE/Cdk2 and its
 # phosphatase Cdc25 (PF loop in the G1/S transition)) without=0 with=1
-Parameter('b1', 1)  # 1/uM
-Parameter('K_1Me', 0.2)  # 0.1 # Michaelis constant for cyclinE/Cdk2 activation by E2F (uM)
+Parameter('b1', 1)  # 1/µM
+Parameter('K_1Me', 0.2)  # 0.1 # Michaelis constant for cyclinE/Cdk2 activation by E2F (µM)
 Expression('kact_CycE_E2F', s * ((V_1Me / omega) * ((a * omega) + b1 * obsCycE) *
                                  ((CycE_tot * omega) - obsCycE - obsCycEp21) /
                                  ((K_1Me * omega) + (CycE_tot * omega) - obsCycE - obsCycEp21)))
 Rule('CycE_activation_E2F', E2F(b=None) >> E2F(b=None) + CycE(b=None), kact_CycE_E2F)  # 1/h
 
 Parameter('V_2Me', 1.6)  # 0.5 # 1.6 # Rate constant for inactivation fo clyclinE/Cdk2 by cyclinA/Cdk2 (1/h)
-Parameter('K_2Me', 0.12)  # 0.1 # Michaelis constant for cyclinE/Cdk2 inactivation by cyclinA/Cdk2 (uM)
+Parameter('K_2Me', 0.12)  # 0.1 # Michaelis constant for cyclinE/Cdk2 inactivation by cyclinA/Cdk2 (µM)
 Expression('kinact_CycE_CycA', s * (V_2Me * (1 / (K_2Me * omega + obsCycE))))
 Rule('CycE_inactivation_CycA', CycA(b=None) + CycE(b=None) >> CycA(b=None), kinact_CycE_CycA)
 
@@ -401,13 +401,13 @@ Rule('CycE_inhibition', CycE(b=None) + CycEi() >> CycEi(), kd_CycE_i)
 # ############
 
 Parameter('V_1Ma', 0.6)  # 0.6 # Rate constant for activation of cyclinA/Cdk2 by E2F (1/h)
-Parameter('K_1Ma', 0.2)  # 0.5 # Michaelis constant for cyclinA/Cdk2 activation by E2F (uM)
+Parameter('K_1Ma', 0.2)  # 0.5 # Michaelis constant for cyclinA/Cdk2 activation by E2F (µM)
 Expression('kact_CycA_E2F', s * (V_1Ma * ((CycA_tot * omega) - obsCycA - obsCycAp21) /
                                  ((K_1Ma * omega) + ((CycA_tot * omega) - obsCycA - obsCycAp21))))
 Rule('CycA_activation_E2F', E2F(b=None) >> E2F(b=None) + CycA(b=None), kact_CycA_E2F)
 
 Parameter('V_2Ma', 0.6)  # 0.6 # Rate constant for inactivation of cyclinA/Cdk2 by Cdc20 (1/h)
-Parameter('K_2Ma', 0.1)  # 0.1 # Michaelis constant for cyclinA/Cdk2 inactivation by Cdc20 (uM)
+Parameter('K_2Ma', 0.1)  # 0.1 # Michaelis constant for cyclinA/Cdk2 inactivation by Cdc20 (µM)
 Expression('kinact_CycA_Cdc20', s * (V_2Ma * (1 / (K_2Ma * omega + obsCycA))))
 Rule('CycA_inactivation_Cdc20', CycA(b=None) + Cdc20() >> Cdc20(), kinact_CycA_Cdc20)
 
@@ -420,12 +420,12 @@ Rule('CycA_inhibition', CycA(b=None) + CycAi() >> CycAi(), kd_CycA_i)
 #    CycB
 # ############
 
-Parameter('V_1Mb', 1)  # 1 # Rate for activation of cyclinB/Cdk1 by cyclinA/Cdk2 (1/uM-h)
+Parameter('V_1Mb', 1)  # 1 # Rate for activation of cyclinB/Cdk1 by cyclinA/Cdk2 (1/µM-h)
 # Term representing the self-activation of cyclinB/Cdk1 through mutual activation between cyclin B/cdk1 and its
 # phosphatase cdk25 (PF loop in the G2/M transition)) without=0 with=1
-Parameter('b2', 1)  # 1/uM
-Parameter('K_ie', 0.2)  # uM
-Parameter('K_1Mb', 0.3)  # 0.1 # Michaelis constant for cyclinB/Cdk1 activation by cyclinA/Cdk2 (uM)
+Parameter('b2', 1)  # 1/µM
+Parameter('K_ie', 0.2)  # µM
+Parameter('K_1Mb', 0.3)  # 0.1 # Michaelis constant for cyclinB/Cdk1 activation by cyclinA/Cdk2 (µM)
 Expression('kact_CycB_CycA', s * ((V_1Mb / omega) * ((a * omega) + b2 * obsCycB) *
                                   ((K_ie * omega) / ((K_ie * omega) + obsCycE)) *
                                   ((CycB_tot * omega) - obsCycBp21 - obsCycB) /
@@ -433,11 +433,11 @@ Expression('kact_CycB_CycA', s * ((V_1Mb / omega) * ((a * omega) + b2 * obsCycB)
 Rule('CycB_activation_CycA', CycA(b=None) >> CycA(b=None) + CycB(b=None), kact_CycB_CycA)  # 1/h
 
 Parameter('V_2Mb', 0.8)  # 0.8 # Rate constant for inactivation of cyclinB/Cdk1 by Cdc20 (1/h)
-Parameter('K_ib', 0.5)  # 0.5 # (uM)
-Parameter('K_2Mb', 0.12)  # 0.1 # Michaelis constant for cyclinB/Cdk1 inactivation by Cdc20 (uM)
+Parameter('K_ib', 0.5)  # 0.5 # (µM)
+Parameter('K_2Mb', 0.12)  # 0.1 # Michaelis constant for cyclinB/Cdk1 inactivation by Cdc20 (µM)
 Expression('kinact_CycB_Cdc20', s * (V_2Mb * ((K_ib * omega) / ((K_ib * omega) + obsCycB)) *
                                      (1 / ((K_2Mb * omega) + obsCycB))))
-Rule('CycB_inactivation_Cdc20', CycB(b=None) + Cdc20() >> Cdc20(), kinact_CycB_Cdc20)  # 1/uM-h
+Rule('CycB_inactivation_Cdc20', CycB(b=None) + Cdc20() >> Cdc20(), kinact_CycB_Cdc20)  # 1/µM-h
 
 Parameter('V_Bi', 0.6)
 Parameter('K_Bi', 0.2)
@@ -449,13 +449,13 @@ Rule('CycB_inhibition', CycB(b=None) + CycBi() >> CycBi(), kd_CycB_i)
 # ############
 
 Parameter('V_1cdc20', 1.8)  # 1.8  # Rate constant for activation of Cdc20 through phosphorylation by cyclinB/Cdk1 (1/h)
-Parameter('K_1cdc20', 0.1)  # uM
+Parameter('K_1cdc20', 0.1)  # µM
 Expression('kact_Cdc20_CycB', s * (V_1cdc20 * (((Cdc20_tot * omega) - obsCdc20) /
                                                ((K_1cdc20 * omega) + ((Cdc20_tot * omega) - obsCdc20)))))
 Rule('Cdc20_activation_CycB', CycB(b=None) >> CycB(b=None) + Cdc20(), kact_Cdc20_CycB)
 
-Parameter('V_2cdc20', 0.6)  # 0.6  # Rate for inactivation of Cdc20 through dephosphorylation (uM/h)
-Parameter('K_2cdc20', 0.1)  # 0.1 # Michaelis constant for Cdc20 inactivation through dephosphorylation (uM)
+Parameter('V_2cdc20', 0.6)  # 0.6  # Rate for inactivation of Cdc20 through dephosphorylation (µM/h)
+Parameter('K_2cdc20', 0.1)  # 0.1 # Michaelis constant for Cdc20 inactivation through dephosphorylation (µM)
 Expression('kinact_Cdc20', s * ((V_2cdc20 * omega) * (1 / ((K_2cdc20 * omega) + obsCdc20))))
 Rule('Cdc20_inactivation', Cdc20() >> None, kinact_Cdc20)
 
@@ -470,7 +470,7 @@ Rule('Cdc20_inhibition', Cdc20() + Cdc20i() >> Cdc20i(), kd_Cdc20_i)
 
 # BAX activation from BH3 and BAXm inactivation
 Parameter('kf1', 0.01)  # 1/h
-Parameter('kf2', 2.4)  # 1/uM-h
+Parameter('kf2', 2.4)  # 1/µM-h
 Parameter('kb', 0.14)  # 1/h
 Expression('kact_BAXm', m * (kf1 + (kf2 / omega) * obsBH3))
 Expression('kinact_BAXm', m * kb)
@@ -478,28 +478,28 @@ Rule('BAX_activation_inactivation', BAX(m='no', b=None) | BAX(m='yes', b=None), 
 Rule('BAXmBCL2_inactivation', BAX(m='yes', b=1) % BCL2(b=1) >> BAX(m='no', b=None) + BCL2(b=None), kinact_BAXm)
 
 # BAXm and BCL2 association and dissociation
-Parameter('kasbaxmbcl2', 75)  # 1/uM-h
+Parameter('kasbaxmbcl2', 75)  # 1/µM-h
 Parameter('kdsbaxmbcl2', 0.05)  # 1/h
 Expression('kasso_BAXm_BCL2', m * (kasbaxmbcl2 / omega))
 Expression('kdiss_BAXmBCL2', m * kdsbaxmbcl2)
 Rule('BAXmBCL2_association_dissociation', BAX(m='yes', b=None) + BCL2(b=None) | BAX(m='yes', b=1) % BCL2(b=1),
      kasso_BAXm_BCL2, kdiss_BAXmBCL2)
 
-Parameter('k1sbh3', 0.001)  # uM/h
+Parameter('k1sbh3', 0.001)  # µM/h
 Parameter('k2sbh3', 0.025)  # 0.0095 # 0.012 # 0.025 # 1/h
-Parameter('a_stress', 0.6515)  # uM updated 20230926
+Parameter('a_stress', 0.6515)  # µM updated 20230926
 Parameter('b_stress_AKT', 0.112)  # unitless
 Parameter('b_stress_ERK', 0.0111)  # unitless
 Expression('ks_BH3', m * ((k1sbh3 * omega) +
                           k2sbh3 * ((a_stress * omega) - b_stress_AKT * (AKT * omega) - b_stress_ERK * (ERK * omega))))
-Rule('BH3_synthesis', None >> BH3(b=None), ks_BH3)  # uM/h
+Rule('BH3_synthesis', None >> BH3(b=None), ks_BH3)  # µM/h
 
 Parameter('kdbh3', 0.03)  # 1/h
 Expression('kd_BH3', m * kdbh3)
 Rule('BH3_degradation', BH3(b=None) >> None, kd_BH3)
 Rule('BH3BCL2_degradation', BH3(b=1) % BCL2(b=1) >> BCL2(b=None), kd_BH3)
 
-Parameter('kasbh3bcl2', 25)  # 1/uM-h
+Parameter('kasbh3bcl2', 25)  # 1/µM-h
 Parameter('kdsbh3bcl2', 0.01)  # 1/h
 Expression('kasso_BH3_BCL2', m * (kasbh3bcl2 / omega))
 Expression('kdiss_BH3BCL2', m * kdsbh3bcl2)
