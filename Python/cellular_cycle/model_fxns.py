@@ -8,6 +8,7 @@ from call_cell_events import call_events
 from retrieve_cellState_dw_2 import retrieve_cellState
 from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
 from pathlib import Path
+from typing import List
 
 def plotObs(model, obs, times, tpos, title=None, ax=None, legend=True, **kwargs):
     """Plot an observable of a model"""
@@ -26,7 +27,7 @@ def plotObs(model, obs, times, tpos, title=None, ax=None, legend=True, **kwargs)
     return ax
 
 
-# def minmax_scale(dat, keep_cols):  # original; shoudl remove keep_cols argument
+# def minmax_scale(dat, keep_cols):  # original; should remove keep_cols argument
 #     '''
 #     dat: pandas dataframe
 #     keep_cols: list of columns to keep
@@ -35,14 +36,11 @@ def plotObs(model, obs, times, tpos, title=None, ax=None, legend=True, **kwargs)
 #     d_minmax_scaled = d_minmax_scaled[keep_cols]
 #     return d_minmax_scaled
 
-def minmax_scale(dat):
-    '''
-    dat: pandas dataframe
-    '''
+def minmax_scale(dat: pd.DataFrame) -> pd.DataFrame:
     return (dat - dat.min(axis=0)) / ((dat.max(axis=0) - dat.min(axis=0)))
 
 
-def stack_sliding_window(dat, window_size, idx):
+def stack_sliding_window(dat: pd.DataFrame, window_size: int, idx: List[int]) -> pd.DataFrame:
     '''
     dat: pandas dataframe
     window_size: int
@@ -52,7 +50,7 @@ def stack_sliding_window(dat, window_size, idx):
     out = pd.DataFrame([np.array(dat[i - half_window : i + half_window].unstack()) for i in idx])
     return out
 
-def get_model_observable_names(model_code_filepath):
+def get_model_observable_names(model_code_filepath: str) -> List[str]:
     out = pd.read_csv(model_code_filepath, sep="\0", header=None)
     out = out[out[0].str.contains("Obs") == True]
     out = out[0].to_list()
