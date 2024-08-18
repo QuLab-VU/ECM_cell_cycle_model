@@ -1,5 +1,6 @@
 """
 Modified from Austin_proliferation_model_6.py
+@author: Austin Oleskie
 @author: Jérémie Marlhens
 @author: Darren Tyson
 @author: Leonard Harris
@@ -43,6 +44,8 @@ Monomer('Cdc20i')
 # Stiff, ERL: 0.6, 0.2, 1
 # Interm, ERL: 0.6, 0.2, 0.6
 # Soft, ERL: 0.3, 0.2, 0.4
+
+# default input parameters == intermediate stiffness + ERL
 Parameter('AKT', 0.6)  # µM
 Parameter('ERK', 0.2)  # µM
 Parameter('FAK', 0.6)  # µM
