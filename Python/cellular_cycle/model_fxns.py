@@ -395,3 +395,96 @@ def runIMTs(init, run_time, observed_cells_time, model, ECM_conditions, conditio
     np.savetxt(filename_IMT, all_IMTs, delimiter=',')
     np.savetxt(filename_g1, all_g1s, delimiter=',')
 
+def load_sim_output(filenames: list) -> pd.DataFrame:
+    # Function copied from 05_UMAP_of_stoch_sims.ipynb 20240821
+    sim_data = pd.DataFrame()
+    for i, f in enumerate(filenames):
+        tmp = pd.read_csv(f, sep=",", header=None, usecols = range(0,19))
+        tmp.columns = ["skp2", "p21", "pp21", "cdh1_act", "cdh1_inact", "myc", "cycD", "cycD-p21", 
+        "Rb", "pRb", "E2F", "E2F-Rb", "cycE", "cycE-p21", "cycA", "cycA-p21",
+        "cycB", "cycB-p21", "cdc20"]
+        tmp = tmp.drop(columns=['cdh1_inact'])
+        if i == 0:
+            sim_data = tmp
+        else:
+            sim_data = pd.concat([sim_data,tmp], ignore_index=True)
+    return sim_data
+
+def calc_minmax(filenames):
+    # Function copied from 05_UMAP_of_stoch_sims.ipynb 20240821
+    dat = load_sim_output(filenames)
+    min_prots = dat.min(axis=0).to_list()
+    max_prots = dat.max(axis=0).tolist()
+    return max_prots, min_prots
+
+def load_norm_data(filenames, filenames_ode, max_prots, min_prots, time_all, init_dt, dt, window, time_step, plot_phase):
+    # Function copied from 05_UMAP_of_stoch_sims.ipynb 20240821
+    if plot_phase:
+        plot_phase(filenames, filenames_ode)
+        plt.savefig(Path(SAVE_DIR, f"phaseplot_{num}.png"), bbox_inches='tight')
+        plot_phase_norm(filenames, filenames_ode, max_prots, min_prots)
+        plt.savefig(Path(SAVE_DIR, f"phaseplot_norm_{num}.png"), bbox_inches='tight')
+    
+    win_len = int(window/dt)
+    all_prot_tmp = np.empty((0,win_len*18))     #careful, this could end up being massive 
+    all_prot_tmp_ode = np.empty((0,win_len*18))
+    all_time_tmp = np.empty((0,win_len))
+    all_time_at_tmp = np.empty((0,1))
+    range_ind = np.arange(int(win_len/2),int(len(time_all)-(int(win_len/2))),int(time_step/dt))
+        
+    for (f, f_ode) in zip(filenames, filenames_ode):
+        prot_tmp = pd.read_csv(f, sep=",", header=None, usecols = range(0,19))
+        prot_tmp.columns = ["skp2", "p21", "pp21", "cdh1_act", "cdh1_inact", "myc", "cycD", "cycD-p21", 
+        "Rb", "pRb", "E2F", "E2F-Rb", "cycE", "cycE-p21", "cycA", "cycA-p21",
+        "cycB", "cycB-p21", "cdc20"]
+        prot_tmp = prot_tmp.drop(columns=['cdh1_inact'])
+        #prot_tmp = prot_tmp/200
+        for ii in range(18):
+            prot_tmp.iloc[:,ii] = (prot_tmp.iloc[:,ii] - min_prots[ii])/(max_prots[ii] - min_prots[ii])
+
+        prot_re_tmp = np.empty((len(range_ind),win_len*18))
+        time_re_tmp = np.empty((len(range_ind),win_len))
+        time_at_tmp = np.empty((len(range_ind),1))
+
+        ii=0
+        for n in range(int(win_len/2),int(len(time_all)-(int(win_len/2))),int(time_step/dt)):
+            tmp = prot_tmp.iloc[n-int(win_len/2):n+int(win_len/2)]
+            tmp_t = time_all['time'].iloc[n-int(win_len/2):n+int(win_len/2)]
+            tmp=tmp.to_numpy()
+            tmp=np.reshape(np.transpose(tmp),win_len*18)
+            tmp_at = time_all['time'].iloc[n]
+
+            prot_re_tmp[ii,:] = np.array([tmp])
+            time_re_tmp[ii,:] = np.array([tmp_t])
+            time_at_tmp[ii,:] = np.array([[tmp_at]])
+            ii+=1
+
+        all_prot_tmp = np.append(all_prot_tmp, prot_re_tmp, axis=0)
+        all_time_tmp = np.append(all_time_tmp, time_re_tmp, axis=0)
+        all_time_at_tmp = np.append(all_time_at_tmp, time_at_tmp, axis=0)
+        
+        prot_tmp_ode = pd.read_csv(f_ode, sep=",", header=None, usecols = range(0,19))
+        prot_tmp_ode.columns = ["skp2", "p21", "pp21", "cdh1_act", "cdh1_inact", "myc", "cycD", "cycD-p21", 
+        "Rb", "pRb", "E2F", "E2F-Rb", "cycE", "cycE-p21", "cycA", "cycA-p21",
+        "cycB", "cycB-p21", "cdc20"]
+        prot_tmp_ode = prot_tmp_ode.drop(columns=['cdh1_inact'])
+        for ii in range(18):
+            prot_tmp_ode.iloc[:,ii] = (prot_tmp_ode.iloc[:,ii] - min_prots[ii])/(max_prots[ii] - min_prots[ii])
+
+        prot_re_tmp = np.empty((len(range_ind),win_len*18))
+
+
+        ii=0
+        for n in range(int(win_len/2),int(len(time_all)-(int(win_len/2))),int(time_step/dt)):
+            tmp = prot_tmp_ode.iloc[n-int(win_len/2):n+int(win_len/2)]
+            tmp=tmp.to_numpy()
+            tmp=np.reshape(np.transpose(tmp),win_len*18)
+
+            prot_re_tmp[ii,:] = np.array([tmp])
+            time_re_tmp[ii,:] = np.array([tmp_t])
+            time_at_tmp[ii,:] = np.array([[tmp_at]])
+            ii+=1
+
+        all_prot_tmp_ode = np.append(all_prot_tmp_ode, prot_re_tmp, axis=0)
+        
+    return all_prot_tmp, all_prot_tmp_ode, all_time_tmp, all_time_at_tmp
