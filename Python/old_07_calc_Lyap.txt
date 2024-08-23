@@ -1,5 +1,0 @@
-# Lyapunov analysis run in multiprocessing mode
-# calculate Lyapunov exponent values
-# calcLyapunov reads:
-    1) 'lyaps_dmso_orig.fea'
-    1) 'lyaps_erl_orig.fea'
