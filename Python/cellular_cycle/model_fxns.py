@@ -157,6 +157,7 @@ def calc_death(cells, all_events_simulated):
     return [a_rate, num_deaths, total_time]
 
 
+# NOTE: The run_treatment function will not work when loading from here since model is not defined
 def run_treatment(inhib_name, inhib_conc):
     model.parameters[inhib_name].value = inhib_conc
 
