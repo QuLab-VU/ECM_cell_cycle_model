@@ -42,12 +42,12 @@ def retrieve_cellState(run_time, cells, return_all_prot=False, cells_starting_at
                             cells['molecules'][ii]['obsCdc20'])
                     
             else : #the course is very short so there can't be a division
-                max_tmp_cdc = 0 # DRT changed to 0 from [] 20240903
+                max_tmp_cdc = []
             
             div_ind = max_tmp_cdc
             
-            if cells['time'][ii][-1]<run_time : # if we didn't record the time until the end of the experiment (so it ends with mitosis or death)
-                if cells['time'][ii][0]==0 and div_ind[0]>0: # start at a mitosis (cdc20 peak) and ends at next peak or death 
+            if cells['time'][ii][-1]<run_time : # if the simulation didn't reach the end of the experiment (i.e. it ends with mitosis or death)
+                if cells['time'][ii][0]==0 and len(div_ind) > 0 and div_ind[0]>0: # start at a mitosis (cdc20 peak) and ends at next peak or death 
                     tmp_counts = {'Starting cell' : True, 
                                   'End_of_Expt' : False, 
                                   'Death' : False, 

@@ -227,7 +227,7 @@ def plot_drate(concs, population_dfs, title="Unknown Condition"):
     fig1 = plt.figure()
     ax = fig1.add_subplot(1, 1, 1)
 
-    ax.set_xlabel('CycDi (M)')
+    ax.set_xlabel('CDK4/6i (M)')
     ax.set_ylabel('Division rate')
     ax.set_xscale("log")
     ax.set_xlim(1.0e-10, 1.0e-4)
@@ -248,7 +248,7 @@ def plot_drate(concs, population_dfs, title="Unknown Condition"):
 def plot_qrate(concs, population_dfs, title="Unknown Condition"):
     fig, ax = plt.subplots()
 
-    ax.set_xlabel('Conc (um)')
+    ax.set_xlabel('Conc (µm)')
     ax.set_ylabel('Quiescence rate')
     plt.xscale("log")
     # ax.set_ylim(-0.01,0.03)
@@ -268,7 +268,7 @@ def plot_qrate(concs, population_dfs, title="Unknown Condition"):
 def plot_daratio(concs, population_dfs, title="Unknown Condition"):
     fig, ax = plt.subplots()
 
-    ax.set_xlabel('Conc (um)')
+    ax.set_xlabel('Conc (µm)')
     ax.set_ylabel('Division/Apoptosis rate')
     plt.xscale("log")
     # ax.set_ylim(-0.01,0.03)
@@ -292,7 +292,7 @@ def plot_daratio(concs, population_dfs, title="Unknown Condition"):
 def plot_divdeath_totals(concs, population_dfs, title="Unknown Condition"):
     fig, ax = plt.subplots()
 
-    ax.set_xlabel('Conc (um)')
+    ax.set_xlabel('Conc (µm)')
     plt.xscale("log")
 
     for conc in concs:
@@ -315,7 +315,7 @@ def plot_numberdeaths(concs, population_dfs, title="Unknown Condition"):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
 
-    ax.set_xlabel('Conc (um)')
+    ax.set_xlabel('Conc (µm)')
     ax.set_ylabel('Death Count')
     ax.set_xscale("log")
     ax.set_xlim(1.0e-10, 1.0e-4)
@@ -339,7 +339,7 @@ def plot_death_avgdiv(concs, population_dfs, title="Unknown Condition"):
     fig1 = plt.figure()
     ax = fig1.add_subplot(1, 1, 1)
 
-    ax.set_xlabel('Conc (um)')
+    ax.set_xlabel('Conc (µm)')
     ax.set_ylabel('Death Count/Avg. Division Time')
     ax.set_xscale("log")
     ax.set_xlim(1.0e-10, 1.0e-4)
