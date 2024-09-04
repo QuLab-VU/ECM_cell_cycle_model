@@ -233,13 +233,14 @@ def plot_drate(concs, population_dfs, title="Unknown Condition"):
     ax.set_xlim(1.0e-10, 1.0e-4)
     # ax.set_ylim(-0.01,0.03)
     # plt.text(0,4.5,title)
+    n = len(population_dfs[0])
     for conc in concs:
         d_rates = []
         for num in range(3):
             tmp_rates, _, _ = calc_rates(population_dfs[conc][num])
             d_rates.append(tmp_rates['d'])
 
-        tmp_c = [conc * 10e-7] * 3
+        tmp_c = [conc * 10e-7] * n
         ax.scatter(tmp_c, d_rates, color='black')
 
     return fig, ax
@@ -253,13 +254,15 @@ def plot_qrate(concs, population_dfs, title="Unknown Condition"):
     plt.xscale("log")
     # ax.set_ylim(-0.01,0.03)
     # plt.text(0,4.5,title)
+    n = len(population_dfs[0])
+
     for conc in concs:
         q_rates = []
         for num in range(3):
             tmp_rates = calc_rates(population_dfs[conc][num])
             q_rates.append(tmp_rates['q'])
 
-        tmp_c = [conc * 10e-7] * 3
+        tmp_c = [conc * 10e-7] * n
         ax.scatter(tmp_c, q_rates, color='black')
 
     return fig, ax
@@ -273,17 +276,18 @@ def plot_daratio(concs, population_dfs, title="Unknown Condition"):
     plt.xscale("log")
     # ax.set_ylim(-0.01,0.03)
     # plt.text(0,4.5,title)
+    n = len(population_dfs[0])
     for conc in concs:
         d_rates = []
         a_rates = []
-        for num in range(3):
+        for num in range(n):
             tmp_rates = calc_rates(population_dfs[conc][num])
             d_rates.append(tmp_rates['d'])
             a_rates.append(tmp_rates['a'])
 
             d_a = np.mean(d_rates) / np.mean(a_rates)
 
-        tmp_c = [conc * 10e-7] * 1
+        tmp_c = [conc * 10e-7] * n
         ax.scatter(tmp_c, d_a, color='black')
 
     return fig, ax
@@ -321,15 +325,16 @@ def plot_numberdeaths(concs, population_dfs, title="Unknown Condition"):
     ax.set_xlim(1.0e-10, 1.0e-4)
     # ax.set_ylim(-0.01,0.03)
     # plt.text(0,4.5,title)
+    n = len(population_dfs[0])
     for conc in concs:
         a_rates = []
         deaths = []
-        for num in range(3):
+        for num in range(n):
             tmp_rates, tot_deaths, _ = calc_rates(population_dfs[conc][num])
             a_rates.append(tmp_rates['a'])
             deaths.append(tot_deaths)
 
-        tmp_c = [conc * 10e-7] * 3
+        tmp_c = [conc * 10e-7] * n
         ax.scatter(tmp_c, deaths, color='black')
 
     return fig, ax
@@ -345,12 +350,14 @@ def plot_death_avgdiv(concs, population_dfs, title="Unknown Condition"):
     ax.set_xlim(1.0e-10, 1.0e-4)
     # ax.set_ylim(-0.01,0.03)
     # plt.text(0,4.5,title)
+    n_meas = len(population_dfs[0])
+
     n = 0
     for conc in concs:
         a_rates = []
         deaths = []
         deathperdiv = []
-        for num in range(3):
+        for num in range(n_meas):
             tmp_rates, tot_deaths, _ = calc_rates(population_dfs[conc][num])
             a_rates.append(tmp_rates['a'])
             deaths.append(tot_deaths)
