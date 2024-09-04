@@ -120,7 +120,11 @@ def retrieve_cellState(run_time, cells, return_all_prot=False, cells_starting_at
                     
                 else:
                     if cells['time'][ii][0]==0 and div_ind[0]>0: # doesn't start at a mitosis (cdc20 peak) and ends at next peak or death 
-                        tmp_counts = {'Starting cell' : True, 'End_of_Expt' : False, 'Death' : False, 'Birthtime' : cells['time'][ii][0], 'Lifespan' : (cells['time'][ii][div_ind[0]] - cells['time'][ii][0])} #add first event = from start of experiment to first mitosis
+                        tmp_counts = {'Starting cell' : True, 
+                        			  'End_of_Expt' : False, 
+                        			  'Death' : False, 
+                        			  'Birthtime' : cells['time'][ii][0], 
+                        			  'Lifespan' : (cells['time'][ii][div_ind[0]] - cells['time'][ii][0])} # add first event = from start of experiment to first mitosis
                         IMT_eoe_counts = pd.concat([IMT_eoe_counts, pd.DataFrame(tmp_counts, index=[0])], ignore_index=True)
                         
                     
