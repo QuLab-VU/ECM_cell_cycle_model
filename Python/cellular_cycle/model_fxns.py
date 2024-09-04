@@ -363,7 +363,7 @@ def plot_death_avgdiv(concs, population_dfs, title="Unknown Condition"):
 
 
 def runIMTs(init, run_time, observed_cells_time, model, ECM_conditions, condition, 
-            sampled_parameter_names, IMTs_count, inhib, SAVE_DIR, vebose=False):
+            sampled_parameter_names, IMTs_count, inhib, SAVE_DIR, verbose=False):
     all_IMTs = []
     n = 0
     while len(all_IMTs) < IMTs_count:
@@ -371,7 +371,7 @@ def runIMTs(init, run_time, observed_cells_time, model, ECM_conditions, conditio
                                                                              ECM_conditions, condition,
                                                                              sampled_parameter_names, thr=[0.26, 0.14],
                                                                              return_plot=False, bypass=True)
-        IMT_eoe_counts, all_prot = retrieve_cellState(run_time, cells, return_all_prot=True)
+        IMT_eoe_counts, all_prot = retrieve_cellState(run_time, cells, return_all_prot=True, verbose=verbose)
         all_events_simulated = call_events(run_time, IMT_eoe_counts)
 
         mits = all_events_simulated.loc[all_events_simulated['event'] == 'mitosis'].reset_index()
