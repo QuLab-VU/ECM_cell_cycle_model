@@ -5,10 +5,11 @@ import pandas as pd
 import numpy as np
 from Cell_Population_Simulation import Cell_Population_Simulation
 from call_cell_events import call_events
-from retrieve_cellState_dw_2 import retrieve_cellState
+from retrieve_cellState import retrieve_cellState
 from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
 from pathlib import Path
 from typing import List
+import fracprolif as fp
 
 def plotObs(model, obs, times, tpos, title=None, ax=None, legend=True, **kwargs):
     """Plot an observable of a model"""
@@ -59,7 +60,7 @@ def get_model_observable_names(model_code_filepath: str) -> List[str]:
     out = [x.split("', ")[0] for x in out if "', " in x]
     return out
 
-def calc_rates(population_df):
+def calc_rates(population_df, fp=fp):
     population_history = population_df
     parameters_sim = {}
     if len(population_history) > 0:
@@ -157,8 +158,7 @@ def calc_death(cells, all_events_simulated):
     return [a_rate, num_deaths, total_time]
 
 
-# NOTE: The run_treatment function will not work when loading from here since model is not defined
-def run_treatment(inhib_name, inhib_conc):
+def run_treatment(model, inhib_name, inhib_conc):
     model.parameters[inhib_name].value = inhib_conc
 
     (check, population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model,
@@ -187,7 +187,7 @@ def fit_DIP(cell_count, run_time):
 def plot_dip(concs, DIPs, title="Unknown Condition"):
     fig, ax = plt.subplots()
 
-    ax.set_xlabel('Conc (um)')
+    ax.set_xlabel('Conc (µm)')
     ax.set_ylabel('DIP')
     plt.xscale("log")
     ax.set_ylim(-0.01, 0.03)
@@ -203,22 +203,24 @@ def plot_arate(concs, population_dfs, title="Unknown Condition"):
     fig1 = plt.figure()
     ax = fig1.add_subplot(1, 1, 1)
 
-    ax.set_xlabel('Conc (um)')
+    ax.set_xlabel('Conc (µm)')
     ax.set_ylabel('Apoptosis rate')
     ax.set_xscale("log")
     ax.set_xlim(1.0e-10, 1.0e-4)
     # ax.set_ylim(-0.01,0.03)
     # plt.text(0,4.5,title)
+    n = len(population_dfs[0])
     for conc in concs:
         a_rates = []
-        for num in range(3):
+        for num in range(n):
             tmp_rates, _, _ = calc_rates(population_dfs[conc][num])
             a_rates.append(tmp_rates['a'])
 
-        tmp_c = [conc * 10e-7] * 3
+        tmp_c = [conc * 10e-7] * n
         ax.scatter(tmp_c, a_rates, color='black')
 
     return fig, ax
+
 
 
 def plot_drate(concs, population_dfs, title="Unknown Condition"):
@@ -296,22 +298,22 @@ def plot_divdeath_totals(concs, population_dfs, title="Unknown Condition"):
     for conc in concs:
         d_rates = []
         a_rates = []
-        for num in range(3):
+        n = len(population_dfs[0])
+        for num in range(n):
             tmp_rates, death_num, div_num = calc_rates(population_dfs[conc][num])
             tot_events = death_num + div_num
             a_rates.append(death_num / tot_events)
             d_rates.append(div_num / tot_events)
 
-        tmp_c = [conc * 10e-7] * 3
+        tmp_c = [conc * 10e-7] * n
         # ax.scatter(tmp_c,d_rates, color='tab:blue')
         ax.scatter(tmp_c, a_rates, color='tab:red')
 
     return fig, ax
 
-
 def plot_numberdeaths(concs, population_dfs, title="Unknown Condition"):
-    fig1 = plt.figure()
-    ax = fig1.add_subplot(1, 1, 1)
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
 
     ax.set_xlabel('Conc (um)')
     ax.set_ylabel('Death Count')
@@ -361,7 +363,7 @@ def plot_death_avgdiv(concs, population_dfs, title="Unknown Condition"):
 
 
 def runIMTs(init, run_time, observed_cells_time, model, ECM_conditions, condition, 
-            sampled_parameter_names, IMTs_count, inhib, SAVE_DIR):
+            sampled_parameter_names, IMTs_count, inhib, SAVE_DIR, vebose=False):
     all_IMTs = []
     n = 0
     while len(all_IMTs) < IMTs_count:
@@ -384,14 +386,12 @@ def runIMTs(init, run_time, observed_cells_time, model, ECM_conditions, conditio
         else:
             all_IMTs.extend(mits_list_r)
             all_g1s.extend(g1_tmp)
-
-        # filename_cell_count = Path(SAVE_DIR, f'cell_counts_{condition}_{n}_cycdi_0_4.csv')
-        # np.savetxt(filename_cell_count, cell_count, delimiter=',')
-
+        if verbose:
+            print(f'runIMT round {n} has {len(all_IMTs)} IMT values')
         n += 1
 
-    filename_IMT = Path(SAVE_DIR, f'IMTs_{condition}_{inhib}.csv')
-    filename_g1 = Path(SAVE_DIR, f'G1s_{condition}_{inhib}.csv')
+    filename_IMT = SAVE_DIR / f'IMTs_{condition}_{inhib}.csv'
+    filename_g1 = SAVE_DIR / f'G1s_{condition}_{inhib}.csv'
     print(f'Saving {filename_IMT} and {filename_g1}...')
     np.savetxt(filename_IMT, all_IMTs, delimiter=',')
     np.savetxt(filename_g1, all_g1s, delimiter=',')

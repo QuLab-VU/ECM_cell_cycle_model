@@ -29,7 +29,7 @@ from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
 import fracprolif as fp
 
 # Import functions related to the data processing
-from retrieve_cellState_dw_2 import retrieve_cellState
+from retrieve_cellState import retrieve_cellState
 from call_cell_events import call_events
 
 
