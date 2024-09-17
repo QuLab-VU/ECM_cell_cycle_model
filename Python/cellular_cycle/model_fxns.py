@@ -10,6 +10,10 @@ from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
 from pathlib import Path
 from typing import List
 import fracprolif as fp
+from scipy.ndimage import gaussian_filter
+from scipy.signal import find_peaks
+from statistics import mean
+
 
 def plotObs(model, obs, times, tpos, title=None, ax=None, legend=True, **kwargs):
     """Plot an observable of a model"""
@@ -403,19 +407,26 @@ def runIMTs(init, run_time, observed_cells_time, model, ECM_conditions, conditio
     np.savetxt(filename_IMT, all_IMTs, delimiter=',')
     np.savetxt(filename_g1, all_g1s, delimiter=',')
 
+
 def load_sim_output(filenames: list) -> pd.DataFrame:
     # Function copied from 05_UMAP_of_stoch_sims.ipynb 20240821
     sim_data = pd.DataFrame()
+    dfs = []
     for i, f in enumerate(filenames):
-        tmp = pd.read_csv(f, sep=",", header=None, usecols = range(0,19))
-        tmp.columns = ["skp2", "p21", "pp21", "cdh1_act", "cdh1_inact", "myc", "cycD", "cycD-p21", 
+        # Extract base file name without extension
+        base_name = Path(f).parts[-1].replace('.csv','')
+
+        df = pd.read_csv(f, sep=",", header=None, usecols = range(0,19))
+        df.columns = ["skp2", "p21", "pp21", "cdh1_act", "cdh1_inact", "myc", "cycD", "cycD-p21", 
         "Rb", "pRb", "E2F", "E2F-Rb", "cycE", "cycE-p21", "cycA", "cycA-p21",
         "cycB", "cycB-p21", "cdc20"]
-        tmp = tmp.drop(columns=['cdh1_inact'])
-        if i == 0:
-            sim_data = tmp
-        else:
-            sim_data = pd.concat([sim_data,tmp], ignore_index=True)
+        df = df.drop(columns=['cdh1_inact'])
+        df.index = pd.MultiIndex.from_arrays(
+            [[base_name] * len(df), range(1, len(df) + 1)],
+            names=['File Name', 'Time index']
+        )
+        dfs.append(df)
+    sim_data = pd.concat(dfs)
     return sim_data
 
 def calc_minmax(filenames):
@@ -496,3 +507,109 @@ def load_norm_data(filenames, filenames_ode, max_prots, min_prots, time_all, ini
         all_prot_tmp_ode = np.append(all_prot_tmp_ode, prot_re_tmp, axis=0)
         
     return all_prot_tmp, all_prot_tmp_ode, all_time_tmp, all_time_at_tmp
+    
+def get_traj(embed_dat, pos, trk_len):
+    if pos > len(embed_dat)/trk_len:
+        print('Position out of range')
+        return np.nan   
+    embed_traj = embed_dat[pos*trk_len:(pos+1)*trk_len]
+    return embed_traj
+
+
+def plot_traj(embed_dat, pos, trk_len, ax=None, color='gray', title=None):
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(5,5))
+    
+    params = {'axes.titley': 1,
+            'axes.titlepad': 5,
+            'axes.labelsize': 16,
+            'axes.edgecolor': "black",
+            'axes.titlesize': 18,
+            'xtick.labelsize': 14,
+            'ytick.labelsize': 14}
+    plt.rcParams.update(params)
+
+    embed_ode = get_traj(embed_dat, pos, trk_len)
+    ax.set_title(title)
+    ax.plot(embed_ode[:,0], embed_ode[:,1], color=color, lw=0.1)
+    return ax
+
+
+def restructProt(protDF, embedDF, timeDF, win_len=int(4/0.1)): ## win_len=int(window/dt)
+    peaks_E, _ = find_peaks(protDF.iloc[:,int((win_len*11+win_len/2)-1)], prominence = 30/200, distance = 10)
+    peaks_cdc, _ = find_peaks(protDF.iloc[:,int((win_len*17+win_len/2)-1)], prominence = 30/200, distance = 10)
+    
+    mit_win = pd.DataFrame()
+    time_win = pd.DataFrame()
+    umap_win = pd.DataFrame()
+    num = 1
+    
+    for n in range(2,len(peaks_cdc)-3):   #make sure we have divisions at ends 
+        tmp_mit = peaks_cdc[n]
+        tmp_mit2 = peaks_cdc[n+1]
+        tmp_mit3 = peaks_cdc[n+2]
+        tmp_mit4 = peaks_cdc[n+3]
+        
+        tmp_g1_s = peaks_E[(tmp_mit < peaks_E) & (peaks_E < tmp_mit2)]
+        tmp_g1_s_2 = peaks_E[(tmp_mit2 < peaks_E) & (peaks_E < tmp_mit3)]
+        tmp_g1_s_3 = peaks_E[(tmp_mit3 < peaks_E) & (peaks_E < tmp_mit4)]    
+             
+        if (np.size(tmp_g1_s) > 0) & (np.size(tmp_g1_s_2)>0) & (np.size(tmp_g1_s_3)>0):
+            ordered = [tmp_mit, tmp_g1_s[0], tmp_mit2, tmp_g1_s_2[0], tmp_mit3, tmp_g1_s_3[0], tmp_mit4]
+            g1_len_tmp = np.array(timeDF.iloc[ordered[3],0]) - np.array(timeDF.iloc[[ordered[2]],0])
+            tmp_prot = protDF.iloc[int(ordered[1]):int(ordered[4]),:]
+            tmp_umap = embedDF.iloc[int(ordered[1]):int(ordered[4]),:]
+            tmp_time = timeDF.iloc[int(ordered[1]):int(ordered[4]),:]
+            tmp = [g1_len_tmp]*len(tmp_time)
+            tmp_g1s = [int(ordered[1])]*len(tmp_time)
+            tmp_mit = [int(ordered[2])]*len(tmp_time)
+            tmp_g1s2 = [int(ordered[3])]*len(tmp_time)
+            tmp_mit2 = [int(ordered[4])]*len(tmp_time)
+            
+            tmp_time.insert(0, 'mit2', tmp_mit2)
+            tmp_time.insert(0, 'G1-S_2', tmp_g1s2)
+            tmp_time.insert(0, 'mit', tmp_mit)
+            tmp_time.insert(0, 'G1-S', tmp_g1s)
+            tmp_time.insert(0, 'G1_len', tmp)
+            tmp_time.insert(0, 'div', [num]*len(tmp_time))
+            num += 1
+            
+            mit_win = pd.concat([mit_win,tmp_prot],ignore_index=True)
+            time_win = pd.concat([time_win, tmp_time], ignore_index=True)
+            umap_win = pd.concat([umap_win, tmp_umap], ignore_index=True)
+            
+    return mit_win, time_win, umap_win
+
+def cosine_similarity(X, Y):
+    '''
+    Calculate the cosine similarity between two vectors X and Y.
+    '''
+    # Convert lists to numpy arrays if they are not already
+    X = np.array(X)
+    Y = np.array(Y)
+    
+    # Calculate the dot product
+    dot_product = np.dot(X, Y)
+    
+    # Calculate the norm (magnitude) of each vector
+    norm_X = np.linalg.norm(X)
+    norm_Y = np.linalg.norm(Y)
+    
+    # Calculate cosine similarity
+    similarity = dot_product / (norm_X * norm_Y)
+    
+    return similarity
+
+def get_cos_similarities(traj, v_len, offset):
+    '''
+    Calculate the cosine similarities between the vectors in a trajectory.
+    '''
+    cos_similarities = []
+    
+    # Calculate the cosine similarity between each vector in the trajectory and the vector v_len steps ahead of it
+    for i in range(len(traj) - v_len - offset):
+        v1 = traj[i + v_len,:] - traj[i,:]
+        v2 = traj[i + v_len + offset,:] - traj[i + offset,:]
+        cos_similarities.append(cosine_similarity(v1,v2))
+    
+    return cos_similarities
