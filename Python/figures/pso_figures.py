@@ -67,30 +67,17 @@ def import_data_pso(dimensions, iterations, path_pso):
     frac_prolif_parameters_original[('cost', 'total cost likelihood')] = frac_prolif_parameters_original['cost'].drop('- log prior', axis=1).sum(axis=1, skipna=False)    
     frac_prolif_parameters_original.replace([np.inf, -np.inf], np.nan, inplace=True)
     
-    def plot_dist(frac_prolif_parameters_pso, var):
-        values = frac_prolif_parameters_pso[('cost', var)]
-        sorted_values = np.sort(values[~np.isnan(values) & np.isfinite(values)])
-        x = np.arange(len(sorted_values))
-        plt.plot(x, sorted_values)
-        plt.fill_between(x, sorted_values, min(sorted_values), alpha=0.5)
-        plt.xlabel('Index')
-        plt.ylabel(var)
-        plt.xlim(0, len(frac_prolif_parameters_pso))
-        
-        
-    plot_dist(frac_prolif_parameters_pso, '- log prior')
-    plt.plot([0, iterations*dimensions],2*[frac_prolif_parameters_original[('cost', '- log prior')]], color='red')
-    plt.show()
-    
-    plot_dist(frac_prolif_parameters_pso, 'total cost likelihood')
-    plt.plot([0, iterations*dimensions],2*[frac_prolif_parameters_original[('cost', 'total cost likelihood')]], color='red')
-    plt.show()
-    
     return time_dict_original, cell_count_dict_original, frac_prolif_parameters_original, frac_prolif_parameters_pso, cell_count_dict, time_dict
 
-
-
-
+def plot_dist(frac_prolif_parameters_pso, var):
+    values = frac_prolif_parameters_pso[('cost', var)]
+    sorted_values = np.sort(values[~np.isnan(values) & np.isfinite(values)])
+    x = np.arange(len(sorted_values))
+    plt.plot(x, sorted_values)
+    plt.fill_between(x, sorted_values, min(sorted_values), alpha=0.5)
+    plt.xlabel('Index')
+    plt.ylabel(var)
+    plt.xlim(0, len(frac_prolif_parameters_pso))
 
 
 ###############################################################################
@@ -314,9 +301,14 @@ def figure_pso_cell_count(cell_count_dict_original, frac_prolif_parameters_origi
     vmax = np.nanmax(costs_array)
     vmin = np.nanmin(costs_array)
     normalize = mcolors.Normalize(vmin=vmin, vmax=vmax)
-    colormap = cm.RdYlBu   
-    fig, axs = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True, figsize=(12, 16))
-    for ax,run_time, condition, num_condition in zip(axs.flatten(), run_times, conditions, range(len(conditions))):
+    colormap = cm.RdYlBu
+
+    # fig, axs = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True, figsize=(12, 16))
+    fig, axs = plt.subplots(nrows=2, ncols=3, sharex=True, sharey=True, figsize=(16, 10))
+    axes_order = axs.flatten()
+    axes_order = [axs[0,0], axs[0,1], axs[0,2], axs[1,0], axs[1,1], axs[1,2]]
+    axes_order = [axs[0,0], axs[1,0], axs[0,1], axs[1,1], axs[0,2], axs[1,2]]
+    for ax,run_time, condition, num_condition in zip(axes_order, run_times, conditions, range(len(conditions))):
         t_sim = np.arange(0,run_time,1/3)
         for chain, iteration, cost_tmp in zip(frac_prolif_parameters_pso['pso']['chain'], frac_prolif_parameters_pso['pso']['iteration'], frac_prolif_parameters_pso[('cost', 'cost population dynamics ' + condition)]): 
             cell_count_t = np.zeros(len(t_sim))
@@ -354,6 +346,7 @@ def figure_pso_cell_count(cell_count_dict_original, frac_prolif_parameters_origi
     cb.ax.tick_params(labelsize=10)
 
     plt.tight_layout()
+    plt.savefig('/Users/jeremie/my_papers/ECM_cell_cycle/figures/dip_pso.svg')
     plt.show()
     
 
@@ -412,6 +405,7 @@ def plot_distributions_cost_pso(conditions, time_dict_pso, frac_prolif_parameter
     #fig.text(0.85, 1.01, 'IMT Time Distributions', fontsize=16, ha='center')
     
     plt.tight_layout()
+    plt.savefig('/Users/jeremie/my_papers/ECM_cell_cycle/figures/distributions_times_pso.svg')
     plt.show()
 
 ########################################################################

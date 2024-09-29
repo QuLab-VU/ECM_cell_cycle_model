@@ -20,8 +20,6 @@ sys.path.insert(0, path + "/Python/fit") #add a pathway to the fit functions #no
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-import random
 import sobol_seq
 
 ##Importing the model, models differ on their initial conditions, one being a concentration and the other a protein count
@@ -30,9 +28,9 @@ model_concentration=model
 from Austin_proliferation_model_population_5 import model
 model_population=model
 
-from cost_function_BngSimulator_frac_prolif_quiescence_and_mmd_ERL_only_30_parameters_fixed_initial_concentrations_mitosis_low_high_stiffness import cost_function_reduced_quiescence_ERL_only_30_parameters
+from Python.obsolete.cost_function_BngSimulator_frac_prolif_quiescence_and_mmd_ERL_only_30_parameters_fixed_initial_concentrations_mitosis_low_high_stiffness import cost_function_reduced_quiescence_ERL_only_30_parameters
 
-from cost_function_BngSimulator_cell_count_30_parameters_middle_stiffness import cost_function_4kPa_30_parameters
+from Python.obsolete.cost_function_BngSimulator_cell_count_30_parameters_middle_stiffness import cost_function_4kPa_30_parameters
 
 ##Import the simulator: for ODE and stochastic simulation :
 from pysb.simulator import BngSimulator
@@ -170,9 +168,6 @@ cost_function_4kPa_30_parameters(10**np.array(original_parameters), 'original_pa
 
 parameter_vector = 10**np.array(original_parameters)
 idx='original_parameters'
-
-from runAKTERK_2 import runAKTERK
-
 
 parameters_original_ERL = pd.read_pickle(r"C:\Users\Grim.M\Ecole\Ens\Master\S2\Stage\Code\fit_data\sobol_seq\version 6\cost\parameters_original_parameters_high_and_low_stiffness_ERL.pkl")
 

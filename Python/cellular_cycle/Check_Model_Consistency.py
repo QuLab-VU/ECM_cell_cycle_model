@@ -5,18 +5,12 @@ Created on Tue Feb 11 17:48:30 2020
 @author: Grim.M
 Title: runStochCell
 """
-
-import sys
-import os
-sys.path.insert(0, os.path.dirname(__file__) + "/../cellular_cycle")
-
 # import necessary packages
-from peakfinder import peakfinder
+from Python.cellular_cycle.peakfinder import peakfinder
 from pysb.simulator import ScipyOdeSimulator
 from pysb.simulator import BngSimulator
 import numpy as np
 import scipy.stats as ss
-
 import matplotlib.pyplot as plt
 
 def Check_Model_Consistency(model, cycling_species = ['obsCdc20', 'obsCycE', 'obsCycD', 'obsp21'], thr = [0.26, 0.18], return_plot = False):
@@ -223,8 +217,8 @@ def Check_Model_Consistency(model, cycling_species = ['obsCdc20', 'obsCycE', 'ob
 # Test Check_Model_Consistency
 
 if __name__=="__main__":
-    # import model
-    from cell_cycle_death_model import model
+    import os
+    from Python.cellular_cycle.cell_cycle_death_model import model
     import pandas as pd
 
     # import pysb sampled parameters
@@ -232,7 +226,6 @@ if __name__=="__main__":
 
     # Importing the parameters:
     new_param = pd.read_csv(os.path.dirname(__file__) + '/../model_data/parameters.csv')
-    del new_param['Stress']
     for key in new_param.keys():
         try:
             if model.parameters[key].value != new_param[key][0]:

@@ -10,27 +10,24 @@ Title: runAKTERK
 import sys
 import os
 import numpy as np
-import pandas as pd
 
 # Import functions related to the model
-sys.path.insert(0, os.path.dirname(__file__) + "/../cellular_cycle")
-from Check_Model_Consistency import Check_Model_Consistency
+# sys.path.insert(0, os.path.dirname(__file__) + "/../cellular_cycle")
+from Python.cellular_cycle.Check_Model_Consistency import Check_Model_Consistency
 from pysb.simulator import BngSimulator
 from peakfinder import peakfinder
 
 # Import functions related to the plots
 sys.path.insert(0, os.path.dirname(__file__) + "/../figures")
-from plots_cell_population_simulation import plot_cell_count
-from plots_cell_population_simulation import break_down_cell_life
-from plots_cell_population_simulation import plot_digraph_population_history
-from plots_cell_population_simulation import plot_tree_from_population_df
-from plots_cell_population_simulation import plot_event_population_history
-from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
-import fracprolif as fp
+from Python.figures.plots_cell_population_simulation import plot_cell_count
+from Python.figures.plots_cell_population_simulation import break_down_cell_life
+from Python.figures.plots_cell_population_simulation import plot_digraph_population_history
+from Python.figures.plots_cell_population_simulation import plot_tree_from_population_df
+from Python.figures.plots_cell_population_simulation import plot_event_population_history
 
-# Import functions related to the data processing
-from retrieve_cellState import retrieve_cellState
-from call_cell_events import call_events
+# Import functions related to the data processing, not used any longer. To check the new way
+from Python.obsolete.retrieve_cellState import retrieve_cellState
+from Python.obsolete.call_cell_events import call_events
 
 
 #######################################################################
@@ -45,9 +42,7 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
     condition: condition (stiffness and drug treatment)
     cond_split_DMSO: condition for determinstic simulation, using DMSO treatment (initially, cells are untreated)
     """
-    print(condition)
-
-    initial_concentrations = pd.read_csv(os.getcwd() + '/model_data/initial_concentrations.csv')
+    initial_concentrations = pd.read_csv('../model_data/initial_concentrations.csv')
     for key in initial_concentrations.keys():
         try:
             model.parameters[key].value = initial_concentrations[key][0] / model.parameters['omega'].value
@@ -504,9 +499,8 @@ def Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_c
 
 if __name__=="__main__":
     # import model
-    from cell_cycle_death_model import model
+    from Python.cellular_cycle.cell_cycle_death_model import model
     import pandas as pd
-    import matplotlib.pyplot as plt
 
     # import pysb sampled parameters
     sampled_parameter_names = np.loadtxt(os.path.dirname(__file__) + '/../model_data/sampled_parameter_names.txt', dtype=str)
@@ -543,7 +537,7 @@ if __name__=="__main__":
     run_time = 120
     observed_cells_time = 120
     
-    path_savefig = "/Users/jeremie/Downloads"
+    path_savefig = "/Users/jeremie/my_papers/ECM_cell_cycle/figures"
 
     (check, population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model, ECM_conditions, condition, sampled_parameter_names, thr=[0.26, 0.14], return_plot=True)
     print(cell_count)
@@ -579,6 +573,7 @@ if __name__=="__main__":
     print(cells["division lineage history"])
     print(cells["end of recording"])
 
+    # Former data extraction. Compare with the new method
     IMT_eoe_counts = retrieve_cellState(run_time, cells, return_all_prot=False,
                                         cells_starting_at_mitosis=False)  # cell count
     all_events_simulated = call_events(run_time, IMT_eoe_counts);

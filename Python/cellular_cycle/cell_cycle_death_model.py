@@ -10,7 +10,6 @@ Title: cell_cycle_death_model
 from pysb import *
 from pysb.simulator import ScipyOdeSimulator, BngSimulator
 from pylab import linspace, plot, xlabel, ylabel, legend, figure, show
-import sympy as sp
 
 Model()
 
@@ -534,7 +533,7 @@ if __name__ == '__main__':
     plot_results([sim_result_ODE, sim_result_SSA], ['ODE', 'SSA'])
 
     # Import most up-to-date model and compare time courses
-    from Austin_proliferation_model_6 import model as model_austin
+    from Python.obsolete.Austin_proliferation_model_6 import model as model_austin
     param_values = {}
     for p in model.parameters:
         if p.name not in ['AKT', 'ERK', 'FAK']:

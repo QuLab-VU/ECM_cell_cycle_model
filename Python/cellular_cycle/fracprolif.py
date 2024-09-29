@@ -13,7 +13,6 @@ from scipy.stats import norm                  # Normal distribution functions
 import scipy.integrate as integrate           # Integration functions
 import matplotlib.pyplot as plt               # Plotting library
 from sklearn.linear_model import LinearRegression    # Linear regression function
-from scipy.optimize import leastsq            # Least squares optimization function
 
 
 
@@ -339,16 +338,25 @@ if __name__ == "__main__":
     #         mu       sigma      lambda           Q
     #18.89452189  1.67126329  0.09735639  0.59049561
 
+    # assert that those values are equal to the ones obtained
+    assert np.allclose(m['x'], [18.89452189, 1.67126329, 0.09735639, 0.59049561], atol=1e-03)
+
 
     v = q_rates(m)
 
     #         d          q
     #0.02475328 0.03569364
 
+    # assert that those values are equal to the ones obtained
+    assert np.allclose([v['d'], v['q']], [0.02475328, 0.03569364], atol=1e-03)
+
     half_imt, untreated_division_rate, a = death_rate(Time_h, card_total, card_total_e16000, v)
 
     #          a
     #0.004111099
+
+    # assert that those values are equal to the ones obtained
+    assert np.allclose(a, 0.004111099, atol=1e-03)
 
 
     y = np.array(card_total_e16000) - card_total_e16000[0]
@@ -376,12 +384,5 @@ if __name__ == "__main__":
         return - sum([np.log(1-Q) + np.log(demg(i, mu = mu, sigma = sigma, lambd = lambd)) for i in  mitotic_lifespans]) - sum([np.log(Q+(1-Q)*pemg(i,  mu = mu, sigma = sigma, lambd = lambd, lower_tail = False)) for i in censored_lifespans])
 
     bounds = [(1,60), (0.1, (max(mitotic_lifespans) - min(mitotic_lifespans))), (0.01, 10), (1e-31, 0.9999999)]
-    #
-    #m = minimize(qsurvival_nllik, x0, method='nelder-mead', bounds=bounds) #Change the method to minimize
-    #x: array([18.89482881,  1.67120341,  0.09735528,  0.59049594])
-    #x0: array([25.5       , 10.35847627,  0.03450854,  0.5       ])
 
-    #m = minimize(qsurvival_nllik, x0, method="L-BFGS-B", bounds=bounds)
 
-    # m = minimize(qsurvival_nllik, x0, method="TNC", bounds=bounds)
-    # m = minimize(qsurvival_nllik, x0, method="SLSQP", bounds=bounds)

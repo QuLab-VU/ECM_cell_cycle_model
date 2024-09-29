@@ -24,7 +24,7 @@ from pysb.simulator import BngSimulator
 import numpy as np
 import matplotlib.pyplot as plt
 
-from Austin_proliferation_model_6 import model as model_previous
+from Python.obsolete.Austin_proliferation_model_6 import model as model_previous
 
 ###############################################################################
 #Compare with matlab simulations

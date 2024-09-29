@@ -3,7 +3,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 path = os.getcwd()
-from pso_figures import figure_pso_cell_count, plot_distributions_cost_pso
+from pso_figures import figure_pso_cell_count, plot_distributions_cost_pso, plot_dist
 import re
 from pathlib import Path
 import glob
@@ -150,24 +150,24 @@ def import_data_pso(dimensions, iterations, conditions, path_pso):
         '- log prior', axis=1).sum(axis=1, skipna=False)
     frac_prolif_parameters_original.replace([np.inf, -np.inf], np.nan, inplace=True)
 
-    def plot_dist(frac_prolif_parameters_pso, var):
-        values = frac_prolif_parameters_pso[('cost', var)]
-        sorted_values = np.sort(values[~np.isnan(values) & np.isfinite(values)])
-        x = np.arange(len(sorted_values))
-        plt.plot(x, sorted_values)
-        plt.fill_between(x, sorted_values, min(sorted_values), alpha=0.5)
-        plt.xlabel('Index')
-        plt.ylabel(var)
-        plt.xlim(0, len(frac_prolif_parameters_pso))
+    # def plot_dist(frac_prolif_parameters_pso, var):
+    #     values = frac_prolif_parameters_pso[('cost', var)]
+    #     sorted_values = np.sort(values[~np.isnan(values) & np.isfinite(values)])
+    #     x = np.arange(len(sorted_values))
+    #     plt.plot(x, sorted_values)
+    #     plt.fill_between(x, sorted_values, min(sorted_values), alpha=0.5)
+    #     plt.xlabel('Index')
+    #     plt.ylabel(var)
+    #     plt.xlim(0, len(frac_prolif_parameters_pso))
 
-    plot_dist(frac_prolif_parameters_pso, 'total cost likelihood')
-    plt.plot([0, iterations * dimensions],
-             2 * [frac_prolif_parameters_original['cost']['total cost likelihood'][0]])
-    plt.show()
-    plot_dist(frac_prolif_parameters_pso, '- log prior')
-    plt.plot([0, iterations * dimensions], 2 * [frac_prolif_parameters_original['cost']['- log prior'][0]],
-             color='red')
-    plt.show()
+    # plot_dist(frac_prolif_parameters_pso, 'total cost likelihood')
+    # plt.plot([0, iterations * dimensions],
+    #          2 * [frac_prolif_parameters_original['cost']['total cost likelihood'][0]])
+    # plt.show()
+    # plot_dist(frac_prolif_parameters_pso, '- log prior')
+    # plt.plot([0, iterations * dimensions], 2 * [frac_prolif_parameters_original['cost']['- log prior'][0]],
+    #          color='red')
+    # plt.show()
 
     return time_dict_original, cell_count_dict_original, frac_prolif_parameters_original, frac_prolif_parameters_pso, cell_count_dict, time_dict
 
@@ -180,6 +180,20 @@ if __name__ == '__main__':
     conditions = ['0.6 kPa DMSO', '0.6 kPa erlotinib', '4 kPa DMSO', '4 kPa erlotinib', '55 kPa DMSO', '55 kPa erlotinib']
 
     time_dict_original, cell_count_dict_original, frac_prolif_parameters_original, frac_prolif_parameters_pso, cell_count_dict_pso, time_dict_pso = import_data_pso(dimensions, iterations, conditions, path_pso)
+
+    plot_dist(frac_prolif_parameters_pso, '- log prior')
+    plt.plot([0, iterations * dimensions], 2 * [frac_prolif_parameters_original[('cost', '- log prior')].values[0,0]], color='red')
+    # save in /Users/jeremie/my_papers/ECM_cell_cycle/figures in svg
+    # plt.savefig(path + "/../fit_data/pso/log_prior_pso.svg")
+    plt.show()
+
+    plot_dist(frac_prolif_parameters_pso, 'total cost likelihood')
+    plt.plot([0, iterations * dimensions], 2 * [frac_prolif_parameters_original[('cost', 'total cost likelihood')].values[0,0]],
+             color='red')
+    plt.savefig("/Users/jeremie/my_papers/ECM_cell_cycle/figures/total_cost_likelihood_pso.svg")
+    plt.show()
+
+    # value of frac_prolif_parameters_original[('cost', 'total cost likelihood')]
 
     # save frac_prolif_parameters_pso in fit_data/pso
     frac_prolif_parameters_pso.to_pickle(path + "/../fit_data/pso/frac_prolif_parameters_pso.pkl")
@@ -194,8 +208,9 @@ if __name__ == '__main__':
     frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(('cost', 'total cost likelihood'), ascending=True)
     frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(('cost', 'cost population dynamics 0.6 kPa DMSO'), ascending=True)
     frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(('cost', 'cost custom'), ascending=True)
+    frac_prolif_parameters_pso = frac_prolif_parameters_pso.sort_values(('cost', 'total cost likelihood'), ascending=True)
 
-    figure_pso_cell_count(cell_count_dict_original, frac_prolif_parameters_original, frac_prolif_parameters_pso.iloc[0:2], cell_count_dict_pso, conditions, run_times, means, stdevs)
+    figure_pso_cell_count(cell_count_dict_original, frac_prolif_parameters_original, frac_prolif_parameters_pso.iloc[0:40], cell_count_dict_pso, conditions, run_times, means, stdevs)
     times = ['G1', 'S-M']
     plot_distributions_cost_pso(conditions, time_dict_pso, frac_prolif_parameters_pso.iloc[0:40], all_IMTs, frac_prolif_parameters_original, time_dict_original, times)
 

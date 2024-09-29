@@ -10,7 +10,6 @@ Title: runAKTERK
 import sys
 import os
 import numpy as np
-import pandas as pd
 
 # Import functions related to the model
 sys.path.insert(0, __file__ + "/../cellular_cycle")
@@ -23,7 +22,7 @@ sys.path.insert(0, os.getcwd() + "/../figures")
 from plots_cell_population_simulation import plot_cell_count
 
 from retrieve_cellState_dw_2 import retrieve_cellState
-from call_cell_events import call_events #
+from Python.obsolete.call_cell_events import call_events #
 
 
 #######################################################################
@@ -493,7 +492,6 @@ if __name__=="__main__":
     # import model
     from cell_cycle_death_model import model
     import pandas as pd
-    import matplotlib.pyplot as plt
 
     # import pysb sampled parameters
     sampled_parameter_names = np.loadtxt(os.path.dirname(__file__) + '/../model_data/sampled_parameter_names.txt', dtype=str)

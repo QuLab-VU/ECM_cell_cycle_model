@@ -1,18 +1,15 @@
 # functions for analyzing PySB model output
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import figure
 import pandas as pd
 import numpy as np
 from Cell_Population_Simulation import Cell_Population_Simulation
-from call_cell_events import call_events
-from retrieve_cellState import retrieve_cellState
-from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
+from Python.obsolete.call_cell_events import call_events
+from Python.obsolete.retrieve_cellState import retrieve_cellState
+from Python.obsolete.SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
 from pathlib import Path
 from typing import List
 import fracprolif as fp
-from scipy.ndimage import gaussian_filter
 from scipy.signal import find_peaks
-from statistics import mean
 
 
 def plotObs(model, obs, times, tpos, title=None, ax=None, legend=True, **kwargs):

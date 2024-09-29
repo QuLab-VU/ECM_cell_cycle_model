@@ -5,43 +5,20 @@ Created on Wed May 20 10:42:26 2020
 @author: Grim.M
 """
 
-
-
-import sys
 import os
 import re
 from pathlib import Path
 import glob
 
-sys.path.insert(0, os.path.dirname(__file__) + "/../cellular_cycle")
-sys.path.insert(0, os.path.dirname(__file__) + "/../fit")
-
-#os.environ["PYOPENCL_CTX"] ="0"
-from Cell_Population_Simulation import Cell_Population_Simulation
-from retrieve_cellState_dw_2 import retrieve_cellState
-from call_cell_events import call_events #
+from Python.cellular_cycle.Cell_Population_Simulation import Cell_Population_Simulation
 import numpy as np
 import pandas as pd
-from pysb.simulator import BngSimulator
-from pysb.simulator import ScipyOdeSimulator
-import fracprolif as fp
-from rbf_mmd import mmd_rbf
-from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
+import Python.cellular_cycle.fracprolif as fp
+from Python.fit.rbf_mmd import mmd_rbf
+from Python.obsolete.SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
 from scipy.stats import multivariate_normal
 
-###############################################################################
-# Model run check
 
-# tmp_t=np.linspace(0, 10, 100)
-# sim = BngSimulator(model, tspan=tmp_t, verbose=True)
-# traj = sim.run()
-#
-# sim = ScipyOdeSimulator(model, tspan=tmp_t, verbose=True)
-# traj = sim.run()
-
-###############################################################################
-
-# omega=200
 
 ###############################################################################
 # Importing data
@@ -67,7 +44,7 @@ stdevs=[]
 for vals in range(len(all_response)):
     stdevs.append(np.std(all_response[vals],axis=1))
   
-t = np.arange(0,420/3,1/3)
+t = np.arange(0, 420/3, 1/3)
 
 
 IMT_DATADIR = Path(os.path.dirname(__file__) + "/../../Data/Exp_Intermitotic_Times")
@@ -193,13 +170,6 @@ def log_likelihood_single_condition(model, init, run_time, inputs, condition, sa
     if check==True:
         if type(cell_count)==np.ndarray and save:
             np.save(os.path.dirname(__file__) + "/../fit_data/pso/cell_count/cell_count_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".npy", cell_count)
-
-        # IMT_eoe_counts = retrieve_cellState(run_time, cells, return_all_prot=False, cells_starting_at_mitosis=False) #cell count
-        # all_events_simulated = call_events(run_time, IMT_eoe_counts);
-        # all_events_simulated = all_events_simulated[all_events_simulated['event'] != 'Starting cell']
-        # all_events_simulated = all_events_simulated[np.array(all_events_simulated['Birthtime']<observed_cells_time)]
-        # mitotic_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='mitosis']
-        # censored_lifespans = all_events_simulated['Lifespan'][all_events_simulated['event']=='End_of_Expt']
 
         if type(population_history)==pd.DataFrame and save:
             population_history.to_pickle(os.path.dirname(__file__) + "/../fit_data/pso/distribution/Events_particle_" + str(chain) + "_iteration_" + str(iteration) + "_" + '_'.join(cond_split) + ".pkl") #doesn't save all imts, only the cells that are born before 30 hours

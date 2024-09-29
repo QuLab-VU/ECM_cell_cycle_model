@@ -1,0 +1,60 @@
+arrow==1.3.0
+bio==1.5.9
+biopython==1.81
+biothings-client==0.3.0
+brokenaxes==0.5.0
+Brotli @ file:///Users/runner/miniforge3/conda-bld/brotli-split_1687884292427/work
+certifi==2023.7.22
+charset-normalizer @ file:///home/conda/feedstock_root/build_artifacts/charset-normalizer_1688813409104/work
+contourpy==1.1.0
+custom-inherit==2.4.1
+cycler==0.11.0
+Cython @ file:///Users/runner/miniforge3/conda-bld/cython_1692959665311/work
+ete3==3.1.3
+ffmpeg-python==0.2.0
+fonttools==4.42.1
+future==0.18.3
+gmpy2 @ file:///Users/runner/miniforge3/conda-bld/gmpy2_1666808753481/work
+gprofiler-official==1.0.0
+idna @ file:///home/conda/feedstock_root/build_artifacts/idna_1663625384323/work
+joblib==1.3.2
+kiwisolver==1.4.5
+llvmlite==0.41.1
+matplotlib==3.7.2
+mpmath @ file:///home/conda/feedstock_root/build_artifacts/mpmath_1678228039184/work
+multipledispatch==1.0.0
+mygene==3.2.2
+networkx @ file:///home/conda/feedstock_root/build_artifacts/networkx_1680692919326/work
+numba==0.58.1
+numpy @ file:///Users/runner/miniforge3/conda-bld/numpy_1691056328349/work
+packaging @ file:///home/conda/feedstock_root/build_artifacts/packaging_1681337016113/work
+pandas==2.0.3
+Pillow==10.0.0
+platformdirs @ file:///home/conda/feedstock_root/build_artifacts/platformdirs_1690813113769/work
+plotly==5.16.1
+pooch @ file:///home/conda/feedstock_root/build_artifacts/pooch_1679580333621/work
+pydot==1.4.2
+pynndescent==0.5.11
+pyparsing==3.0.9
+pypng==0.20220715.0
+pysb==1.15.0
+PySocks @ file:///home/conda/feedstock_root/build_artifacts/pysocks_1661604839144/work
+python-dateutil @ file:///home/conda/feedstock_root/build_artifacts/python-dateutil_1626286286081/work
+pytz==2023.3
+reportlab==4.0.6
+requests @ file:///home/conda/feedstock_root/build_artifacts/requests_1684774241324/work
+scikit-learn==1.3.0
+scipy @ file:///Users/runner/miniforge3/conda-bld/scipy-split_1692501373958/work/base/dist/scipy-1.11.2-cp310-cp310-macosx_11_0_arm64.whl#sha256=8568a0d7cbef81753fe63da9cbd21e0fb422c8d9d008487bcaed73327eaed27c
+seaborn==0.13.0
+six @ file:///home/conda/feedstock_root/build_artifacts/six_1620240208055/work
+sympy @ file:///home/conda/feedstock_root/build_artifacts/sympy_1684180540116/work
+tenacity==8.2.3
+threadpoolctl==3.2.0
+toyplot==1.0.3
+toytree==2.0.1
+tqdm==4.66.1
+types-python-dateutil==2.8.19.14
+typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1688315532570/work
+tzdata==2023.3
+umap-learn==0.5.5
+urllib3 @ file:///home/conda/feedstock_root/build_artifacts/urllib3_1689789803562/work
