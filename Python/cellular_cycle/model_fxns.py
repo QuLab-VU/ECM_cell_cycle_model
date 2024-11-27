@@ -394,18 +394,22 @@ def runIMTs(init, run_time, observed_cells_time, model, ECM_conditions, conditio
         if n == 0:
             all_IMTs = mits_list_r
             all_g1s = g1_tmp
+            all_sm = s_m_tmp
         else:
             all_IMTs.extend(mits_list_r)
             all_g1s.extend(g1_tmp)
+            all_sm.extend(s_m_tmp)
         if verbose:
             print(f'runIMT round {n} has {len(all_IMTs)} IMT values')
         n += 1
 
     filename_IMT = SAVE_DIR / f'IMTs_{condition}_{inhib}.csv'
     filename_g1 = SAVE_DIR / f'G1s_{condition}_{inhib}.csv'
-    print(f'Saving {filename_IMT} and {filename_g1}...')
+    filename_sm = SAVE_DIR / f'SMs_{condition}_{inhib}.csv'
+    print(f'Saving {filename_IMT}, {filename_g1}, and {filename_sm}...')
     np.savetxt(filename_IMT, all_IMTs, delimiter=',')
     np.savetxt(filename_g1, all_g1s, delimiter=',')
+    np.savetxt(filename_sm, all_sm, delimiter=',')
 
 
 def load_sim_output(filenames: list) -> pd.DataFrame:

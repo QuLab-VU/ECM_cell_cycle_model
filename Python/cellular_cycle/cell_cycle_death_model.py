@@ -51,7 +51,7 @@ Parameter('ERK', 0.2)  # µM
 Parameter('FAK', 0.6)  # µM
 
 Parameter('omega', 200)  # 1/µM
-Parameter('BCL2t', 0.95)  # µM
+Parameter('BCL2t', 0.845)  # µM
 Parameter('BAXt', 1)  # µM
 # TODO: Is the scaling parameter necessary?
 Parameter('s', 0.4)  # 0.4 # scaling parameter
@@ -82,10 +82,10 @@ Parameter('CycAp21_0', 0.01)
 Parameter('CycB_0', 0.085)
 Parameter('CycBp21_0', 0.01)
 Parameter('Cdc20_0', 0.03)
-Parameter('BAX_0', 0.999000159839911)
-Parameter('BAXmBCL2_0', 0.000997752220497874)
-Parameter('BH3_0', 5.81398691338436e-05)
-Parameter('BH3BCL2_0', 0.0332751934642001)
+Parameter('BAX_0', 0.93)
+Parameter('BAXmBCL2_0', 0.065)
+Parameter('BH3_0', 0)
+Parameter('BH3BCL2_0', 0.035)
 Parameter('CycDi_0', 0)
 Parameter('CycEi_0', 0)
 Parameter('CycAi_0', 0)
@@ -93,8 +93,8 @@ Parameter('CycBi_0', 0)
 Parameter('E2Fi_0', 0)
 Parameter('Cdc20i_0', 0)
 # TODO: What are BAX, BAXmBCL2, and BH3BCL2? Steady state values? What parameter values?
-Expression('BAXm_0_expr', (BAXt - 0.999000159839911 - 0.000997752220497874) * omega)  # BAXt - BAX - BAXmBCL2
-Expression('BCL2_0_expr', (BCL2t - 0.0332751934642001 - 0.000997752220497874) * omega)  # BCL2t - BH3BCL2 -BAXmBCL2
+Expression('BAXm_0_expr', (BAXt - 0.93 - 0.065) * omega)  # BAXt - BAX - BAXmBCL2
+Expression('BCL2_0_expr', (BCL2t - 0.035 - 0.065) * omega)  # BCL2t - BH3BCL2 -BAXmBCL2
 
 Initial(Skp2(), Expression('Skp2_0_expr', Skp2_0 * omega))
 Initial(p21(b=None, S='u'), Expression('p21_0_expr', p21_0 * omega))
