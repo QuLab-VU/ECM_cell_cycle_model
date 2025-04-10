@@ -219,11 +219,7 @@ def main(test_mode=False, n_test=5):
         results = []
 
         with mp.Pool(processes = PROCESSES) as p:
-        #     results = p.starmap(run_lyaps, conds)
-            for result in tqdm(p.starmap(run_lyaps_safe, conds), total=len(conds)):
-                results.append(result)
-#             with mp.Pool(processes = PROCESSES) as p:
-#                 results = p.starmap(run_lyaps_safe, conds)
+            results = p.starmap(run_lyaps_safe, conds)
 
         end = time.localtime()
         print(f'End time is {time.strftime("%Y-%m-%d %H:%M:%S",end)}')
@@ -286,7 +282,7 @@ def main(test_mode=False, n_test=5):
 if __name__ == '__main__':
     # Set test_mode=True for debugging with a subset of conditions
     print(f'XXXX\nRunning main()\nXXXX\n\n')
-    main(test_mode=True, n_test=5)
+    main(test_mode=False, n_test=5)
     
 
 
