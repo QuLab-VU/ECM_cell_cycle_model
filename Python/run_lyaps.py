@@ -18,13 +18,13 @@ from cell_cycle_death_model import model
 
 PARAM = pd.read_csv(os.getcwd() + '/model_data/parameters.csv')  # parameter file to use
 INIT_CONCS = pd.read_csv(os.getcwd() + '/model_data/initial_concentrations.csv')  # initial concentrations for simulations
-TREATMENT = 'DMSO'  # set AKT, ERK, and FAK by setting 'ERL' or 'DMSO'
+TREATMENT = 'DMSO'  # set AKT, ERK, and FAK by setting 'ERL', 'DMSO', or 'LOW'
 CYCDI_CONC = 0
-POINTS = 10  # number to divide each condition into, sets the number of points to divide cell cycle
-PROCESSES = 75  # number of pool processes to run at once
+POINTS = 5  # number to divide each condition into, sets the number of points to divide cell cycle
+PROCESSES = 6  # number of pool processes to run at once
 OVERWRITE = False  # Overwrite existing simulation files
 VERBOSE = True
-SET_JPARAM = True
+SET_JPARAM = False
 PARAM_NUM = 0
 integrator_options = {
     "rtol": 1e-12,
@@ -159,21 +159,48 @@ for key in INIT_CONCS.keys():
 model.parameters['CycDi_0'].value = CYCDI_CONC
 
 if TREATMENT == 'ERL':
-    FAKs = list(np.linspace(0.4,0.6,50))
-    tmp = list(np.linspace(0.6,1,50))
-    FAKs.extend(tmp)
-    AKTs = list(np.linspace(0.3,0.6,50))
+    FAKs = list(np.linspace(0,0.4,51))
+    tmp = list(np.linspace(0.4,0.6,51))
+    FAKs.extend(tmp[1:])
+    tmp = list(np.linspace(0.6,1,51))
+    FAKs.extend(tmp[1:])
+
+    AKTs = list(np.linspace(0,0.3,51))
+    tmp = list(np.linspace(0.3,0.6,51))
+    AKTs.extend(tmp[1:])
     tmp = [0.6]*50
     AKTs.extend(tmp)
-    ERKs = [0.2]*100
-else:
-    FAKs = list(np.linspace(0.4,0.6,50))
-    tmp = list(np.linspace(0.6,1,50))
-    FAKs.extend(tmp)
-    AKTs = list(np.linspace(0.6,1,50))
+    
+    ERKs = [0.2]*151
+    
+elif TREATMENT == 'DMSO':
+    FAKs = list(np.linspace(0,0.4,51))
+    tmp = list(np.linspace(0.4,0.6,51))
+    FAKs.extend(tmp[1:])
+    tmp = list(np.linspace(0.6,1,51))
+    FAKs.extend(tmp[1:])
+
+    AKTs = list(np.linspace(0,0.6,51))
+    tmp = list(np.linspace(0.6,1,51))
+    AKTs.extend(tmp[1:])
     tmp = [1]*50
     AKTs.extend(tmp)
-    ERKs = [1]*100
+    
+    ERKs = [1]*151
+else:
+    FAKs = list(np.linspace(0,0.4,51))
+    tmp = list(np.linspace(0.4,0.6,51))
+    FAKs.extend(tmp[1:])
+    tmp = list(np.linspace(0.6,1,51))
+    FAKs.extend(tmp[1:])
+
+    AKTs = list(np.linspace(0,0.3,51))
+    tmp = list(np.linspace(0.3,0.6,51))
+    AKTs.extend(tmp[1:])
+    tmp = [0.6]*50
+    AKTs.extend(tmp)
+    
+    ERKs = [0.1]*151
 
 conds = [(AKT, ERK, FAK) for AKT, ERK, FAK, in zip(AKTs, ERKs, FAKs)]
 
