@@ -475,7 +475,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
 if __name__ == '__main__':
 
     # Calculate Lyapunov exponents for all conditions
-    for TREATMENT in ['DMSO']:  #, 'ERL', 'LOW']:
+    for TREATMENT in ['DMSO', 'ERL', 'LOW']:
 
         # FAK: 0 -> 0.4 -> 0.6 -> 1 for all conditions
         FAKs = np.concatenate((
@@ -500,7 +500,7 @@ if __name__ == '__main__':
 
         # loop over all conditions
         print('=== %s ===' % TREATMENT)
-        for AKT, ERK, FAK in zip(AKTs[:1], ERKs[:1], FAKs[:1]):
+        for AKT, ERK, FAK in zip(AKTs, ERKs, FAKs):
             print('AKT: %g, ERK: %g, FAK: %g' % (AKT, ERK, FAK))
             lyap_exps = run_lyaps(AKT, ERK, FAK, points=9)
             print('Lyapunov exponents:', lyap_exps)
