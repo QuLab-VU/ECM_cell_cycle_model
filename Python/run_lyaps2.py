@@ -199,6 +199,8 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     y_ref = output_ref.observables
     peaks_cdc, _ = find_peaks(y_ref['obsCdc20'], prominence=0.6, distance=10)
     peaks_ref = peaks_cdc[peaks_cdc > len(y_ref) / 2]  # peaks from last half of the simulation
+    # TODO: Need a more general method for identifying the repeating peaks in the oscillation, i.e., when dealing with
+    #  complex oscillations can't assume the cycle length is the distance between two adjacent peaks
     window = list(np.arange(peaks_ref[-4], peaks_ref[-2] + 1))  # window of points to compare against
     y_cycle = y_ref[peaks_ref[-3]:peaks_ref[-2] + 1]  # concentrations for one full cycle
 
@@ -280,6 +282,10 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
 
     print('POINTS:', points)
 
+    ax_window.set_xlim(left=1800)
+    plt.show()
+    quit()
+
     slopes = []
     for kk in range(points):
         print('========\nPoint %d\n========' % kk)
@@ -288,7 +294,19 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
         ref_idx = round(len(y_cycle) / points) * kk
         window_kk = window[ref_idx:ref_idx + len(y_cycle)]
         t_0_window_kk = t_0[ref_idx:ref_idx + len(y_cycle)]
+        '''
+        print('ref_idx:', ref_idx)
+        print('len(y_cycle):', len(y_cycle))
+        print('ref_idx + len(y_cycle):', ref_idx + len(y_cycle))
+        print('len(window):', len(window))
+        print('len(window_kk):', len(window_kk))
+        print('len(t_0):', len(t_0))
+        print('len(t_0_window_kk):', len(t_0_window_kk))
+        '''
         axs_tc[kk].plot(t_0_window_kk, y_ref['obsCdc20'][window_kk], '0.75', lw=6, alpha=1, label='ref')
+
+        # t_0 = np.linspace(0, 2000, int(2e6) + 1)
+        # window = list(np.arange(peaks_ref[-4], peaks_ref[-2] + 1))  # window of points to compare against
 
         outside_kk = [window[:ref_idx], window[ref_idx + len(y_cycle):]]
         t_0_outside_kk = [t_0[:ref_idx], t_0[ref_idx + len(y_cycle):len(window)]]
@@ -500,7 +518,7 @@ if __name__ == '__main__':
 
         # loop over all conditions
         print('=== %s ===' % TREATMENT)
-        for AKT, ERK, FAK in zip(AKTs, ERKs, FAKs):
+        for AKT, ERK, FAK in [(0.792, 1, 0.496)]:  # zip(AKTs, ERKs, FAKs):
             print('AKT: %g, ERK: %g, FAK: %g' % (AKT, ERK, FAK))
             lyap_exps = run_lyaps(AKT, ERK, FAK, points=9)
             print('Lyapunov exponents:', lyap_exps)
