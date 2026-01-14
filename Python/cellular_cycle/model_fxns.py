@@ -204,8 +204,8 @@ def plot_dip(concs, DIPs, title="Unknown Condition"):
 
 
 def plot_arate(concs, population_dfs, title="Unknown Condition"):
-    fig1 = plt.figure()
-    ax = fig1.add_subplot(1, 1, 1)
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
 
     ax.set_xlabel('Conc (µm)')
     ax.set_ylabel('Apoptosis rate')
@@ -228,8 +228,8 @@ def plot_arate(concs, population_dfs, title="Unknown Condition"):
 
 
 def plot_drate(concs, population_dfs, title="Unknown Condition"):
-    fig1 = plt.figure()
-    ax = fig1.add_subplot(1, 1, 1)
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
 
     ax.set_xlabel('CDK4/6i (M)')
     ax.set_ylabel('Division rate')
@@ -240,7 +240,7 @@ def plot_drate(concs, population_dfs, title="Unknown Condition"):
     n = len(population_dfs[0])
     for conc in concs:
         d_rates = []
-        for num in range(3):
+        for num in range(n):
             tmp_rates, _, _ = calc_rates(population_dfs[conc][num])
             d_rates.append(tmp_rates['d'])
 
