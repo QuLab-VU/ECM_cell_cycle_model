@@ -428,14 +428,15 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
             leg_tc.get_title().set_fontsize(8)
 
         # filter ln(dists)
-        tt = []
-        ld = []
-        for i in range(1, len(log_dists)):
-            if log_dists[i] > log_dists[i - 1]:
-                tt.append(times[i - 1])
-                ld.append(log_dists[i - 1])
-        times = tt
-        log_dists = ld
+        if i_peak[0] - i_peak[1] > 1:  # indicates complex oscillations
+            tt = []
+            ld = []
+            for i in range(1, len(log_dists)):
+                if log_dists[i] > log_dists[i - 1]:
+                    tt.append(times[i - 1])
+                    ld.append(log_dists[i - 1])
+            times = tt
+            log_dists = ld
 
         # fit a regression line and calculate Lyaponov exponent (slope)
         max_idx = len(log_dists)
