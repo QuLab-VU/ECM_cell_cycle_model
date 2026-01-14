@@ -199,10 +199,23 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     y_ref = output_ref.observables
     peaks_cdc, _ = find_peaks(y_ref['obsCdc20'], prominence=0.6, distance=10)
     peaks_ref = peaks_cdc[peaks_cdc > len(y_ref) / 2]  # peaks from last half of the simulation
-    # TODO: Need a more general method for identifying the repeating peaks in the oscillation, i.e., when dealing with
+
+    # A more general method for identifying the repeating peaks in the oscillation, i.e., when dealing with
     #  complex oscillations can't assume the cycle length is the distance between two adjacent peaks
-    window = list(np.arange(peaks_ref[-4], peaks_ref[-2] + 1))  # window of points to compare against
-    y_cycle = y_ref[peaks_ref[-3]:peaks_ref[-2] + 1]  # concentrations for one full cycle
+    # window = list(np.arange(peaks_ref[-4], peaks_ref[-2] + 1))  # window of points to compare against
+    # y_cycle = y_ref[peaks_ref[-3]:peaks_ref[-2] + 1]  # concentrations for one full cycle
+    i_start = -2
+    ref_dt = t_0[peaks_ref[i_start]] - t_0[peaks_ref[i_start-1]]
+    i_peak = []
+    for i in np.arange(i_start - 1, i_start - len(peaks_ref) + 2, -1):
+        if np.isclose(ref_dt, t_0[peaks_ref[i]] - t_0[peaks_ref[i-1]], rtol=1e-4, atol=1e-8):
+            i_peak.append(i)
+        if len(i_peak) == 2:
+            break
+    if len(i_peak) != 2:
+        raise Exception("Couldn't find two full cycles in the reference time course.")
+    y_cycle = y_ref[peaks_ref[i_peak[0]]:peaks_ref[i_start] + 1]  # concentrations for one full cycle
+    window = list(np.arange(peaks_ref[i_peak[1]], peaks_ref[i_start] + 1))  # window of points to compare against
 
     # FIGURES
 
@@ -227,7 +240,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
 
     # 3. Peak comparisons
     nrows, ncols = get_fig_nrows_ncols(points)
-    figsize = (6.4 / 3 * ncols, 4.8 * 0.4 * nrows)
+    figsize = (6.4 / 3 * (ncols + 1), 4.8 * 0.4 * nrows)
     fig_tc, axs_tc = plt.subplots(nrows, ncols, sharex='all', sharey='all', constrained_layout=True,
                                   figsize=(4 / 3 * figsize[0], 4 / 3 * figsize[1]))  # increase width to include legend
     fig_tc.suptitle('Comparisons Between Reference and Perturbed Cycles')
@@ -282,10 +295,6 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
 
     print('POINTS:', points)
 
-    ax_window.set_xlim(left=1800)
-    plt.show()
-    quit()
-
     slopes = []
     for kk in range(points):
         print('========\nPoint %d\n========' % kk)
@@ -294,19 +303,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
         ref_idx = round(len(y_cycle) / points) * kk
         window_kk = window[ref_idx:ref_idx + len(y_cycle)]
         t_0_window_kk = t_0[ref_idx:ref_idx + len(y_cycle)]
-        '''
-        print('ref_idx:', ref_idx)
-        print('len(y_cycle):', len(y_cycle))
-        print('ref_idx + len(y_cycle):', ref_idx + len(y_cycle))
-        print('len(window):', len(window))
-        print('len(window_kk):', len(window_kk))
-        print('len(t_0):', len(t_0))
-        print('len(t_0_window_kk):', len(t_0_window_kk))
-        '''
         axs_tc[kk].plot(t_0_window_kk, y_ref['obsCdc20'][window_kk], '0.75', lw=6, alpha=1, label='ref')
-
-        # t_0 = np.linspace(0, 2000, int(2e6) + 1)
-        # window = list(np.arange(peaks_ref[-4], peaks_ref[-2] + 1))  # window of points to compare against
 
         outside_kk = [window[:ref_idx], window[ref_idx + len(y_cycle):]]
         t_0_outside_kk = [t_0[:ref_idx], t_0[ref_idx + len(y_cycle):len(window)]]
@@ -399,7 +396,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
         # loop over peaks in perturbed simulation
         times = []
         log_dists = []
-        for ii, peak in enumerate(peaks_cdc[:-2]):
+        for ii, peak in enumerate(peaks_cdc[:i_peak[1] - i_start]):
             start_idx = peak + ref_idx
             axs_obsCdc20[kk].plot(t_0[start_idx], 0, '2r', ms=8)  # starting points for comparisons
 
@@ -416,7 +413,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
             axs_tc[kk].set_title('Point %d' % kk, fontsize=12)
 
             # For the last peak, plot the portion of the cell cycle compared against the reference
-            if ii == len(peaks_cdc[:-2]) - 1:
+            if ii == len(peaks_cdc[:i_peak[1] - i_start]) - 1:
                 axs_obsCdc20[kk].plot(t_0[start_idx:start_idx + len(y_cycle)],
                                       y_out['obsCdc20'][start_idx:start_idx + len(y_cycle)], 'r', lw=3)
 
@@ -430,7 +427,17 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
             leg_tc.get_title().set_fontweight('bold')
             leg_tc.get_title().set_fontsize(8)
 
-        # calculate ln(dists), fit a regression line, and calculate Lyaponov exponent (slope)
+        # filter ln(dists)
+        tt = []
+        ld = []
+        for i in range(1, len(log_dists)):
+            if log_dists[i] > log_dists[i - 1]:
+                tt.append(times[i - 1])
+                ld.append(log_dists[i - 1])
+        times = tt
+        log_dists = ld
+
+        # fit a regression line and calculate Lyaponov exponent (slope)
         max_idx = len(log_dists)
         r2val = [0]
         while r2val[-1] < 0.95 and max_idx >= 3:
@@ -487,6 +494,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     # save and return Lyapunov exponents for all points along the cell cycle
     slopes = np.array(slopes)
     np.save(os.path.join(outdir, 'lyap'), slopes)
+
     return slopes
 
 
@@ -518,10 +526,10 @@ if __name__ == '__main__':
 
         # loop over all conditions
         print('=== %s ===' % TREATMENT)
-        for AKT, ERK, FAK in [(0.792, 1, 0.496)]:  # zip(AKTs, ERKs, FAKs):
+        for AKT, ERK, FAK in zip(AKTs, ERKs, FAKs):  # [(0.792, 1, 0.496)]: # [(0.0, 1, 0.0)]: # zip(AKTs, ERKs, FAKs):
             print('AKT: %g, ERK: %g, FAK: %g' % (AKT, ERK, FAK))
             lyap_exps = run_lyaps(AKT, ERK, FAK, points=9)
             print('Lyapunov exponents:', lyap_exps)
-            print('Mean value: %g' % np.mean(lyap_exps))
+            print('Mean value: %g\n' % np.mean(lyap_exps))
 
     plt.show()
