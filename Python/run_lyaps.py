@@ -16,21 +16,21 @@ import pyarrow.feather as feather
 sys.path.insert(0, "./cellular_cycle")
 from cell_cycle_death_model import model
 
-cwd = os.getcwd()
-PARAM = pd.read_csv(os.path.join(cwd, 'model_data', 'parameters.csv'))  # parameter file to use
-INIT_CONCS = pd.read_csv(os.path.join(cwd, 'model_data', 'initial_concentrations.csv'))  # initial concentrations
+PARAM = pd.read_csv(os.getcwd() + '/model_data/parameters.csv')  # parameter file to use
+INIT_CONCS = pd.read_csv(os.getcwd() + '/model_data/initial_concentrations.csv')  # initial concentrations for simulations
 TREATMENT = 'DMSO'  # set AKT, ERK, and FAK by setting 'ERL', 'DMSO', or 'LOW'
 CYCDI_CONC = 0
-POINTS = 10  # number to divide each condition into, sets the number of points to divide cell cycle
-PROCESSES = 6  # number of pool processes to run at once
-OVERWRITE = False  # Overwrite existing simulation files
+POINTS = 5  # number to divide each condition into, sets the number of points to divide cell cycle
+PROCESSES = 5  # number of pool processes to run at once
+OVERWRITE = True  # Overwrite existing simulation files
 VERBOSE = True
 SET_JPARAM = False
-PARAM_NUM = 0  # index of parameter set to use from sets of fit parameters
+PARAM_NUM = 0
 integrator_options = {
     "rtol": 1e-12,
     "atol": 1e-12
 }
+
 
 # Where to save large simulation output files
 SAVE_DIR = Path(Path.home(), 'ECM_mod_output')
@@ -45,18 +45,14 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
     model.parameters['ERK'].value = ERK
     model.parameters['FAK'].value = FAK
     ep = 0.001 * 200
-    t = np.linspace(0, 1000, int(1e6)+1)
-    t_0 = np.linspace(0, 2000, int(2e6)+1)
+    t = np.linspace(0, 1000, 1000001)
+    t_0 = np.linspace(0, 2000, 2000001)
     all_logz = dict.fromkeys(list(range(1, points + 1)))
 
     for kk in range(points):
-        sim_ode = ScipyOdeSimulator(model, t_0, verbose=False, compiler='cython',
+        sim_ode = ScipyOdeSimulator(model, t_0, verbose=False, compiler='python',
                                     integrator_options=integrator_options).run()
         y_out = sim_ode.observables
-
-        #####
-        plt.plot(t_0, y_out['obsCdc20'], lw=2, label='obsCdc20')
-        #####
 
         peaks_cdc, _ = find_peaks(y_out['obsCdc20'], prominence=0.6, distance=10)
         # new_y = y_out[peaks_cdc[-11]:peaks_cdc[-2]]
@@ -73,7 +69,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
             variable_range = y_out[575000:600000]
             tmp_loc = (round(len(variable_range) / (points)) * (kk))
         if verbose:
-            print('meanIMT:', meanIMT)
+            print(meanIMT)
 
 
         Initial_1 = variable_range[tmp_loc]
@@ -87,15 +83,13 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
         for key in prot_init.keys():
             model.parameters[key].value = prot_init[key] / model.parameters['omega'].value
 
-        sim_ode1 = ScipyOdeSimulator(model, t, verbose=False, compiler='cython',
+        sim_ode1 = ScipyOdeSimulator(model, t, verbose=False, compiler='python',
                                      integrator_options=integrator_options).run()
         y_out1 = sim_ode1.observables
 
         z = [0] * (round((len(y_out1) / 2000)) + 1)
         n = 0
-        print('len(y_out1)', len(y_out1))
         for i in range(0, len(y_out1), 2000):
-            print('i:', i)
             if len(peaks_half2) > 0:
                 window = y_out[peaks_half[-3]+i+tmp_loc-5000:peaks_half[-2]+i+tmp_loc+5000]
             else:
@@ -103,7 +97,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
 
             dists = [0] * len(window)
             for j in range(0, len(window)):
-                dif = np.asarray(window[j].tolist()) - np.asarray(y_out1[i].tolist())
+                dif = np.asarray(window[j].tolist())-np.asarray(y_out1[i].tolist())
                 dists[j] = norm(dif[0:19]/200)
 
             z[n] = min(dists)
@@ -112,30 +106,14 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=POINTS, ScipyOdeSimulato
         logz = [math.log(num) for num in z]
         all_logz[kk + 1] = logz
         if verbose:
-            print('[AKT, ERK, FAK, kk]:', [AKT, ERK, FAK, kk])
+            print([AKT, ERK, FAK, kk])
 
     return all_logz, meanIMT
 
 
-##### TEST - LAH
-import matplotlib.pyplot as plt
-
-AKT = 0
-FAK = 0
-ERK = 1  # DMSO
-
-plt.figure(constrained_layout=True)
-run_lyaps(AKT, ERK, FAK, points=1)
-plt.xlabel('time')
-plt.ylabel('concentration')
-plt.legend(loc='best')
-plt.show()
-quit()
-#####
-
 CURDATE = datetime.datetime.now().strftime('%Y%m%d')
 
-t = np.linspace(0, 1000, int(1e6)+1)
+t = np.linspace(0, 1000, 1000001)
 # t = np.linspace(0, 20000, 200001)
 # t = np.linspace(0, 50000, 500001)
 
@@ -144,19 +122,17 @@ model.parameters['ERK'].value = 1
 model.parameters['FAK'].value = 1
 
 # Importing the parameters:
+
 for key in PARAM.keys():
-    print(key, PARAM[key][0], model.parameters[key].value)
     try:
         if model.parameters[key].value != PARAM[key][0]:
             model.parameters[key].value = PARAM[key]
-            print('  ', model.parameters[key].value)
     except:
         print(key)
-
-# model.parameters['omega'].value = 200
+model.parameters['omega'].value = 200
 
 if SET_JPARAM:
-    with open(os.path.join('fit_data', 'pso', 'frac_prolif_parameters_pso.pkl'), 'rb') as f:
+    with open('fit_data/pso/frac_prolif_parameters_pso.pkl', 'rb') as f:
         frac_prolif_parameters_pso = pickle.load(f)
 
     frac_prolif_parameters_pso[('cost', 'custom cost populations')] = frac_prolif_parameters_pso[(
@@ -172,7 +148,8 @@ if SET_JPARAM:
                 model.parameters[key].value = new_params[key].iloc[PARAM_NUM]
         except:
             print(key)
-    # model.parameters['omega'].value = 200
+    model.parameters['omega'].value = 200
+
 
 for key in INIT_CONCS.keys():
     try:
@@ -228,11 +205,17 @@ else:
 
 conds = [(AKT, ERK, FAK) for AKT, ERK, FAK, in zip(AKTs, ERKs, FAKs)]
 
-start = time.time()
-with mp.Pool(processes = PROCESSES) as p:
-    results = p.starmap(run_lyaps, conds)
-end = time.time()
-print(end - start)
+if __name__ ==  '__main__': 
+    start = time.localtime()
+    print(f'Start time is {time.strftime("%Y-%m-%d %H:%M:%S",start)}')
+    results = []
+
+    with mp.Pool(processes = PROCESSES) as p:
+        results = p.starmap(run_lyaps, conds)    
+    end = time.localtime()
+    # print(results)
+    print(f'End time is {time.strftime("%Y-%m-%d %H:%M:%S",end)}')
+    print(f'Process took {np.round((time.mktime(end) - time.mktime(start))/60, 2)} minutes')
 
 z_list = [num[0] for num in results]
 mean_IMT = [num[1] for num in results]
