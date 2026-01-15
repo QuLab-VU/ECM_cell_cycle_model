@@ -161,7 +161,7 @@ def create_umap_projection(prot_conc, downsample=None, n_neighbors=50, min_dist=
 # integrator_options = {"rtol": 1e-12, "atol": 1e-12}
 
 def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=ScipyOdeSimulator,
-              find_peaks=find_peaks, integrator_options=None, norm=norm, math=math, verbose=False):
+              find_peaks=find_peaks, integrator_options=None, norm=norm, math=math, overwrite=True, verbose=False):
 
     if integrator_options is None:
         integrator_options = {"rtol": 1e-12, "atol": 1e-12}
@@ -507,7 +507,8 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
                           'AKT_%g_FAK_%g_ERK_%g' % (AKT, FAK, ERK))
     p = Path(outdir)
     if p.exists():
-        shutil.rmtree(p)  # removes the directory and all contents
+        if overwrite or not Path(os.path.join(outdir, 'lyap.npy')).exists():
+            shutil.rmtree(p)  # removes the directory and all contents
     p.mkdir(parents=True, exist_ok=True)
 
     for fig in figures.keys():
@@ -552,7 +553,7 @@ if __name__ == '__main__':
             # [(0.792, 1, 0.496)]:  [(0.0, 1, 0.0)]:  [(0.736, 1, 0.468)]:  zip(AKTs, ERKs, FAKs):
             # [(0.744, 1, 0.472)]:
             print('AKT: %g, ERK: %g, FAK: %g' % (AKT, ERK, FAK))
-            lyap_exps = run_lyaps(AKT, ERK, FAK, points=9)
+            lyap_exps = run_lyaps(AKT, ERK, FAK, points=9, overwrite=False)
             print('Lyapunov exponents:', lyap_exps)
             print('Mean value: %g\n' % np.mean(lyap_exps))
 
