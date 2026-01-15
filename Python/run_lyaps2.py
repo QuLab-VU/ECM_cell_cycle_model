@@ -200,6 +200,14 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     peaks_cdc, _ = find_peaks(y_ref['obsCdc20'], prominence=0.6, distance=10)
     peaks_ref = peaks_cdc[peaks_cdc > len(y_ref) / 2]  # peaks from last half of the simulation
 
+    #####
+    # plt.figure(constrained_layout=True)
+    # plt.plot(t_0, y_ref['obsCdc20'], lw=2, label='obsCdc20 (ref)')
+    # plt.xlim(left=1800, right=2000)
+    # plt.show()
+    # quit()
+    #####
+
     # A more general method for identifying the repeating peaks in the oscillation, i.e., when dealing with
     #  complex oscillations can't assume the cycle length is the distance between two adjacent peaks
     # window = list(np.arange(peaks_ref[-4], peaks_ref[-2] + 1))  # window of points to compare against
@@ -207,15 +215,26 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     i_start = -2
     ref_dt = t_0[peaks_ref[i_start]] - t_0[peaks_ref[i_start-1]]
     i_peak = []
+    # print('ref_dt:', ref_dt)
     for i in np.arange(i_start - 1, i_start - len(peaks_ref) + 2, -1):
-        if np.isclose(ref_dt, t_0[peaks_ref[i]] - t_0[peaks_ref[i-1]], rtol=1e-4, atol=1e-8):
+        # print('%d, %d:' % (i, i-1), end=' ')
+        # print('%g, %g,' % (t_0[peaks_ref[i]], t_0[peaks_ref[i-1]]), end=' ')
+        # print('%g' % (t_0[peaks_ref[i]] - t_0[peaks_ref[i-1]]), end=' ')
+        # plt.axvline(t_0[peaks_ref[i]], color='r', ls='--')
+        if np.isclose(ref_dt, t_0[peaks_ref[i]] - t_0[peaks_ref[i-1]], atol=0.01):  # rtol=1e-3, atol=1e-8):
             i_peak.append(i)
+        #     print('True')
+        # else:
+        #     print('False')
         if len(i_peak) == 2:
             break
+    # plt.show()
     if len(i_peak) != 2:
         raise Exception("Couldn't find two full cycles in the reference time course.")
     y_cycle = y_ref[peaks_ref[i_peak[0]]:peaks_ref[i_start] + 1]  # concentrations for one full cycle
     window = list(np.arange(peaks_ref[i_peak[1]], peaks_ref[i_start] + 1))  # window of points to compare against
+
+    # quit()
 
     # FIGURES
 
@@ -422,10 +441,12 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
             handles, labels = axs_tc[kk].get_legend_handles_labels()
             handles = [(handles[0], handles[1])] + list(handles[3:])
             labels = list(dict.fromkeys(labels))
-            leg_tc = axs_tc[kk].legend(handles=handles, labels=labels, loc='upper left', title='Peak', fontsize=10,
-                                       ncols=2, bbox_to_anchor=(1.01, 1.1))
+            n_peaks = len(peaks_cdc[:i_peak[1] - i_start])
+            leg_tc = fig_tc.legend(handles=handles, labels=labels, loc='upper left', title='Peak', fontsize=10,
+                                       ncols=math.ceil(n_peaks / 30), bbox_to_anchor=(0.75, 1))
             leg_tc.get_title().set_fontweight('bold')
             leg_tc.get_title().set_fontsize(8)
+            fig_tc.get_layout_engine().set(rect=(0, 0, 0.75, 1))  # (left, bottom, width, height)
 
         # filter ln(dists)
         if i_peak[0] - i_peak[1] > 1:  # indicates complex oscillations
@@ -527,7 +548,8 @@ if __name__ == '__main__':
 
         # loop over all conditions
         print('=== %s ===' % TREATMENT)
-        for AKT, ERK, FAK in zip(AKTs, ERKs, FAKs):  # [(0.792, 1, 0.496)]: # [(0.0, 1, 0.0)]: # zip(AKTs, ERKs, FAKs):
+        for AKT, ERK, FAK in zip(AKTs, ERKs, FAKs):
+            # [(0.792, 1, 0.496)]:  [(0.0, 1, 0.0)]:  [(0.736, 1, 0.468)]:  zip(AKTs, ERKs, FAKs):
             print('AKT: %g, ERK: %g, FAK: %g' % (AKT, ERK, FAK))
             lyap_exps = run_lyaps(AKT, ERK, FAK, points=9)
             print('Lyapunov exponents:', lyap_exps)
