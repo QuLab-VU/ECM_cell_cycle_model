@@ -221,7 +221,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
         # print('%g, %g,' % (t_0[peaks_ref[i]], t_0[peaks_ref[i-1]]), end=' ')
         # print('%g' % (t_0[peaks_ref[i]] - t_0[peaks_ref[i-1]]), end=' ')
         # plt.axvline(t_0[peaks_ref[i]], color='r', ls='--')
-        if np.isclose(ref_dt, t_0[peaks_ref[i]] - t_0[peaks_ref[i-1]], atol=0.01):  # rtol=1e-3, atol=1e-8):
+        if np.isclose(ref_dt, t_0[peaks_ref[i]] - t_0[peaks_ref[i-1]], atol=0.01, rtol=1e-3):
             i_peak.append(i)
         #     print('True')
         # else:
@@ -550,6 +550,7 @@ if __name__ == '__main__':
         print('=== %s ===' % TREATMENT)
         for AKT, ERK, FAK in zip(AKTs, ERKs, FAKs):
             # [(0.792, 1, 0.496)]:  [(0.0, 1, 0.0)]:  [(0.736, 1, 0.468)]:  zip(AKTs, ERKs, FAKs):
+            # [(0.744, 1, 0.472)]:
             print('AKT: %g, ERK: %g, FAK: %g' % (AKT, ERK, FAK))
             lyap_exps = run_lyaps(AKT, ERK, FAK, points=9)
             print('Lyapunov exponents:', lyap_exps)
