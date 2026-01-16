@@ -171,8 +171,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     model.parameters['ERK'].value = ERK
     model.parameters['FAK'].value = FAK
 
-    # Check if the output directory already exists and delete it if 'overwrite=True' or if it doesn't have output files.
-    # NOTE: We'll create the directory later, after confirming the system oscillates.
+    # Create output directory
     outdir_rel = os.path.join('LYAP_FIGURES', 'DMSO' if ERK == 1 else 'ERL' if ERK == 0.2 else 'LOW',
                               'AKT_%g_FAK_%g_ERK_%g' % (AKT, FAK, ERK))
     outdir = os.path.join(os.getcwd(), outdir_rel)
@@ -183,6 +182,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
         else:  # if the directory exists, includes `lyap.npy`, and overwrite=False, skip this condition
             print('%s already exists' % outdir_rel)
             return None
+    p.mkdir(parents=True, exist_ok=True)
 
     # Create simulator
     t_0 = np.linspace(0, 2000, int(2e6) + 1)
@@ -230,6 +230,13 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
         ref_dt = t_0[peaks_ref[i_start]] - t_0[peaks_ref[i_start-1]]
     except IndexError as e:  # this will happen for non-oscillatory cases
         print(e)
+        plt.figure(constrained_layout=True)
+        plt.plot(t_0, y_ref['obsCdc20'], lw=2, label='obsCdc20 (ref)')
+        plt.title('Reference Timecourse')
+        plt.xlabel('time')
+        plt.ylabel('concentration')
+        plt.legend(loc='best')
+        plt.savefig(os.path.join(outdir, 'ref'))
         return None
     i_peak = []
     # print('ref_dt:', ref_dt)
@@ -254,9 +261,6 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     # quit()
 
     # FIGURES
-
-    # Create output directory
-    p.mkdir(parents=True, exist_ok=True)
 
     # 1. UMAP projection
     print('creating UMAP projection...', end='')
