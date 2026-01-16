@@ -213,6 +213,16 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     peaks_cdc, _ = find_peaks(y_ref['obsCdc20'], prominence=0.6, distance=10)
     peaks_ref = peaks_cdc[peaks_cdc > len(y_ref) / 2]  # peaks from last half of the simulation
 
+
+    def _plot_ref_tc_error():
+        plt.figure(constrained_layout=True)
+        plt.plot(t_0, y_ref['obsCdc20'], lw=2, label='obsCdc20 (ref)')
+        plt.title('Reference Timecourse')
+        plt.xlabel('time')
+        plt.ylabel('concentration')
+        plt.legend(loc='best')
+        plt.savefig(os.path.join(outdir, 'ref'))
+
     #####
     # plt.figure(constrained_layout=True)
     # plt.plot(t_0, y_ref['obsCdc20'], lw=2, label='obsCdc20 (ref)')
@@ -223,22 +233,15 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
 
     # A more general method for identifying the repeating peaks in the oscillation, i.e., when dealing with
     #  complex oscillations can't assume the cycle length is the distance between two adjacent peaks
-    # window = list(np.arange(peaks_ref[-4], peaks_ref[-2] + 1))  # window of points to compare against
-    # y_cycle = y_ref[peaks_ref[-3]:peaks_ref[-2] + 1]  # concentrations for one full cycle
     i_start = -2
     try:
         ref_dt = t_0[peaks_ref[i_start]] - t_0[peaks_ref[i_start-1]]
     except IndexError as e:  # this will happen for non-oscillatory cases
         print(e)
-        plt.figure(constrained_layout=True)
-        plt.plot(t_0, y_ref['obsCdc20'], lw=2, label='obsCdc20 (ref)')
-        plt.title('Reference Timecourse')
-        plt.xlabel('time')
-        plt.ylabel('concentration')
-        plt.legend(loc='best')
-        plt.savefig(os.path.join(outdir, 'ref'))
+        _plot_ref_tc_error()
         return None
     i_peak = []
+    # print('len(peaks_ref):', len(peaks_ref))
     # print('ref_dt:', ref_dt)
     for i in np.arange(i_start - 1, i_start - len(peaks_ref) + 2, -1):
         # print('%d, %d:' % (i, i-1), end=' ')
@@ -254,7 +257,9 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
             break
     # plt.show()
     if len(i_peak) != 2:
-        raise Exception("Couldn't find two full cycles in the reference time course.")
+        print("Couldn't find two full cycles in the reference time course.")
+        _plot_ref_tc_error()
+        return None
     y_cycle = y_ref[peaks_ref[i_peak[0]]:peaks_ref[i_start] + 1]  # concentrations for one full cycle
     window = list(np.arange(peaks_ref[i_peak[1]], peaks_ref[i_start] + 1))  # window of points to compare against
 
@@ -576,6 +581,8 @@ if __name__ == '__main__':
             # [(0.744, 1, 0.472)]:
             # === ERL ===
             # [(0, 0.2, 0)]:  [(0.06, 0.2, 0.08)]:
+            # === LOW ===
+            # [(0.006, 0.1, 0.008)]:
             print('AKT: %g, ERK: %g, FAK: %g' % (AKT, ERK, FAK))
             lyap_exps = run_lyaps(AKT, ERK, FAK, points=9, overwrite=False)
             if lyap_exps is None:
