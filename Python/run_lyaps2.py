@@ -171,6 +171,19 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     model.parameters['ERK'].value = ERK
     model.parameters['FAK'].value = FAK
 
+    # Check if the output directory already exists and delete it if 'overwrite=True' or if it doesn't have output files.
+    # NOTE: We'll create the directory later, after confirming the system oscillates.
+    outdir_rel = os.path.join('LYAP_FIGURES', 'DMSO' if ERK == 1 else 'ERL' if ERK == 0.2 else 'LOW',
+                              'AKT_%g_FAK_%g_ERK_%g' % (AKT, FAK, ERK))
+    outdir = os.path.join(os.getcwd(), outdir_rel)
+    p = Path(outdir)
+    if p.exists():
+        if overwrite or not Path(os.path.join(outdir, 'lyap.npy')).exists():
+            shutil.rmtree(p)  # removes the directory and all contents
+        else:  # if the directory exists, includes `lyap.npy`, and overwrite=False, skip this condition
+            print('%s already exists' % outdir_rel)
+            return None
+
     # Create simulator
     t_0 = np.linspace(0, 2000, int(2e6) + 1)
     sim = ScipyOdeSimulator(model, t_0, verbose=verbose, compiler='cython', integrator_options=integrator_options)
@@ -213,7 +226,11 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     # window = list(np.arange(peaks_ref[-4], peaks_ref[-2] + 1))  # window of points to compare against
     # y_cycle = y_ref[peaks_ref[-3]:peaks_ref[-2] + 1]  # concentrations for one full cycle
     i_start = -2
-    ref_dt = t_0[peaks_ref[i_start]] - t_0[peaks_ref[i_start-1]]
+    try:
+        ref_dt = t_0[peaks_ref[i_start]] - t_0[peaks_ref[i_start-1]]
+    except IndexError as e:  # this will happen for non-oscillatory cases
+        print(e)
+        return None
     i_peak = []
     # print('ref_dt:', ref_dt)
     for i in np.arange(i_start - 1, i_start - len(peaks_ref) + 2, -1):
@@ -237,6 +254,9 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     # quit()
 
     # FIGURES
+
+    # Create output directory
+    p.mkdir(parents=True, exist_ok=True)
 
     # 1. UMAP projection
     print('creating UMAP projection...', end='')
@@ -503,14 +523,6 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
             axs[kk].set_ylim(top=top * 1.1)
 
     # save figures
-    outdir = os.path.join(os.getcwd(), 'LYAP_FIGURES', 'DMSO' if ERK == 1 else 'ERL' if ERK == 0.2 else 'LOW',
-                          'AKT_%g_FAK_%g_ERK_%g' % (AKT, FAK, ERK))
-    p = Path(outdir)
-    if p.exists():
-        if overwrite or not Path(os.path.join(outdir, 'lyap.npy')).exists():
-            shutil.rmtree(p)  # removes the directory and all contents
-    p.mkdir(parents=True, exist_ok=True)
-
     for fig in figures.keys():
         fig.savefig(os.path.join(outdir, figures[fig]))
 
@@ -550,11 +562,18 @@ if __name__ == '__main__':
         # loop over all conditions
         print('=== %s ===' % TREATMENT)
         for AKT, ERK, FAK in zip(AKTs, ERKs, FAKs):
-            # [(0.792, 1, 0.496)]:  [(0.0, 1, 0.0)]:  [(0.736, 1, 0.468)]:  zip(AKTs, ERKs, FAKs):
+            # zip(AKTs, ERKs, FAKs):
+            # === DMSO ===
+            # [(0.792, 1, 0.496)]:  [(0.0, 1, 0.0)]:  [(0.736, 1, 0.468)]:
             # [(0.744, 1, 0.472)]:
+            # === ERL ===
+            # [(0, 0.2, 0)]:
             print('AKT: %g, ERK: %g, FAK: %g' % (AKT, ERK, FAK))
             lyap_exps = run_lyaps(AKT, ERK, FAK, points=9, overwrite=False)
-            print('Lyapunov exponents:', lyap_exps)
-            print('Mean value: %g\n' % np.mean(lyap_exps))
+            if lyap_exps is None:
+                print('*** Skipping ***')
+            else:
+                print('Lyapunov exponents:', lyap_exps)
+                print('Mean value: %g\n' % np.mean(lyap_exps))
 
     plt.show()
