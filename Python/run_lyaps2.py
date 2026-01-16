@@ -483,6 +483,10 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
             times = tt
             log_dists = ld
 
+        # if no peaks were detected, skip and move on to the next point
+        if len(times) == 0:
+            continue
+
         # fit a regression line and calculate Lyaponov exponent (slope)
         max_idx = len(log_dists)
         r2val = [0]
@@ -571,7 +575,7 @@ if __name__ == '__main__':
             # [(0.792, 1, 0.496)]:  [(0.0, 1, 0.0)]:  [(0.736, 1, 0.468)]:
             # [(0.744, 1, 0.472)]:
             # === ERL ===
-            # [(0, 0.2, 0)]:
+            # [(0, 0.2, 0)]:  [(0.06, 0.2, 0.08)]:
             print('AKT: %g, ERK: %g, FAK: %g' % (AKT, ERK, FAK))
             lyap_exps = run_lyaps(AKT, ERK, FAK, points=9, overwrite=False)
             if lyap_exps is None:
