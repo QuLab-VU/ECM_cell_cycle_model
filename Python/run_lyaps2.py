@@ -226,7 +226,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     #####
     # plt.figure(constrained_layout=True)
     # plt.plot(t_0, y_ref['obsCdc20'], lw=2, label='obsCdc20 (ref)')
-    # plt.xlim(left=1800, right=2000)
+    # plt.xlim(left=1500, right=2000)
     # plt.show()
     # quit()
     #####
@@ -243,16 +243,19 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     i_peak = []
     # print('len(peaks_ref):', len(peaks_ref))
     # print('ref_dt:', ref_dt)
+    # plt.axvline(t_0[peaks_ref[i_start]], color='b', ls='--')
     for i in np.arange(i_start - 1, i_start - len(peaks_ref) + 2, -1):
         # print('%d, %d:' % (i, i-1), end=' ')
         # print('%g, %g,' % (t_0[peaks_ref[i]], t_0[peaks_ref[i-1]]), end=' ')
         # print('%g' % (t_0[peaks_ref[i]] - t_0[peaks_ref[i-1]]), end=' ')
-        # plt.axvline(t_0[peaks_ref[i]], color='r', ls='--')
         if np.isclose(ref_dt, t_0[peaks_ref[i]] - t_0[peaks_ref[i-1]], atol=0.01, rtol=1e-3):
             i_peak.append(i)
+        #     color = 'b'
         #     print('True')
         # else:
+        #     color = 'r'
         #     print('False')
+        # plt.axvline(t_0[peaks_ref[i]], color=color, ls='--')
         if len(i_peak) == 2:
             break
     # plt.show()
@@ -261,7 +264,9 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
         _plot_ref_tc_error()
         return None
     y_cycle = y_ref[peaks_ref[i_peak[0]]:peaks_ref[i_start] + 1]  # concentrations for one full cycle
-    window = list(np.arange(peaks_ref[i_peak[1]], peaks_ref[i_start] + 1))  # window of points to compare against
+    t_cycle = t_0[:len(y_cycle)]
+    dt_cycle = t_0[peaks_ref[i_start]] - t_0[peaks_ref[i_peak[0]]]
+    window = list(np.arange(peaks_ref[i_peak[1]], peaks_ref[i_start] + 1))  # points to compare against (2 cycles)
 
     # quit()
 
@@ -321,7 +326,6 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     axs_obsp21p = axs_obsp21p.flatten()
 
     # 7. Perturbation distances along the cell cycle
-    t_cycle = t_0[:len(y_cycle)]
     dt = 0.01 * t_cycle[-1]  # 1% of the cell cycle length
     fig_perturb = plt.figure(constrained_layout=True)
     ax_perturb = fig_perturb.gca()
@@ -479,12 +483,21 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
 
         # filter ln(dists)
         if i_peak[0] - i_peak[1] > 1:  # indicates complex oscillations
-            tt = []
-            ld = []
-            for i in range(1, len(log_dists)):
-                if log_dists[i] > log_dists[i - 1]:
-                    tt.append(times[i - 1])
-                    ld.append(log_dists[i - 1])
+            t0 = times[0]
+            tt = [t0]
+            ld = [log_dists[0]]
+            # split 'times' into groups of duration of the cell cycle
+            best_ld = {}  # bin_id -> min log_dist
+            best_t = {}  # bin_id -> corresponding time
+            for t, y in zip(times[1:], log_dists[1:]):
+                k = math.ceil((t - t0) / dt_cycle) - 1  # (t0+k*dt, t0+(k+1)*dt]
+                if k not in best_ld or y < best_ld[k]:
+                    best_ld[k] = y
+                    best_t[k] = t
+            # Append bins in increasing time order
+            for k in sorted(best_ld):
+                tt.append(best_t[k])
+                ld.append(best_ld[k])
             times = tt
             log_dists = ld
 
@@ -582,7 +595,7 @@ if __name__ == '__main__':
             # === ERL ===
             # [(0, 0.2, 0)]:  [(0.06, 0.2, 0.08)]:
             # === LOW ===
-            # [(0.006, 0.1, 0.008)]:
+            # [(0.006, 0.1, 0.008)]:  [(0.6, 0.1, 0.64)]:
             print('AKT: %g, ERK: %g, FAK: %g' % (AKT, ERK, FAK))
             lyap_exps = run_lyaps(AKT, ERK, FAK, points=9, overwrite=False)
             if lyap_exps is None:
