@@ -475,11 +475,12 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
             handles = [(handles[0], handles[1])] + list(handles[3:])
             labels = list(dict.fromkeys(labels))
             n_peaks = len(peaks_cdc[:i_peak[1] - i_start])
-            leg_tc = fig_tc.legend(handles=handles, labels=labels, loc='upper left', title='Peak', fontsize=10,
-                                       ncols=math.ceil(n_peaks / 30), bbox_to_anchor=(0.75, 1))
+            ncols_leg = math.ceil(n_peaks / 30)
+            leg_tc = fig_tc.legend(handles=handles, labels=labels, loc='upper left', title='Peak', fontsize=12,
+                                       ncols=ncols_leg, bbox_to_anchor=(1 - 0.1 * ncols_leg, 1))
             leg_tc.get_title().set_fontweight('bold')
-            leg_tc.get_title().set_fontsize(8)
-            fig_tc.get_layout_engine().set(rect=(0, 0, 0.75, 1))  # (left, bottom, width, height)
+            leg_tc.get_title().set_fontsize(12)
+            fig_tc.get_layout_engine().set(rect=(0, 0, 1 - 0.1 * ncols_leg, 1))  # (left, bottom, width, height)
 
         # filter ln(dists)
         if i_peak[0] - i_peak[1] > 1:  # indicates complex oscillations
@@ -590,7 +591,7 @@ if __name__ == '__main__':
         for AKT, ERK, FAK in zip(AKTs, ERKs, FAKs):
             # zip(AKTs, ERKs, FAKs):
             # === DMSO ===
-            # [(0.792, 1, 0.496)]:  [(0.0, 1, 0.0)]:  [(0.736, 1, 0.468)]:
+            # [(0.0, 1, 0.0)]:  [(0.792, 1, 0.496)]:  [(0.736, 1, 0.468)]:
             # [(0.744, 1, 0.472)]:
             # === ERL ===
             # [(0, 0.2, 0)]:  [(0.06, 0.2, 0.08)]:
