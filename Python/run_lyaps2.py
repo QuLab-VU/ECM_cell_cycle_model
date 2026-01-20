@@ -160,7 +160,7 @@ def create_umap_projection(prot_conc, downsample=None, n_neighbors=50, min_dist=
 # PARAM_NUM = 0  # index of parameter set to use from sets of fit parameters
 # integrator_options = {"rtol": 1e-12, "atol": 1e-12}
 
-def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=ScipyOdeSimulator,
+def run_lyaps(AKT, ERK, FAK, t_end=2000, points=10, np=np, model=model, ScipyOdeSimulator=ScipyOdeSimulator,
               find_peaks=find_peaks, integrator_options=None, norm=norm, math=math, overwrite=True, verbose=False):
 
     if integrator_options is None:
@@ -185,7 +185,7 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
     p.mkdir(parents=True, exist_ok=True)
 
     # Create simulator
-    t_0 = np.linspace(0, 2000, int(2e6) + 1)
+    t_0 = np.linspace(0, t_end, int(2e6) + 1)  # 2000
     sim = ScipyOdeSimulator(model, t_0, verbose=verbose, compiler='cython', integrator_options=integrator_options)
 
     # Protein species
@@ -477,10 +477,10 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
             n_peaks = len(peaks_cdc[:i_peak[1] - i_start])
             ncols_leg = math.ceil(n_peaks / 30)
             leg_tc = fig_tc.legend(handles=handles, labels=labels, loc='upper left', title='Peak', fontsize=12,
-                                       ncols=ncols_leg, bbox_to_anchor=(1 - 0.1 * ncols_leg, 1))
+                                       ncols=ncols_leg, bbox_to_anchor=(1 - 0.09 * ncols_leg, 0.95))
             leg_tc.get_title().set_fontweight('bold')
             leg_tc.get_title().set_fontsize(12)
-            fig_tc.get_layout_engine().set(rect=(0, 0, 1 - 0.1 * ncols_leg, 1))  # (left, bottom, width, height)
+            fig_tc.get_layout_engine().set(rect=(0, 0, 1 - 0.09 * ncols_leg, 1))  # (left, bottom, width, height)
 
         # filter ln(dists)
         if i_peak[0] - i_peak[1] > 1:  # indicates complex oscillations
@@ -563,7 +563,9 @@ def run_lyaps(AKT, ERK, FAK, np=np, model=model, points=10, ScipyOdeSimulator=Sc
 if __name__ == '__main__':
 
     # Calculate Lyapunov exponents for all conditions
-    for TREATMENT in ['DMSO', 'ERL', 'LOW']:
+    for TREATMENT in ['DMSO', 'ERL', 'LOW']:  # ['LOW']:
+
+        t_end = 10000 if TREATMENT == 'LOW' else 2000
 
         # FAK: 0 -> 0.4 -> 0.6 -> 1 for all conditions
         FAKs = np.concatenate((
@@ -584,7 +586,7 @@ if __name__ == '__main__':
                     [0.6] * 50))
 
         # ERK = 1 for 'DMSO', 0.2 for 'ERL', 0.1 for 'LOW'
-        ERKs = [1] * 151 if TREATMENT == 'DMSO' else [0.2] * 151 if TREATMENT == 'ERL' else [0.1] * 151
+        ERKs = ([1] if TREATMENT == 'DMSO' else [0.2] if TREATMENT == 'ERL' else [0.1]) * 151
 
         # loop over all conditions
         print('=== %s ===' % TREATMENT)
@@ -596,9 +598,9 @@ if __name__ == '__main__':
             # === ERL ===
             # [(0, 0.2, 0)]:  [(0.06, 0.2, 0.08)]:
             # === LOW ===
-            # [(0.006, 0.1, 0.008)]:  [(0.6, 0.1, 0.64)]:
+            # [(0.006, 0.1, 0.008)]:  [(0.6, 0.1, 0.64)]:  [(0.3, 0.1, 0.4)]:
             print('AKT: %g, ERK: %g, FAK: %g' % (AKT, ERK, FAK))
-            lyap_exps = run_lyaps(AKT, ERK, FAK, points=9, overwrite=False)
+            lyap_exps = run_lyaps(AKT, ERK, FAK, t_end=t_end, points=9, overwrite=False)
             if lyap_exps is None:
                 print('*** Skipping ***')
             else:
