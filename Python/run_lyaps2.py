@@ -226,7 +226,7 @@ def run_lyaps(AKT, ERK, FAK, t_end=2000, points=10, np=np, model=model, ScipyOde
     #####
     # plt.figure(constrained_layout=True)
     # plt.plot(t_0, y_ref['obsCdc20'], lw=2, label='obsCdc20 (ref)')
-    # plt.xlim(left=1500, right=t_end)
+    # plt.xlim(left=9000, right=t_end)
     # plt.show()
     # quit()
     #####
@@ -259,7 +259,7 @@ def run_lyaps(AKT, ERK, FAK, t_end=2000, points=10, np=np, model=model, ScipyOde
         if len(i_peak) == 2:
             break
     # plt.show()
-    if len(i_peak) != 2:
+    if len(i_peak) != 2 or i_peak[0] - i_start != i_peak[1] - i_peak[0]:
         print("Couldn't find two full cycles in the reference time course.")
         _plot_ref_tc_error()
         return None
@@ -574,7 +574,7 @@ if __name__ == '__main__':
     # Calculate Lyapunov exponents for all conditions
     for TREATMENT in ['DMSO', 'ERL', 'LOW']:  # ['LOW']:
 
-        t_end = 10000 if TREATMENT == 'LOW' else 2000
+        t_end = 10000 if TREATMENT == 'LOW' else 2000  # 10000
 
         # FAK: 0 -> 0.4 -> 0.6 -> 1 for all conditions
         FAKs = np.concatenate((
@@ -599,7 +599,7 @@ if __name__ == '__main__':
 
         # loop over all conditions
         print('=== %s ===' % TREATMENT)
-        for AKT, ERK, FAK in zip(AKTs, ERKs, FAKs):
+        for AKT, ERK, FAK in [(0.462, 0.1, 0.508)]:
             # zip(AKTs, ERKs, FAKs):
             # === DMSO ===
             # [(0.0, 1, 0.0)]:  [(0.792, 1, 0.496)]:  [(0.736, 1, 0.468)]:
@@ -608,6 +608,7 @@ if __name__ == '__main__':
             # [(0, 0.2, 0)]:  [(0.06, 0.2, 0.08)]:
             # === LOW ===
             # [(0.006, 0.1, 0.008)]:  [(0.6, 0.1, 0.64)]:  [(0.3, 0.1, 0.4)]:  [(0.258, 0.1, 0.344)]:
+            # [(0.462, 0.1, 0.508)]:
             print('AKT: %g, ERK: %g, FAK: %g' % (AKT, ERK, FAK))
             lyap_exps = run_lyaps(AKT, ERK, FAK, t_end=t_end, points=9, overwrite=False)
             if lyap_exps is None:
