@@ -599,7 +599,7 @@ if __name__ == '__main__':
 
         # loop over all conditions
         print('=== %s ===' % TREATMENT)
-        for AKT, ERK, FAK in [(0.462, 0.1, 0.508)]:
+        for AKT, ERK, FAK in zip(AKTs, ERKs, FAKs):
             # zip(AKTs, ERKs, FAKs):
             # === DMSO ===
             # [(0.0, 1, 0.0)]:  [(0.792, 1, 0.496)]:  [(0.736, 1, 0.468)]:
