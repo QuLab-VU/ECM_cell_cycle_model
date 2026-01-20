@@ -226,7 +226,7 @@ def run_lyaps(AKT, ERK, FAK, t_end=2000, points=10, np=np, model=model, ScipyOde
     #####
     # plt.figure(constrained_layout=True)
     # plt.plot(t_0, y_ref['obsCdc20'], lw=2, label='obsCdc20 (ref)')
-    # plt.xlim(left=1500, right=2000)
+    # plt.xlim(left=1500, right=t_end)
     # plt.show()
     # quit()
     #####
@@ -433,6 +433,14 @@ def run_lyaps(AKT, ERK, FAK, t_end=2000, points=10, np=np, model=model, ScipyOde
         y_out = sim.run(initials=initials).observables
         peaks_cdc, _ = find_peaks(y_out['obsCdc20'], prominence=0.6, distance=10)
 
+        #####
+        # plt.figure(constrained_layout=True)
+        # plt.plot(t_0, y_out['obsCdc20'], lw=2, label='obsCdc20 (perturb)')
+        # plt.xlim(left=1500, right=t_end)
+        # plt.show()
+        # quit()
+        #####
+
         # perturbed Cdc20 timecourses
         axs_obsCdc20[kk].plot(t_0, y_out['obsCdc20'], lw=2, label='Point %d' % kk)
         axs_obsCdc20[kk].tick_params(axis='both', which='major', labelsize=18)
@@ -482,6 +490,11 @@ def run_lyaps(AKT, ERK, FAK, t_end=2000, points=10, np=np, model=model, ScipyOde
             leg_tc.get_title().set_fontsize(12)
             fig_tc.get_layout_engine().set(rect=(0, 0, 1 - 0.09 * ncols_leg, 1))  # (left, bottom, width, height)
 
+        # if no peaks were detected, skip and move on to the next point
+        if len(times) == 0:
+            print('No peaks detected in perturbed simulation for point %d. Moving on...' % kk)
+            continue
+
         # filter ln(dists)
         if i_peak[0] - i_peak[1] > 1:  # indicates complex oscillations
             t0 = times[0]
@@ -501,10 +514,6 @@ def run_lyaps(AKT, ERK, FAK, t_end=2000, points=10, np=np, model=model, ScipyOde
                 ld.append(best_ld[k])
             times = tt
             log_dists = ld
-
-        # if no peaks were detected, skip and move on to the next point
-        if len(times) == 0:
-            continue
 
         # fit a regression line and calculate Lyaponov exponent (slope)
         max_idx = len(log_dists)
@@ -598,7 +607,7 @@ if __name__ == '__main__':
             # === ERL ===
             # [(0, 0.2, 0)]:  [(0.06, 0.2, 0.08)]:
             # === LOW ===
-            # [(0.006, 0.1, 0.008)]:  [(0.6, 0.1, 0.64)]:  [(0.3, 0.1, 0.4)]:
+            # [(0.006, 0.1, 0.008)]:  [(0.6, 0.1, 0.64)]:  [(0.3, 0.1, 0.4)]:  [(0.258, 0.1, 0.344)]:
             print('AKT: %g, ERK: %g, FAK: %g' % (AKT, ERK, FAK))
             lyap_exps = run_lyaps(AKT, ERK, FAK, t_end=t_end, points=9, overwrite=False)
             if lyap_exps is None:
