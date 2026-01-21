@@ -456,7 +456,9 @@ def run_lyaps(AKT, ERK, FAK, t_end=2000, points=10, np=np, model=model, ScipyOde
         # loop over peaks in perturbed simulation
         times = []
         log_dists = []
-        for ii, peak in enumerate(peaks_cdc[:i_peak[1] - i_start]):
+        peaks_perturb = peaks_cdc[:i_peak[1] - i_start][:100]  # limit the number of peaks to 100
+        n_peaks = len(peaks_perturb)
+        for ii, peak in enumerate(peaks_perturb):
             start_idx = peak + ref_idx
             axs_obsCdc20[kk].plot(t_0[start_idx], 0, '2r', ms=8)  # starting points for comparisons
 
@@ -473,7 +475,7 @@ def run_lyaps(AKT, ERK, FAK, t_end=2000, points=10, np=np, model=model, ScipyOde
             axs_tc[kk].set_title('Point %d' % kk, fontsize=12)
 
             # For the last peak, plot the portion of the cell cycle compared against the reference
-            if ii == len(peaks_cdc[:i_peak[1] - i_start]) - 1:
+            if ii == n_peaks - 1:
                 axs_obsCdc20[kk].plot(t_0[start_idx:start_idx + len(y_cycle)],
                                       y_out['obsCdc20'][start_idx:start_idx + len(y_cycle)], 'r', lw=3)
 
@@ -482,7 +484,6 @@ def run_lyaps(AKT, ERK, FAK, t_end=2000, points=10, np=np, model=model, ScipyOde
             handles, labels = axs_tc[kk].get_legend_handles_labels()
             handles = [(handles[0], handles[1])] + list(handles[3:])
             labels = list(dict.fromkeys(labels))
-            n_peaks = len(peaks_cdc[:i_peak[1] - i_start])
             ncols_leg = math.ceil(n_peaks / 30)
             leg_tc = fig_tc.legend(handles=handles, labels=labels, loc='upper left', title='Peak', fontsize=12,
                                        ncols=ncols_leg, bbox_to_anchor=(1 - 0.09 * ncols_leg, 0.95))
@@ -608,7 +609,7 @@ if __name__ == '__main__':
             # [(0, 0.2, 0)]:  [(0.06, 0.2, 0.08)]:
             # === LOW ===
             # [(0.006, 0.1, 0.008)]:  [(0.6, 0.1, 0.64)]:  [(0.3, 0.1, 0.4)]:  [(0.258, 0.1, 0.344)]:
-            # [(0.462, 0.1, 0.508)]:
+            # [(0.462, 0.1, 0.508)]:  [(0.6, 0.1, 0.672)]:
             print('AKT: %g, ERK: %g, FAK: %g' % (AKT, ERK, FAK))
             lyap_exps = run_lyaps(AKT, ERK, FAK, t_end=t_end, points=9, overwrite=False)
             if lyap_exps is None:
