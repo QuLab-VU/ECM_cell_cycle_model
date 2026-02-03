@@ -9,7 +9,9 @@ Title: cell_cycle_death_model
 
 from pysb import *
 from pysb.simulator import ScipyOdeSimulator, BngSimulator
-from pylab import linspace, plot, xlabel, ylabel, legend, figure, show
+from pylab import linspace, plot, xlabel, ylabel, legend, figure, show, tight_layout, bar, title, yscale, barh, \
+    xticks, yticks, gca, text, hlines, ylim, subplots_adjust, annotate, rcParams
+
 import sympy as sp
 
 Model()
@@ -36,6 +38,7 @@ Monomer('CycAi')
 Monomer('CycBi')
 Monomer('E2Fi')
 Monomer('Cdc20i')
+
 # PARAMETERS
 # Stiffness, Drug: [AKT, ERK, FAK]
 # Stiff, DMSO: 1, 1 ,1
@@ -92,7 +95,6 @@ Parameter('CycAi_0', 0)
 Parameter('CycBi_0', 0)
 Parameter('E2Fi_0', 0)
 Parameter('Cdc20i_0', 0)
-# TODO: What are BAX, BAXmBCL2, and BH3BCL2? Steady state values? What parameter values?
 Expression('BAXm_0_expr', (BAXt - 0.93 - 0.065) * omega)  # BAXt - BAX - BAXmBCL2
 Expression('BCL2_0_expr', (BCL2t - 0.035 - 0.065) * omega)  # BCL2t - BH3BCL2 -BAXmBCL2
 
@@ -510,6 +512,7 @@ Rule('BH3mBCL2_association_dissociation', BH3(b=None) + BCL2(b=None) | BH3(b=1) 
      kasso_BH3_BCL2, kdiss_BH3BCL2)
 
 if __name__ == '__main__':
+
     # Plot trajectory of CDC20
     def plot_results(sim_result, label):
         # check if more than one sim_result
@@ -521,10 +524,11 @@ if __name__ == '__main__':
         # plot results
         figure()
         for i in range(len(sim_result)):
-            plot(time, sim_result[i].observables['obsCdc20'], label=label[i])
+            plot(time, sim_result[i].observables['obsCdc20'], lw=2, label=label[i])
         xlabel('Time (h)')
         ylabel('Amount of CDC20 (# of molecules)')
         legend(loc=0)
+        tight_layout()
 
     # Simulate the model for 240 hours
     time = linspace(0, 240, 2401)
@@ -533,19 +537,106 @@ if __name__ == '__main__':
     sim_result_SSA = BngSimulator(model, time, verbose=True).run(seed=33)
     plot_results([sim_result_ODE, sim_result_SSA], ['ODE', 'SSA'])
 
+    # Calculate Jacobian and eigenvectors/eigenvalues for a point attractor
+    # Change (AKT, ERK, FAK) to (0.1484848484848485, 0.09898989898989899, 0.19797979797979798)
+    time = linspace(0, 1000, 1001)
+    print("Simulating...")
+    param_values = \
+        {'AKT': 0.1484848484848485,
+         'ERK': 0.09898989898989899,
+         'FAK': 0.19797979797979798}
+    sim_result_ODE = ScipyOdeSimulator(model, time, verbose=True).run(param_values=param_values)
+    sim_result_SSA = BngSimulator(model, time, verbose=True).run(param_values=param_values, seed=33)
+    plot_results([sim_result_ODE, sim_result_SSA], ['ODE', 'SSA'])
+    #####
+    import numpy as np
+    from pysb.simulator.scipyode import PythonRhsBuilder
+    from pysb.logging import get_logger
+    import itertools
+    prb = PythonRhsBuilder(model, with_jacobian=True, _logger=get_logger(__name__))
+    y = sim_result_ODE.species[-1]
+    p = np.array([p.value for p in model.parameters])
+    e = np.array([e.expr.subs(dict(zip(model.parameters, p))) for e in model.expressions_constant()], dtype=float)
+    J = prb.jacobian_fn(time, y, p, e[:, None])
+    eigenvalues, eigenvectors = np.linalg.eig(np.array(J))
+    sorted_indices = np.argsort(np.real(eigenvalues))  # Sort eigenvalues by real part
+    eigenvalues_sorted = eigenvalues[sorted_indices]  # Sort eigenvalues using the indices
+    eigenvectors_sorted = eigenvectors[:, sorted_indices]  # Sort eigenvectors accordingly
+    print("Point attractor strength (most negative eigenvalue):", eigenvalues_sorted.real[0])
+    print('tau_point = ', -1 / eigenvalues_sorted.real[0])
+    # norm = np.sqrt(np.sum(np.abs(eigenvectors_sorted[:, 0]) ** 2, axis=0))
+    contributions = np.abs(eigenvectors_sorted[:, 0]) ** 2  # Compute squared magnitudes
+    contributions /= np.sum(contributions)  # Normalize so they sum to 1
+    sorted_indices = np.argsort(contributions)[::-1]
+    sp_names = np.array([str(sp) for sp in model.species])
+
+    # Plot horizontal lines at each log-scaled y-value
+    figure(figsize=(6.4, 4.8*2))
+    subplots_adjust(left=0.125, right=0.6, top=0.95, bottom=0.05)
+    y_offsets = [
+        [0.75, 0, -0.75], # E2F(b=1) % pRb(b=1, S='u'), E2F(b=None), pRb(b=None, S='u')
+        [0.5], # pRb(b=None, S='p')
+        [0.5], # CycE(b=None)
+        [0.25], # CycA(b=None)
+        [0.3, -0.3], # p21(b=None, S='u'), p21(b=None, S='p')
+        [0.75, 0], # cdh1(A='no'), cdh1(A='yes')
+        [-0.25], # CycE(b=1) % p21(b=1, S='u')
+        [0], # CycA(b=1) % p21(b=1, S='u')
+        [-0.25], # CycB(b=None)
+        [0.35, -0.35], # CycD(b=None), CycD(b=1) % p21(b=1, S='u')
+        [0.2], # Cdc20()
+        [-0.2], # CycB(b=1) % p21(b=1, S='u')
+        [0], # Skp2()
+        [0], # BCL2(b=None)
+        [0.9, 0.15], # BAX(b=1, m='yes') % BCL2(b=1), BAX(b=None, m='yes')
+        [-0.15, -0.9], # BH3(b=None), BCL2(b=1) % BH3(b=1)
+        [0], # BAX(b=None, m='no')
+        [0], [0], [0], [0], [0], [0], [0] # E2Fi(), Myc(), CycDi(), CycEi(), CycAi(), CycBi(), Cdc20i()
+    ]
+    y_offsets_flattened = [item for sublist in y_offsets for item in sublist]
+    # Replace species names with indices
+    counter = itertools.count()  # Creates an iterator that returns consecutive integers
+    y_offsets_indices = [[next(counter) for _ in sublist] for sublist in y_offsets]
+    for value, name, offset in zip(contributions[sorted_indices], sp_names[sorted_indices], y_offsets_flattened):
+        hlines(y=value, xmin=0, xmax=1, color='black', linewidth=1.5)  # Horizontal line
+        annotate(name, xy=(1.05, 10 ** (np.log10(value) + offset)), xycoords=gca().get_yaxis_transform(), va='center',
+                 fontsize=10)
+    # Mark groups of species with similar eigenvector contributions on the plot
+    cycle = rcParams['axes.prop_cycle'].by_key()['color']  # standard colors
+    counter = itertools.count()
+    for offsets, indices in zip(y_offsets, y_offsets_indices):
+        if len(offsets) > 1:
+            count = next(counter)
+            values = contributions[sorted_indices][indices]
+            annotate(
+                '', xy=(1.03, 10 ** (np.log10(values[0]) + offsets[0] + 0.4)),
+                xytext=(1.03, 10 ** (np.log10(values[-1]) + offsets[-1] - 0.3)),
+                xycoords=gca().get_yaxis_transform(), textcoords=gca().get_yaxis_transform(),
+                arrowprops=dict(arrowstyle='-', lw=2, color=cycle[count % 10])
+            )
+            plot(0.95, np.mean(values), '*', ms=6, color=cycle[count % 10])
+    yscale('log')
+    ylim(min(contributions) * 0.5, 10)  # Adjust limits for clarity
+    # Remove x-axis ticks and labels
+    xticks([])
+    xlabel("")
+    ylabel(r"log$_{10}$ Contribution")
+    tight_layout()
+    #####
+
     # Import most up-to-date model and compare time courses
-    from Austin_proliferation_model_6 import model as model_austin
-    param_values = {}
-    for p in model.parameters:
-        if p.name not in ['AKT', 'ERK', 'FAK']:
-            param_values[p.name] = p.value
-            # print('%s, %g, %g' % (p.name, p.value, model_austin.parameters[p.name].value))
-        else:
-            param_values[p.name] = p.value * omega.value
-    # quit()
-    # Use same parameter values and initial species amounts to compare models
-    sim_result_Austin = ScipyOdeSimulator(model_austin, time, verbose=True).\
-        run(param_values=param_values, initials=sim_result_ODE.species[0])
-    plot_results([sim_result_ODE, sim_result_Austin], ['ODE', 'Austin'])
+    # from Austin_proliferation_model_6 import model as model_austin
+    # param_values = {}
+    # for p in model.parameters:
+    #     if p.name not in ['AKT', 'ERK', 'FAK']:
+    #         param_values[p.name] = p.value
+    #         # print('%s, %g, %g' % (p.name, p.value, model_austin.parameters[p.name].value))
+    #     else:
+    #         param_values[p.name] = p.value * omega.value
+    # # quit()
+    # # Use same parameter values and initial species amounts to compare models
+    # sim_result_Austin = ScipyOdeSimulator(model_austin, time, verbose=True).\
+    #     run(param_values=param_values, initials=sim_result_ODE.species[0])
+    # plot_results([sim_result_ODE, sim_result_Austin], ['ODE', 'Austin'])
 
     show()
