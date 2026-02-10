@@ -552,7 +552,6 @@ if __name__ == '__main__':
     import numpy as np
     from pysb.simulator.scipyode import PythonRhsBuilder
     from pysb.logging import get_logger
-    import itertools
     prb = PythonRhsBuilder(model, with_jacobian=True, _logger=get_logger(__name__))
     y = sim_result_ODE.species[-1]
     p = np.array([p.value for p in model.parameters])
@@ -562,10 +561,15 @@ if __name__ == '__main__':
     sorted_indices = np.argsort(np.real(eigenvalues))  # Sort eigenvalues by real part
     eigenvalues_sorted = eigenvalues[sorted_indices]  # Sort eigenvalues using the indices
     eigenvectors_sorted = eigenvectors[:, sorted_indices]  # Sort eigenvectors accordingly
-    print("Point attractor strength (most negative eigenvalue):", eigenvalues_sorted.real[0])
-    print('tau_point = ', -1 / eigenvalues_sorted.real[0])
-    # norm = np.sqrt(np.sum(np.abs(eigenvectors_sorted[:, 0]) ** 2, axis=0))
-    contributions = np.abs(eigenvectors_sorted[:, 0]) ** 2  # Compute squared magnitudes
+    # Identify the eigenvector with the least negative (closest to zero) real part of the eigenvalue
+    tol = 1e-10
+    real_parts = np.real(eigenvalues_sorted)
+    neg_idx = np.where(real_parts < -tol)[0]  # indices of strictly negative modes
+    idx_slowest = neg_idx[np.argmax(real_parts[neg_idx])]  # index of the least-negative (closest to zero) eigenvalue
+    lambda_slowest = eigenvalues_sorted[idx_slowest]
+    print('Least negative eigenvalue: [%d] %g' %(idx_slowest, lambda_slowest))
+    #####
+    contributions = np.abs(eigenvectors_sorted[:, idx_slowest]) ** 2  # Compute squared magnitudes
     contributions /= np.sum(contributions)  # Normalize so they sum to 1
     sorted_indices = np.argsort(contributions)[::-1]
     sp_names = np.array([str(sp) for sp in model.species])
@@ -573,35 +577,16 @@ if __name__ == '__main__':
     # Plot horizontal lines at each log-scaled y-value
     figure(figsize=(6.4, 4.8*2))
     subplots_adjust(left=0.125, right=0.6, top=0.95, bottom=0.05)
-    y_offsets = [
-        [0.75, 0, -0.75], # E2F(b=1) % pRb(b=1, S='u'), E2F(b=None), pRb(b=None, S='u')
-        [0.5], # pRb(b=None, S='p')
-        [0.5], # CycE(b=None)
-        [0.25], # CycA(b=None)
-        [0.3, -0.3], # p21(b=None, S='u'), p21(b=None, S='p')
-        [0.75, 0], # cdh1(A='no'), cdh1(A='yes')
-        [-0.25], # CycE(b=1) % p21(b=1, S='u')
-        [0], # CycA(b=1) % p21(b=1, S='u')
-        [-0.25], # CycB(b=None)
-        [0.35, -0.35], # CycD(b=None), CycD(b=1) % p21(b=1, S='u')
-        [0.2], # Cdc20()
-        [-0.2], # CycB(b=1) % p21(b=1, S='u')
-        [0], # Skp2()
-        [0], # BCL2(b=None)
-        [0.9, 0.15], # BAX(b=1, m='yes') % BCL2(b=1), BAX(b=None, m='yes')
-        [-0.15, -0.9], # BH3(b=None), BCL2(b=1) % BH3(b=1)
-        [0], # BAX(b=None, m='no')
-        [0], [0], [0], [0], [0], [0], [0] # E2Fi(), Myc(), CycDi(), CycEi(), CycAi(), CycBi(), Cdc20i()
-    ]
-    y_offsets_flattened = [item for sublist in y_offsets for item in sublist]
-    # Replace species names with indices
-    counter = itertools.count()  # Creates an iterator that returns consecutive integers
-    y_offsets_indices = [[next(counter) for _ in sublist] for sublist in y_offsets]
-    for value, name, offset in zip(contributions[sorted_indices], sp_names[sorted_indices], y_offsets_flattened):
+    top = 1
+    offset = 0
+    for value, name in zip(contributions[sorted_indices][:18], sp_names[sorted_indices][:18]):
         hlines(y=value, xmin=0, xmax=1, color='black', linewidth=1.5)  # Horizontal line
-        annotate(name, xy=(1.05, 10 ** (np.log10(value) + offset)), xycoords=gca().get_yaxis_transform(), va='center',
-                 fontsize=10)
+        # annotate(name, xy=(1.05, 10 ** (np.log10(value) + offset)), xycoords=gca().get_yaxis_transform(), va='center',
+        #          fontsize=10)
+        annotate(name, xy=(1.05, top - offset), xycoords='axes fraction', va='center', fontsize=10)
+        offset += 0.025
     # Mark groups of species with similar eigenvector contributions on the plot
+    '''
     cycle = rcParams['axes.prop_cycle'].by_key()['color']  # standard colors
     counter = itertools.count()
     for offsets, indices in zip(y_offsets, y_offsets_indices):
@@ -615,12 +600,14 @@ if __name__ == '__main__':
                 arrowprops=dict(arrowstyle='-', lw=2, color=cycle[count % 10])
             )
             plot(0.95, np.mean(values), '*', ms=6, color=cycle[count % 10])
+    '''
     yscale('log')
     ylim(min(contributions) * 0.5, 10)  # Adjust limits for clarity
     # Remove x-axis ticks and labels
     xticks([])
     xlabel("")
-    ylabel(r"log$_{10}$ Contribution")
+    ylabel(r"log$_{10}$ Contribution", fontsize=12)
+    yticks(fontsize=12)
     tight_layout()
     #####
 
