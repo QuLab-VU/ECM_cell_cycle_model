@@ -20,11 +20,21 @@ from peakfinder import peakfinder
 
 # Import functions related to the plots
 sys.path.insert(0, os.path.dirname(__file__) + "/../figures")
-from plots_cell_population_simulation import plot_cell_count
-from plots_cell_population_simulation import break_down_cell_life
-from plots_cell_population_simulation import plot_digraph_population_history
-from plots_cell_population_simulation import plot_tree_from_population_df
-from plots_cell_population_simulation import plot_event_population_history
+##### Moved to model_fxns.py ########
+# from plots_cell_population_simulation import plot_cell_count
+# from plots_cell_population_simulation import break_down_cell_life
+# from plots_cell_population_simulation import plot_digraph_population_history
+# from plots_cell_population_simulation import plot_tree_from_population_df
+# from plots_cell_population_simulation import plot_event_population_history
+######################################
+from model_fxns import plot_cell_count
+from model_fxns import break_down_cell_life
+from model_fxns import plot_digraph_population_history
+from model_fxns import plot_tree_from_population_df
+from model_fxns import plot_event_population_history
+
+
+# from model_fxns import *
 from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
 import fracprolif as fp
 
