@@ -4,7 +4,7 @@ import networkx as nx
 from matplotlib.pyplot import figure
 import pandas as pd
 import numpy as np
-from Cell_Population_Simulation import Cell_Population_Simulation
+# from Cell_Population_Simulation import Cell_Population_Simulation
 from call_cell_events import call_events
 from retrieve_cellState import retrieve_cellState
 from SMs_G1s_IMTs_extraction import SMs_G1s_IMTs_extraction
@@ -168,6 +168,7 @@ def calc_death(cells, all_events_simulated):
 
 
 def run_treatment(model, inhib_name, inhib_conc):
+    from Cell_Population_Simulation import Cell_Population_Simulation
     model.parameters[inhib_name].value = inhib_conc
 
     (check, population_df, cells, cell_count) = Cell_Population_Simulation(init, run_time, observed_cells_time, model,
@@ -380,6 +381,7 @@ def plot_death_avgdiv(concs, population_dfs, title="Unknown Condition"):
 
 def runIMTs(init, run_time, observed_cells_time, model, ECM_conditions, condition, 
             sampled_parameter_names, IMTs_count, inhib, SAVE_DIR, verbose=False):
+    from Cell_Population_Simulation import Cell_Population_Simulation
     all_IMTs = []
     n = 0
     while len(all_IMTs) < IMTs_count:
