@@ -5,6 +5,8 @@ import csv
 import json
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+from mpl_toolkits.axes_grid1 import Divider, Size
 
 
 def build_sweep_arrays(treatment: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -377,13 +379,36 @@ def main() -> None:
     print(f"Issues rows: {len(issues)} / {len(records)}")
 
     # Plot: treatment-colored Lyap lines; X markers for irregular; circles for steady eigenvalues
-    # Plot: treatment-colored Lyap lines; X markers for irregular; circles for steady eigenvalues
-    plt.figure(constrained_layout=True)
+    params = {
+        "axes.titley": 1,
+        "axes.titlepad": -14,
+        "axes.labelsize": 14,
+        "axes.titlesize": 14,
+        "axes.edgecolor": "black",
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
+    }
+    plt.rcParams.update(params)
+
+    # ===== SHARED axes-box geometry — keep IDENTICAL across matched figures =====
+    BOX_W, BOX_H = 2.75, 2.75     # the plotting box, in inches (the thing being matched)
+    LEFT, RIGHT  = 0.90, 0.15   # left margin holds the y-label + decimal y-ticks
+    BOTTOM, TOP  = 0.55, 0.15
+    figW = LEFT + BOX_W + RIGHT
+    figH = BOTTOM + BOX_H + TOP
+
+    fig = plt.figure(figsize=(figW, figH))
+    fig.set_layout_engine("none")          # required — Divider places the axes manually
+    h = [Size.Fixed(LEFT), Size.Fixed(BOX_W), Size.Fixed(RIGHT)]
+    v = [Size.Fixed(BOTTOM), Size.Fixed(BOX_H), Size.Fixed(TOP)]
+    div = Divider(fig, (0, 0, 1, 1), h, v, aspect=False)
+    ax = fig.add_axes(div.get_position(), axes_locator=div.new_locator(nx=1, ny=1))
 
     color_map = {"DMSO": "C0", "ERL": "C1", "LOW": "C2"}
     x = np.linspace(0.0, 3.0, 151)
 
     SMOOTH_WINDOW = 11
+    label_dict = {"ERL": "EGFRi", "LOW": "ERK = 0.1"}
 
     for treatment in treatments:
         y_raw = means_by_treat[treatment]
@@ -400,19 +425,19 @@ def main() -> None:
         y_line[steady_mask] = np.nan  # breaks the line at steady-state locations
 
         # Line only for non-steady regions
-        plt.plot(
+        ax.plot(
             x,
             y_line,
             linestyle="-",
             linewidth=3,
             color=c,
-            label=treatment,
+            label=label_dict.get(treatment, treatment),
         )
 
         # 'x' markers where oscillatory but irregular (no repeatable cycles)
         irreg = states == "irregular_oscillation"
         if np.any(irreg):
-            plt.scatter(
+            ax.scatter(
                 x[irreg],
                 y_smooth[irreg],  # marker sits on the smoothed curve value
                 marker="x",
@@ -424,7 +449,7 @@ def main() -> None:
 
         # Circles where steady-state eigenvalue exists (plot at eigenvalue, not on line)
         if np.any(steady_mask):
-            plt.scatter(
+            ax.scatter(
                 x[steady_mask],
                 y_steady[steady_mask],
                 marker="o",
@@ -433,11 +458,56 @@ def main() -> None:
                 alpha=0.95,
             )
 
-    plt.xlim(0, 3)
-    plt.xlabel("Stiffness Metric", fontsize=16)
-    plt.ylabel("Attractor Strength", fontsize=16)
-    plt.tick_params(axis="both", labelsize=16)
-    plt.legend(loc="best", fontsize=14)
+    # -- Annotation arrows pointing at notable features --
+    # (x, y_tip, direction, treatment);  'up' = arrow points upward, 'down' = downward
+    arrow_specs = [
+        (0.05, -0.010, "up",   "LOW"),
+        (0.75, -0.009, "up",   "ERL"),
+        (1.00, -0.037, "up",   "DMSO"),
+        (1.68, -0.018, "up",   "DMSO"),
+        (1.98, -0.033, "up",   "ERL"),
+        (2.30, -0.043, "up",   "LOW"),
+        (2.45, -0.080, "down", "DMSO"),
+        (2.98, -0.042, "down", "ERL"),
+        (2.98, -0.055, "down", "DMSO"),
+        (2.98, -0.060, "up",   "LOW"),
+    ]
+    ARROW_LEN = 0.012  # arrow length in y-units; tweak to taste
+
+    for xa, y_tip, direction, treat in arrow_specs:
+        dy = ARROW_LEN if direction == "up" else -ARROW_LEN
+        ax.annotate(
+            "",
+            xy=(xa, y_tip),             # arrowhead sits at the feature
+            xytext=(xa, y_tip - dy),    # tail offset
+            arrowprops=dict(arrowstyle="-|>", color=color_map[treat],
+                            lw=2, mutation_scale=11),
+        )
+
+    ax.set_xlim(0, 3)
+    ax.set_xlabel("Stiffness Metric")
+    ax.set_ylabel("Attractor Strength")
+
+    # Get existing legend entries
+    handles, labels = ax.get_legend_handles_labels()
+
+    # Create new legend entries
+    line_entry = Line2D([0], [0], color='black', lw=2)  # line
+    circle_entry = Line2D([0], [0], marker='o', color='black', lw=0)  # circle
+    x_entry = Line2D([0], [0], marker='x', color='black', lw=0, mew=2, ms=8)  # x
+
+    # Append them
+    handles.extend([line_entry, circle_entry, x_entry])
+    labels.extend(['Cycle', 'Point', 'Indeterminate'])
+    ax.legend(handles, labels, loc="lower left", fontsize=7, ncol=2,
+              columnspacing=1, handlelength=1.4, labelspacing=0.3,
+              borderpad=0.3, frameon=False)
+
+    # Save as SVG (no bbox_inches='tight' -> the fixed box/figure size is preserved)
+    out_svg = out_dir / "lyap_attractor_strength.svg"
+    fig.savefig(out_svg, format="svg")
+    print(f"Wrote: {out_svg}")
+
     plt.show()
 
 
